@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVR Shop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0a0e27; 
+            color: white; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 { 
+            margin-bottom: 30px; 
+            text-align: center; 
+            color: #00d4ff; 
+            font-size: 28px;
+            font-weight: 600;
+        }
+        /* BANNIÈRE CONCOURS */
+        .concours-banner {
+            background: linear-gradient(135deg, #1a1f3a 0%, #2d3561 100%);
+            border: 1px solid #00d4ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .concours-banner img {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .concours-content {
+            flex: 1;
+        }
+        .concours-title {
+            color: #00d4ff;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .concours-text {
+            color: #aaa;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        /* MENU PRODUITS */
+        .menu { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+        }
+        .product { 
+            background: linear-gradient(135deg, #1a1f3a, #2d3561);
+            border-radius: 12px; 
+            overflow: hidden;
+            border: 1px solid #1e2847;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .product:hover {
+            border-color: #00d4ff;
+            transform: translateY(-2px);
+        }
+        .product img { 
+            width: 100%; 
+            height: 150px; 
+            object-fit: cover;
+        }
+        .product-info { 
+            padding: 15px; 
+        }
+        .product h3 { 
+            margin-bottom: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .product p { 
+            font-size: 12px; 
+            color: #aaa; 
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        .tarifs {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 2px solid #00d4ff;
+            padding: 10px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #00d4ff;
+            font-weight: 500;
+        }
+        .tarifs div {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+        }
+        .disponibilite {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .disponible {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4cb050;
+        }
+        .indisponible {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+        .video-badge {
+            display: inline-block;
+            background: #ff6b00;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .admin-btn { 
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px; 
+            background: #ff6b00; 
+            padding: 12px 24px; 
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            font-weight: 600;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .admin-btn:hover {
+            background: #ff5500;
+            transform: translateY(-2px);
+        }
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .spinner {
+            border: 3px solid #1a1f3a;
+            border-top: 3px solid #00d4ff;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            color: #00d4ff;
+            font-size: 16px;
+            text-align: center;
+        }
+        /* MODALE VIDÉO */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            position: relative;
+            background: #1a1f3a;
+            margin: 5% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .modal video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            color: #fff;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.7);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .close-modal:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- ÉCRAN DE CHARGEMENT -->
+    <div id="loadingScreen" class="loading-container">
+        <div class="spinner"></div>
+        <div class="loading-text">Chargement en cours...</div>
+    </div>
+
+    <!-- LE MENU (caché au départ) -->
+    <div id="mainContent" style="display: none;">
+        <h1>🏪 SVR Shop</h1>
+        
+        <!-- BANNIÈRE CONCOURS -->
+        <div id="concoursBanner" style="display: none;" class="concours-banner">
+            <img id="concoursImage" src="" alt="Concours">
+            <div class="concours-content">
+                <div class="concours-title">🎉 Concours</div>
+                <div class="concours-text" id="concoursText"></div>
+            </div>
+        </div>
+
+        <!-- MENU PRODUITS -->
+        <div class="menu" id="menu"></div>
+        <a href="admin.html" class="admin-btn">⚙️ Admin</a>
+    </div>
+
+    <!-- MODALE VIDÉO -->
+    <div id="videoModal" class="modal" onclick="closeVideoModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-modal" onclick="closeVideoModal()">&times;</span>
+            <video id="videoPlayer" controls style="width: 100%; height: auto;"></video>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+        // Support pour Telegram Mini App
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+        }
+
+        // VOS DONNÉES FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCyrxd0NSQQfBjSy_Rhz9vF-moHxl1D2dk",
+            authDomain: "tovasvr.firebaseapp.com",
+            projectId: "tovasvr",
+            storageBucket: "tovasvr.firebasestorage.app",
+            messagingSenderId: "747176572181",
+            appId: "1:747176572181:web:0ce458b78d97f93f8e251c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.openVideoModal = function(videoUrl) {
+            document.getElementById("videoPlayer").src = videoUrl;
+            document.getElementById("videoModal").style.display = "block";
+        };
+
+        window.closeVideoModal = function(event) {
+            if (event && event.target.id !== "videoModal") return;
+            document.getElementById("videoModal").style.display = "none";
+            document.getElementById("videoPlayer").src = "";
+        };
+
+        async function loadProducts() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "products"));
+                const menu = document.getElementById("menu");
+                menu.innerHTML = "";
+
+                querySnapshot.forEach((doc) => {
+                    const product = doc.data();
+                    const disponibilite = product.stock > 0 ? "Disponible" : "Non disponible";
+                    const classDisponibilite = product.stock > 0 ? "disponible" : "indisponible";
+                    
+                    // Image par défaut si vide
+                    const image = product.image || "https://via.placeholder.com/150?text=No+Image";
+                    
+                    // Afficher les tarifs
+                    const tarifsArray = product.tarifs ? product.tarifs.split(" | ") : [];
+                    const tarifsHTML = tarifsArray.length > 0 ? `
+                        <div class="tarifs">
+                            ${tarifsArray.map(t => `<div><span>${t}</span></div>`).join('')}
+                        </div>
+                    ` : '';
+
+                    // Badge vidéo si vidéo existe
+                    const videoBadge = product.video ? `<div class="video-badge" onclick="openVideoModal('${product.video}'); event.stopPropagation();">🎥 Voir vidéo</div>` : '';
+
+                    const html = `
+                        <div class="product" onclick="product.video ? openVideoModal('${product.video}') : null">
+                            <img src="${image}" alt="${product.name}">
+                            <div class="product-info">
+                                <h3>${product.name}</h3>
+                                <p>${product.description}</p>
+                                ${tarifsHTML}
+                                <span class="disponibilite ${classDisponibilite}">
+                                    ${disponibilite ? '✓' : '✕'} ${disponibilite}
+                                </span>
+                                ${videoBadge}
+                            </div>
+                        </div>
+                    `;
+                    menu.innerHTML += html;
+                });
+
+                // Charger la bannière concours
+                loadConcours();
+
+                // Masquer l'écran de chargement et afficher le menu
+                document.getElementById("loadingScreen").style.display = "none";
+                document.getElementById("mainContent").style.display = "block";
+
+            } catch (error) {
+                console.error("Erreur:", error);
+                document.getElementById("loadingScreen").style.display = "none";
+                document.getElementById("mainContent").style.display = "block";
+            }
+        }
+
+        async function loadConcours() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "concours"));
+                querySnapshot.forEach((doc) => {
+                    const concours = doc.data();
+                    if (concours.description) {
+                        document.getElementById("concoursText").textContent = concours.description;
+                        if (concours.image) {
+                            document.getElementById("concoursImage").src = concours.image;
+                        }
+                        document.getElementById("concoursBanner").style.display = "flex";
+                    }
+                });
+            } catch (error) {
+                console.error("Erreur concours:", error);
+            }
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>
