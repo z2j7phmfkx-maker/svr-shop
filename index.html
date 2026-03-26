@@ -12,13 +12,11 @@
         .container { max-width: 1000px; margin: 0 auto; }
         h1 { text-align: center; margin-bottom: 30px; color: #667eea; }
         .products { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .product { background: #333; padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
-        .product:hover { transform: translateY(-5px); background: #444; }
+        .product { background: #333; padding: 15px; border-radius: 8px; }
         .product img { width: 100%; height: 200px; object-fit: cover; border-radius: 4px; margin-bottom: 10px; }
         .product h3 { color: #667eea; margin-bottom: 5px; }
-        .product p { font-size: 12px; color: #aaa; margin: 5px 0; }
+        .product p { font-size: 12px; color: #aaa; }
         .loading { text-align: center; padding: 40px; color: #aaa; }
-        .error { color: #f5576c; text-align: center; padding: 20px; }
         .admin { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; z-index: 100; }
     </style>
 </head>
@@ -42,39 +40,23 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        async function loadProducts() {
-            try {
-                const snapshot = await db.collection('products').get();
-                const content = document.getElementById('content');
-                
-                if (snapshot.empty) {
-                    content.innerHTML = '<p class="error">Aucun produit</p>';
-                    return;
-                }
-
-                let html = '<div class="products">';
-                snapshot.forEach(doc => {
-                    const p = doc.data();
-                    const tariffs = p.tariffs || 'N/A';
-                    html += `
-                        <div class="product">
-                            <img src="${p.image}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/200'">
-                            <h3>${p.name}</h3>
-                            <p>${p.description || 'N/A'}</p>
-                            <p><strong>Tarifs:</strong> ${tariffs}</p>
-                            <p><strong>Stock:</strong> ${p.stock || 'N/A'}</p>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                content.innerHTML = html;
-            } catch (error) {
-                console.error('Erreur:', error);
-                document.getElementById('content').innerHTML = '<p class="error">Erreur: ' + error.message + '</p>';
-            }
-        }
-
-        loadProducts();
+        db.collection('products').get().then(snapshot => {
+            let html = '<div class="products">';
+            snapshot.forEach(doc => {
+                const p = doc.data();
+                html += `<div class="product">
+                    <img src="${p.image}" alt="${p.name}">
+                    <h3>${p.name}</h3>
+                    <p>${p.description || ''}</p>
+                    <p><b>Tarifs:</b> ${p.tariffs}</p>
+                    <p><b>Stock:</b> ${p.stock}</p>
+                </div>`;
+            });
+            html += '</div>';
+            document.getElementById('content').innerHTML = html || '<p class="loading">Aucun produit</p>';
+        }).catch(err => {
+            document.getElementById('content').innerHTML = '<p class="loading">Erreur: ' + err.message + '</p>';
+        });
     </script>
 </body>
 </html>
