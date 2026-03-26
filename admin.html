@@ -40,6 +40,11 @@
         .promo-list { background: #333; padding: 15px; border-radius: 8px; margin-top: 20px; }
         .promo-item { background: #444; padding: 10px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
         .promo-delete { background: #f5576c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .upload-btn { padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+        .gallery-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
+        .gallery-item { position: relative; }
+        .gallery-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid #444; }
+        .gallery-remove { position: absolute; top: 5px; right: 5px; background: #f5576c; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -75,7 +80,7 @@
                 <div class="form-group">
                     <label>Image</label>
                     <img id="concours-image-preview" class="image-preview" style="display:none;">
-                    <button class="submit-btn" onclick="uploadConcoursImage()">Upload Image</button>
+                    <button class="upload-btn" onclick="uploadConcoursImage()">📸 Upload Image</button>
                 </div>
                 <button class="submit-btn" onclick="saveConcours()" style="width: 100%;">Sauvegarder</button>
             </div>
@@ -85,15 +90,15 @@
                 <div id="products-message" class="message"></div>
                 <h2>Ajouter Produit</h2>
                 <div class="form-group">
-                    <label>Nom</label>
+                    <label>Nom *</label>
                     <input type="text" id="product-name">
                 </div>
                 <div class="form-group">
                     <label>Description</label>
-                    <textarea id="product-description"></textarea>
+                    <textarea id="product-description" placeholder="(optionnel)"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Tarifs (2g=20|30g=80)</label>
+                    <label>Tarifs * (ex: 2g=20|30g=80)</label>
                     <input type="text" id="product-tariffs">
                 </div>
                 <div class="form-group">
@@ -104,15 +109,21 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Image</label>
+                    <label>Image principale * (1:1)</label>
                     <img id="product-image-preview" class="image-preview" style="display:none;">
-                    <button class="submit-btn" onclick="uploadProductImage()">Upload Image</button>
+                    <button class="upload-btn" onclick="uploadProductImage()">📸 Prendre une photo</button>
                 </div>
                 <div class="form-group">
-                    <label>Vidéo (URL)</label>
-                    <input type="text" id="product-video">
+                    <label>Galerie (images optionnelles)</label>
+                    <div id="gallery-preview" class="gallery-list"></div>
+                    <button class="upload-btn" onclick="uploadGalleryImage()">📸 Ajouter images</button>
                 </div>
-                <button class="submit-btn" id="save-product-btn" onclick="saveProduct()" style="width: 100%;">Ajouter</button>
+                <div class="form-group">
+                    <label>Vidéo (URL optionnelle)</label>
+                    <input type="text" id="product-video" placeholder="(optionnel)">
+                    <button class="upload-btn" onclick="uploadProductVideo()">🎥 Uploader vidéo</button>
+                </div>
+                <button class="submit-btn" id="save-product-btn" onclick="saveProduct()" style="width: 100%; margin-top: 20px;">Ajouter</button>
                 <h2 style="margin-top: 40px;">Produits</h2>
                 <div id="products-list" class="products-list"></div>
             </div>
@@ -159,6 +170,7 @@
         let shopData = { concours: { description: "", image: "" }, products: [], promos: [] };
         let currentProductId = null;
         let productImageUrl = null;
+        let productGallery = [];
 
         async function loadShopData() {
             try {
@@ -215,7 +227,7 @@
         }
 
         function uploadConcoursImage() {
-            cloudinary.openUploadWidget({ cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, cropping: true, croppingAspectRatio: 16/9 }, (error, result) => {
+            cloudinary.openUploadWidget({ cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, cropping: true, croppingAspectRatio: 16/9, sources: ['local', 'camera'] }, (error, result) => {
                 if (result && result.event === 'success') {
                     const img = document.getElementById('concours-image-preview');
                     img.src = result.info.secure_url;
@@ -230,7 +242,7 @@
             const imageEl = document.getElementById('concours-image-preview');
             const image = imageEl.dataset.url || imageEl.src;
 
-            shopData.concours = { description, image };
+            shopData.concours = { description, image: image || "" };
 
             try {
                 await fetch('/api/save-data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(shopData) });
@@ -265,12 +277,45 @@
         }
 
         function uploadProductImage() {
-            cloudinary.openUploadWidget({ cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, cropping: true, croppingAspectRatio: 1 }, (error, result) => {
+            cloudinary.openUploadWidget({ cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, cropping: true, croppingAspectRatio: 1, sources: ['local', 'camera'] }, (error, result) => {
                 if (result && result.event === 'success') {
                     const img = document.getElementById('product-image-preview');
                     img.src = result.info.secure_url;
                     img.style.display = 'block';
                     productImageUrl = result.info.secure_url;
+                }
+            });
+        }
+
+        function uploadGalleryImage() {
+            cloudinary.openUploadWidget({ cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, cropping: true, croppingAspectRatio: 1, sources: ['local', 'camera'], maxFiles: 10 }, (error, result) => {
+                if (result && result.event === 'success' && productGallery.length < 10) {
+                    productGallery.push(result.info.secure_url);
+                    updateGalleryPreview();
+                }
+            });
+        }
+
+        function updateGalleryPreview() {
+            const preview = document.getElementById('gallery-preview');
+            preview.innerHTML = '';
+            productGallery.forEach((img, index) => {
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.innerHTML = `<img src="${img}" alt=""><button class="gallery-remove" onclick="removeGalleryImage(${index})">×</button>`;
+                preview.appendChild(item);
+            });
+        }
+
+        function removeGalleryImage(index) {
+            productGallery.splice(index, 1);
+            updateGalleryPreview();
+        }
+
+        function uploadProductVideo() {
+            cloudinary.openUploadWidget({ cloudName: CLOUDINARY_CLOUD, uploadPreset: CLOUDINARY_PRESET, resourceType: 'video', sources: ['local', 'camera'] }, (error, result) => {
+                if (result && result.event === 'success') {
+                    document.getElementById('product-video').value = result.info.secure_url;
                 }
             });
         }
@@ -284,11 +329,11 @@
             const video = document.getElementById('product-video').value;
 
             if (!name || !tariffs || !image) {
-                showMessage('products', 'Remplissez tous les champs', 'error');
+                showMessage('products', 'Remplissez: Nom, Tarifs et Image principale', 'error');
                 return;
             }
 
-            const productData = { id: currentProductId !== null ? shopData.products[currentProductId].id : Date.now(), name, description, tariffs, stock, image, images: [], video };
+            const productData = { id: currentProductId !== null ? shopData.products[currentProductId].id : Date.now(), name, description, tariffs, stock, image, images: productGallery, video };
 
             if (currentProductId !== null) {
                 shopData.products[currentProductId] = productData;
@@ -309,8 +354,9 @@
         function editProduct(index) {
             const product = shopData.products[index];
             currentProductId = index;
+            productGallery = product.images || [];
             document.getElementById('product-name').value = product.name;
-            document.getElementById('product-description').value = product.description;
+            document.getElementById('product-description').value = product.description || '';
             document.getElementById('product-tariffs').value = product.tariffs;
             document.getElementById('product-stock').value = product.stock;
             document.getElementById('product-video').value = product.video || '';
@@ -318,6 +364,7 @@
             img.src = product.image;
             img.style.display = 'block';
             productImageUrl = product.image;
+            updateGalleryPreview();
             document.getElementById('save-product-btn').textContent = 'Modifier';
         }
 
@@ -341,6 +388,8 @@
             document.getElementById('product-video').value = '';
             document.getElementById('product-image-preview').style.display = 'none';
             productImageUrl = null;
+            productGallery = [];
+            updateGalleryPreview();
             currentProductId = null;
             document.getElementById('save-product-btn').textContent = 'Ajouter';
         }
