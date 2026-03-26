@@ -1,0 +1,18 @@
+{
+  "concours": {
+    "description": "Bienvenue sur SVR Shop!",
+    "image": "https://via.placeholder.com/1600x900"
+  },
+  "products": [
+    {
+      "id": 1,
+      "name": "GARY PAYTON",
+      "description": "Produit premium",
+      "tariffs": "2g=20|30g=80|20g=150",
+      "stock": "En stock",
+      "image": "https://via.placeholder.com/250",
+      "images": [],
+      "video": ""
+    }
+  ]
+}
