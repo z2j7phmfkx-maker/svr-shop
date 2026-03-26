@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - SVR Shop</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+    <script src="https://widget.cloudinary.com/v2.0/cloudinary-core.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            background: transparent;
+            color: #aaa;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #ddd;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .preview-img {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .product-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-info h3 {
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+
+        .product-info p {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: #667eea;
+        }
+
+        .tariff-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .tariff-item input {
+            flex: 1;
+        }
+
+        .tariff-item button {
+            padding: 6px 10px;
+            background: #f5576c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .gallery-item {
+            position: relative;
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .gallery-item img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .gallery-item .remove-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
+            background: #f5576c;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #aaa;
+        }
+
+        .success-msg {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: #000;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .promo-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .promo-section {
+            background: rgba(240, 147, 251, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 3px solid #f093fb;
+        }
+
+        .promo-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛍️ Admin Panel - SVR Shop</h1>
+            <button class="logout-btn" onclick="logout()">Déconnexion</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('concours')">📣 Concours</button>
+            <button class="tab-btn" onclick="switchTab('products')">📦 Produits</button>
+        </div>
+
+        <!-- TAB: CONCOURS -->
+        <div id="concours" class="tab-content active">
+            <div class="form-section">
+                <h2>Gérer le Concours</h2>
+                <div class="form-group">
+                    <label>Description du Concours</label>
+                    <textarea id="concoursDescription" placeholder="Entrez la description..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Photo du Concours (16:9)</label>
+                    <button class="btn" onclick="openConcoursUpload()">📁 Sélectionner une photo</button>
+                    <div id="concours-preview"></div>
+                </div>
+                <button class="btn" onclick="saveConcours()">💾 Sauvegarder le Concours</button>
+                <div id="concours-message"></div>
+            </div>
+        </div>
+
+        <!-- TAB: PRODUCTS -->
+        <div id="products" class="tab-content">
+            <!-- ADD PRODUCT SECTION -->
+            <div class="form-section">
+                <h2>Ajouter un Produit</h2>
+                
+                <div class="form-group">
+                    <label>Nom du Produit</label>
+                    <input type="text" id="productName" placeholder="Ex: Fleur Cannabis">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="productDescription" placeholder="Détails du produit..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Tarifs (format: 1g=20€|5g=90€|10g=150€)</label>
+                    <textarea id="productTariffs" placeholder="Ex: 1g=20€|5g=90€|10g=150€"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Stock</label>
+                    <select id="productStock">
+                        <option value="En stock">✓ En stock</option>
+                        <option value="Rupture de stock">✕ Rupture de stock</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Photo Principale (1:1)</label>
+                    <button class="btn btn-secondary" onclick="openProductImageUpload('main')">📁 Sélectionner une photo</button>
+                    <input type="hidden" id="productImage">
+                    <div id="product-image-preview"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Galerie (jusqu'à 10 photos, 1:1)</label>
+                    <button class="btn btn-secondary" onclick="openProductGalleryUpload()">📁 Ajouter des photos</button>
+                    <div id="product-gallery-container"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Vidéo (URL MP4)</label>
+                    <button class="btn btn-secondary" onclick="openProductVideoUpload()">🎥 Sélectionner une vidéo</button>
+                    <input type="hidden" id="productVideo">
+                    <div id="product-video-preview"></div>
+                </div>
+
+                <button class="btn" onclick="addProduct()">➕ Ajouter le Produit</button>
+                <div id="add-product-message"></div>
+            </div>
+
+            <!-- PRODUCTS LIST -->
+            <div class="form-section">
+                <h2>Liste des Produits</h2>
+                <div id="products-list" class="product-list">
+                    <div class="loading">Chargement...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT PRODUCT MODAL -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeEditModal()">&times;</button>
+            <h2>Modifier le Produit</h2>
+            
+            <div class="form-group">
+                <label>Nom</label>
+                <input type="text" id="editProductName">
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="editProductDescription"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Tarifs</label>
+                <textarea id="editProductTariffs"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Stock</label>
+                <select id="editProductStock">
+                    <option value="En stock">✓ En stock</option>
+                    <option value="Rupture de stock">✕ Rupture de stock</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Photo Principale (1:1)</label>
+                <button class="btn btn-secondary" onclick="openProductImageUpload('edit')">📁 Changer la photo</button>
+                <input type="hidden" id="editProductImage">
+                <div id="edit-product-image-preview"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Galerie</label>
+                <button class="btn btn-secondary" onclick="openProductGalleryUpload('edit')">📁 Modifier galerie</button>
+                <div id="edit-product-gallery-container"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Vidéo</label>
+                <button class="btn btn-secondary" onclick="openProductVideoUpload('edit')">🎥 Changer la vidéo</button>
+                <input type="hidden" id="editProductVideo">
+                <div id="edit-product-video-preview"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Promotions Temporaires</label>
+                <div id="edit-product-promos"></div>
+                <button class="btn btn-secondary" onclick="openPromoModal()">🎁 Ajouter Promo</button>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" onclick="saveEditProduct()">💾 Sauvegarder</button>
+                <button class="btn btn-danger" onclick="deleteProduct()">🗑️ Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROMO MODAL -->
+    <div id="promoModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closePromoModal()">&times;</button>
+            <h2>Ajouter une Promotion</h2>
+            
+            <div class="form-group">
+                <label>Sélectionner une Quantité</label>
+                <select id="promoQuantity"></select>
+            </div>
+
+            <div class="form-group">
+                <label>Nouveau Prix (€)</label>
+                <input type="number" id="promoPrice" step="0.01" placeholder="Ex: 70">
+            </div>
+
+            <div class="form-group">
+                <label>Date d'Expiration (optionnel)</label>
+                <input type="datetime-local" id="promoExpiration">
+            </div>
+
+            <div class="form-group" id="promoPreview" style="display: none; background: rgba(132, 250, 176, 0.1); padding: 10px; border-radius: 8px;">
+                <p><strong>Aperçu:</strong></p>
+                <p>Prix normal: <span id="promoOriginalPrice"></span>€</p>
+                <p>Nouveau prix: <span id="promoNewPrice"></span>€</p>
+                <p>Économies: <span id="promoSavings"></span>€ (-<span id="promoPercent"></span>%)</p>
+            </div>
+
+            <button class="btn" onclick="savePromo()">💾 Ajouter la Promo</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCyrxd0NSQQfBjSy_Rhz9vF-moHxl1D2dk",
+            authDomain: "tovasvr.firebaseapp.com",
+            projectId: "tovasvr",
+            storageBucket: "tovasvr.firebasestorage.app",
+            messagingSenderId: "747176572181",
+            appId: "1:747176572181:web:0ce458b78d97f93f8e251c"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const CLOUDINARY_CLOUD_NAME = "diezs6eqa";
+        const CLOUDINARY_UPLOAD_PRESET = "unsigned_upload";
+
+        let currentEditProductId = null;
+        let currentProductGallery = [];
+
+        // CHECK AUTH
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                showLoginForm();
+            } else {
+                showAdminPanel();
+            }
+        });
+
+        function showLoginForm() {
+            document.body.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+                    <div style="background: rgba(255, 255, 255, 0.05); padding: 40px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); max-width: 400px; width: 90%;">
+                        <h1 style="margin-bottom: 30px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Admin Login</h1>
+                        <input type="email" id="loginEmail" placeholder="Email" style="width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; border-radius: 8px;">
+                        <input type="password" id="loginPassword" placeholder="Mot de passe" style="width: 100%; padding: 12px; margin-bottom: 15px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; border-radius: 8px;">
+                        <button onclick="login()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Se Connecter</button>
+                        <div id="login-message" style="margin-top: 15px; text-align: center; color: #aaa;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showAdminPanel() {
+            document.body.innerHTML = document.body.innerHTML.replace('display: none', '');
+            loadProducts();
+            loadConcours();
+        }
+
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    location.reload();
+                })
+                .catch((error) => {
+                    document.getElementById('login-message').textContent = "Erreur: " + error.message;
+                });
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                location.reload();
+            });
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // CLOUDINARY UPLOAD - CONCOURS
+        function openConcoursUpload() {
+            cloudinary.openUploadWidget(
+                {
+                    cloudName: CLOUDINARY_CLOUD_NAME,
+                    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+                    cropping: true,
+                    croppingAspectRatio: 16/9,
+                    maxFiles: 1
+                },
+                (error, result) => {
+                    if (result && result.event === 'success') {
+                        document.getElementById('concoursImage').value = result.info.secure_url;
+                        showPreview('concours-preview', result.info.secure_url);
+                    }
+                }
+            );
+        }
+
+        // CLOUDINARY UPLOAD - PRODUCT IMAGE
+        function openProductImageUpload(type) {
+            cloudinary.openUploadWidget(
+                {
+                    cloudName: CLOUDINARY_CLOUD_NAME,
+                    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+                    cropping: true,
+                    croppingAspectRatio: 1,
+                    maxFiles: 1
+                },
+                (error, result) => {
+                    if (result && result.event === 'success') {
+                        if (type === 'main') {
+                            document.getElementById('productImage').value = result.info.secure_url;
+                            showPreview('product-image-preview', result.info.secure_url);
+                        } else if (type === 'edit') {
+                            document.getElementById('editProductImage').value = result.info.secure_url;
+                            showPreview('edit-product-image-preview', result.info.secure_url);
+                        }
+                    }
+                }
+            );
+        }
+
+        // CLOUDINARY UPLOAD - GALLERY
+        function openProductGalleryUpload(type) {
+            const targetType = type === 'edit' ? 'edit' : 'main';
+            cloudinary.openUploadWidget(
+                {
+                    cloudName: CLOUDINARY_CLOUD_NAME,
+                    uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+                    cropping: true,
+                    croppingAspectRatio: 1,
+                    maxFiles: 1
+                },
+                (error, result) => {
+                    if (result && result.event === 'success') {
+                        if (targetType === 'main') {
+                            currentProductGallery.push(result.info.secure_url);
+                            displayGallery('product-gallery-container');
+                        } else {
+                            currentProductGallery.push(result.info.secure_url);
+                            displayGallery('edit-product-gallery-container');
+                        }
+                    }
+                }
+            );
+        }
+
+        // CLOUDINARY UPLOAD - VIDEO
+        function openProductVideoUpload(type) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'video/mp4,video/webm,video/ogg';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+                    fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (type === 'main') {
+                            document.getElementById('productVideo').value = data.secure_url;
+                            showVideoPreview('product-video-preview', data.secure_url);
+                        } else {
+                            document.getElementById('editProductVideo').value = data.secure_url;
+                            showVideoPreview('edit-product-video-preview', data.secure_url);
+                        }
+                    });
+                }
+            };
+            input.click();
+        }
+
+        function showPreview(containerId, url) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<img src="${url}" class="preview-img" alt="preview">`;
+        }
+
+        function showVideoPreview(containerId, url) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<video width="200" height="112" style="border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2);" controls><source src="${url}" type="video/mp4"></video>`;
+        }
+
+        function displayGallery(containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            currentProductGallery.forEach((img, idx) => {
+                const div = document.createElement('div');
+                div.className = 'gallery-item';
+                div.innerHTML = `
+                    <img src="${img}" alt="gallery-${idx}">
+                    <button class="remove-btn" onclick="removeGalleryItem(${idx})">×</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function removeGalleryItem(idx) {
+            currentProductGallery.splice(idx, 1);
+            displayGallery(currentProductGallery.length === 0 ? 'product-gallery-container' : 'edit-product-gallery-container');
+        }
+
+        // ADD PRODUCT
+        async function addProduct() {
+            const name = document.getElementById('productName').value;
+            const description = document.getElementById('productDescription').value;
+            const tariffs = document.getElementById('productTariffs').value;
+            const stock = document.getElementById('productStock').value;
+            const image = document.getElementById('productImage').value;
+            const video = document.getElementById('productVideo').value;
+
+            if (!name || !tariffs || !image) {
+                alert('Remplissez: Nom, Tarifs, et Photo');
+                return;
+            }
+
+            try {
+                await db.collection('products').add({
+                    name,
+                    description,
+                    tariffs,
+                    stock,
+                    image,
+                    images: currentProductGallery,
+                    video,
+                    promos: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showMessage('add-product-message', '✅ Produit ajouté!', true);
+                document.getElementById('productName').value = '';
+                document.getElementById('productDescription').value = '';
+                document.getElementById('productTariffs').value = '';
+                document.getElementById('productStock').value = 'En stock';
+                document.getElementById('productImage').value = '';
+                document.getElementById('productVideo').value = '';
+                document.getElementById('product-image-preview').innerHTML = '';
+                document.getElementById('product-video-preview').innerHTML = '';
+                currentProductGallery = [];
+                document.getElementById('product-gallery-container').innerHTML = '';
+
+                loadProducts();
+            } catch (error) {
+                showMessage('add-product-message', '❌ Erreur: ' + error.message, false);
+            }
+        }
+
+        // LOAD PRODUCTS
+        async function loadProducts() {
+            const productsList = document.getElementById('products-list');
+            const products = await db.collection('products').get();
+            
+            productsList.innerHTML = '';
+
+            if (products.empty) {
+                productsList.innerHTML = '<p style="text-align: center; color: #aaa;">Aucun produit</p>';
+                return;
+            }
+
+            products.forEach((doc) => {
+                const product = doc.data();
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-info">
+                        <h3>${product.name}</h3>
+                        <p>Tarifs: ${product.tariffs}</p>
+                        <p>Stock: ${product.stock}</p>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn btn-small" onclick="editProduct('${doc.id}')">✏️ Modifier</button>
+                    </div>
+                `;
+                productsList.appendChild(card);
+            });
+        }
+
+        // EDIT PRODUCT
+        async function editProduct(id) {
+            currentEditProductId = id;
+            const doc = await db.collection('products').doc(id).get();
+            const product = doc.data();
+
+            document.getElementById('editProductName').value = product.name;
+            document.getElementById('editProductDescription').value = product.description || '';
+            document.getElementById('editProductTariffs').value = product.tariffs;
+            document.getElementById('editProductStock').value = product.stock;
+            document.getElementById('editProductImage').value = product.image;
+            document.getElementById('editProductVideo').value = product.video || '';
+
+            currentProductGallery = product.images || [];
+
+            if (product.image) showPreview('edit-product-image-preview', product.image);
+            if (product.video) showVideoPreview('edit-product-video-preview', product.video);
+            displayGallery('edit-product-gallery-container');
+
+            // LOAD PROMOS
+            const promosContainer = document.getElementById('edit-product-promos');
+            promosContainer.innerHTML = '';
+            if (product.promos && product.promos.length > 0) {
+                product.promos.forEach((promo, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'promo-item';
+                    const expText = promo.expiration ? new Date(promo.expiration).toLocaleString('fr-FR') : 'Sans expiration';
+                    const percent = Math.round(((promo.originalPrice - promo.price) / promo.originalPrice) * 100);
+                    div.innerHTML = `
+                        <span>${promo.quantity}: ${promo.price}€ (était ${promo.originalPrice}€, -${percent}%)</span>
+                        <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="removePromo(${idx})">Supprimer</button>
+                    `;
+                    promosContainer.appendChild(div);
+                });
+            }
+
+            // POPULATE PROMO QUANTITY SELECT
+            const promoQuantitySelect = document.getElementById('promoQuantity');
+            promoQuantitySelect.innerHTML = '';
+            product.tariffs.split('|').forEach((t) => {
+                const [qty] = t.split('=');
+                const option = document.createElement('option');
+                option.value = qty;
+                option.textContent = qty;
+                promoQuantitySelect.appendChild(option);
+            });
+
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        // SAVE EDIT PRODUCT
+        async function saveEditProduct() {
+            const name = document.getElementById('editProductName').value;
+            const description = document.getElementById('editProductDescription').value;
+            const tariffs = document.getElementById('editProductTariffs').value;
+            const stock = document.getElementById('editProductStock').value;
+            const image = document.getElementById('editProductImage').value;
+            const video = document.getElementById('editProductVideo').value;
+
+            if (!name || !tariffs || !image) {
+                alert('Remplissez: Nom, Tarifs, et Photo');
+                return;
+            }
+
+            try {
+                await db.collection('products').doc(currentEditProductId).update({
+                    name,
+                    description,
+                    tariffs,
+                    stock,
+                    image,
+                    images: currentProductGallery,
+                    video
+                });
+
+                closeEditModal();
+                loadProducts();
+            } catch (error) {
+                alert('Erreur: ' + error.message);
+            }
+        }
+
+        // DELETE PRODUCT
+        async function deleteProduct() {
+            if (confirm('Supprimer ce produit?')) {
+                try {
+                    await db.collection('products').doc(currentEditProductId).delete();
+                    closeEditModal();
+                    loadProducts();
+                } catch (error) {
+                    alert('Erreur: ' + error.message);
+                }
+            }
+        }
+
+        // PROMO MANAGEMENT
+        function openPromoModal() {
+            document.getElementById('promoModal').classList.add('show');
+        }
+
+        function closePromoModal() {
+            document.getElementById('promoModal').classList.remove('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        document.getElementById('promoPrice').addEventListener('input', () => {
+            const quantity = document.getElementById('promoQuantity').value;
+            const newPrice = parseFloat(document.getElementById('promoPrice').value);
+            const product = db.collection('products').doc(currentEditProductId);
+
+            product.get().then((doc) => {
+                const tariffs = doc.data().tariffs.split('|');
+                const tariff = tariffs.find(t => t.startsWith(quantity));
+                if (tariff) {
+                    const originalPrice = parseFloat(tariff.split('=')[1]);
+                    const savings = originalPrice - newPrice;
+                    const percent = Math.round((savings / originalPrice) * 100);
+
+                    document.getElementById('promoPreview').style.display = 'block';
+                    document.getElementById('promoOriginalPrice').textContent = originalPrice;
+                    document.getElementById('promoNewPrice').textContent = newPrice;
+                    document.getElementById('promoSavings').textContent = savings.toFixed(2);
+                    document.getElementById('promoPercent').textContent = percent;
+                }
+            });
+        });
+
+        async function savePromo() {
+            const quantity = document.getElementById('promoQuantity').value;
+            const price = parseFloat(document.getElementById('promoPrice').value);
+            const expiration = document.getElementById('promoExpiration').value;
+
+            const doc = await db.collection('products').doc(currentEditProductId).get();
+            const product = doc.data();
+            const tariffs = product.tariffs.split('|');
+            const tariff = tariffs.find(t => t.startsWith(quantity));
+            const originalPrice = parseFloat(tariff.split('=')[1]);
+
+            const newPromo = {
+                quantity,
+                price,
+                originalPrice,
+                expiration: expiration ? new Date(expiration).toISOString() : null
+            };
+
+            const promos = product.promos || [];
+            promos.push(newPromo);
+
+            await db.collection('products').doc(currentEditProductId).update({
+                promos
+            });
+
+            closePromoModal();
+            editProduct(currentEditProductId);
+        }
+
+        function removePromo(idx) {
+            db.collection('products').doc(currentEditProductId).get().then((doc) => {
+                const product = doc.data();
+                const promos = product.promos || [];
+                promos.splice(idx, 1);
+                db.collection('products').doc(currentEditProductId).update({ promos });
+                editProduct(currentEditProductId);
+            });
+        }
+
+        // CONCOURS
+        async function loadConcours() {
+            const doc = await db.collection('concours').doc('main').get();
+            if (doc.exists) {
+                document.getElementById('concoursDescription').value = doc.data().description || '';
+                if (doc.data().image) {
+                    showPreview('concours-preview', doc.data().image);
+                }
+            }
+        }
+
+        async function saveConcours() {
+            const description = document.getElementById('concoursDescription').value;
+            const image = document.getElementById('concoursImage').value;
+
+            if (!description || !image) {
+                showMessage('concours-message', '❌ Remplissez tous les champs', false);
+                return;
+            }
+
+            try {
+                await db.collection('concours').doc('main').set({
+                    description,
+                    image
+                });
+                showMessage('concours-message', '✅ Concours sauvegardé!', true);
+            } catch (error) {
+                showMessage('concours-message', '❌ Erreur: ' + error.message, false);
+            }
+        }
+
+        function showMessage(elementId, text, success) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="${success ? 'success-msg' : ''}" style="color: ${success ? '#000' : '#f5576c'};">${text}</div>`;
+            setTimeout(() => {
+                el.innerHTML = '';
+            }, 3000);
+        }
+
+        // HIDDEN INPUT FOR CONCOURS IMAGE
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.id = 'concoursImage';
+            document.body.appendChild(input);
+        });
+    </script>
+</body>
+</html>
