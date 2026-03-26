@@ -17,7 +17,7 @@
         .admin-panel { display: none; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #444; }
         .logout-btn { padding: 10px 20px; background: #f5576c; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 30px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
         .tab-btn { padding: 12px 24px; background: #444; border: none; color: #aaa; cursor: pointer; border-radius: 8px; }
         .tab-btn.active { background: #667eea; color: white; }
         .tab-content { display: none; }
@@ -37,6 +37,9 @@
         .message.success { background: #84fab0; color: #000; display: block; }
         .message.error { background: #f5576c; color: white; display: block; }
         .image-preview { width: 100%; height: 200px; background: #333; border: 1px solid #444; border-radius: 8px; object-fit: cover; margin-bottom: 10px; }
+        .promo-list { background: #333; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .promo-item { background: #444; padding: 10px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .promo-delete { background: #f5576c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -59,8 +62,10 @@
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('concours')">Concours</button>
                 <button class="tab-btn" onclick="switchTab('products')">Produits</button>
+                <button class="tab-btn" onclick="switchTab('promos')">Promos</button>
             </div>
 
+            <!-- CONCOURS -->
             <div id="concours-tab" class="tab-content active">
                 <div id="concours-message" class="message"></div>
                 <div class="form-group">
@@ -75,6 +80,7 @@
                 <button class="submit-btn" onclick="saveConcours()" style="width: 100%;">Sauvegarder</button>
             </div>
 
+            <!-- PRODUITS -->
             <div id="products-tab" class="tab-content">
                 <div id="products-message" class="message"></div>
                 <h2>Ajouter Produit</h2>
@@ -107,9 +113,39 @@
                     <input type="text" id="product-video">
                 </div>
                 <button class="submit-btn" id="save-product-btn" onclick="saveProduct()" style="width: 100%;">Ajouter</button>
-
                 <h2 style="margin-top: 40px;">Produits</h2>
                 <div id="products-list" class="products-list"></div>
+            </div>
+
+            <!-- PROMOS -->
+            <div id="promos-tab" class="tab-content">
+                <div id="promos-message" class="message"></div>
+                <h2>Ajouter Promo</h2>
+                <div class="form-group">
+                    <label>Sélectionner Produit</label>
+                    <select id="promo-product">
+                        <option value="">-- Choisir un produit --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quantité (ex: 30g)</label>
+                    <input type="text" id="promo-quantity" placeholder="30g">
+                </div>
+                <div class="form-group">
+                    <label>Nouveau Prix €</label>
+                    <input type="number" id="promo-price" placeholder="64">
+                </div>
+                <div class="form-group">
+                    <label>Pourcentage Réduction %</label>
+                    <input type="number" id="promo-percent" placeholder="20">
+                </div>
+                <div class="form-group">
+                    <label>Date Expiration (optionnel)</label>
+                    <input type="date" id="promo-expiration">
+                </div>
+                <button class="submit-btn" onclick="savePromo()" style="width: 100%;">Ajouter Promo</button>
+                <h2 style="margin-top: 40px;">Promos Actives</h2>
+                <div id="promos-list" class="promo-list"></div>
             </div>
         </div>
     </div>
@@ -120,7 +156,7 @@
         const CLOUDINARY_PRESET = 'svr_shop';
 
         let isLoggedIn = false;
-        let shopData = { concours: { description: "", image: "" }, products: [] };
+        let shopData = { concours: { description: "", image: "" }, products: [], promos: [] };
         let currentProductId = null;
         let productImageUrl = null;
 
@@ -128,6 +164,7 @@
             try {
                 const response = await fetch('/data.json');
                 shopData = await response.json();
+                if (!shopData.promos) shopData.promos = [];
             } catch (error) {
                 console.log('Error:', error);
             }
@@ -141,6 +178,7 @@
                 loadShopData().then(() => {
                     loadConcours();
                     loadProducts();
+                    loadPromos();
                 });
             } else {
                 document.getElementById('login-error').textContent = 'Mot de passe incorrect';
@@ -165,6 +203,7 @@
             event.target.classList.add('active');
         }
 
+        // CONCOURS
         function loadConcours() {
             document.getElementById('concours-description').value = shopData.concours.description || '';
             if (shopData.concours.image) {
@@ -201,6 +240,7 @@
             }
         }
 
+        // PRODUITS
         function loadProducts() {
             const grid = document.getElementById('products-list');
             grid.innerHTML = '';
@@ -211,6 +251,16 @@
                 card.className = 'product-item';
                 card.innerHTML = `<img src="${product.image}" alt="${product.name}"><h3>${product.name}</h3><div class="product-actions"><button class="edit-btn" onclick="editProduct(${index})">Éditer</button><button class="delete-btn" onclick="deleteProduct(${index})">Supprimer</button></div>`;
                 grid.appendChild(card);
+            });
+
+            // Remplir le select des promos
+            const select = document.getElementById('promo-product');
+            select.innerHTML = '<option value="">-- Choisir un produit --</option>';
+            shopData.products.forEach((product, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = product.name;
+                select.appendChild(option);
             });
         }
 
@@ -293,6 +343,81 @@
             productImageUrl = null;
             currentProductId = null;
             document.getElementById('save-product-btn').textContent = 'Ajouter';
+        }
+
+        // PROMOS
+        function loadPromos() {
+            const list = document.getElementById('promos-list');
+            list.innerHTML = '';
+
+            if (!shopData.promos || shopData.promos.length === 0) {
+                list.innerHTML = '<p style="color: #aaa;">Aucune promo</p>';
+                return;
+            }
+
+            shopData.promos.forEach((promo, index) => {
+                const product = shopData.products[promo.productId];
+                const item = document.createElement('div');
+                item.className = 'promo-item';
+                item.innerHTML = `
+                    <div>
+                        <strong>${product ? product.name : 'Produit'}</strong> - ${promo.quantity} = ${promo.price}€ (-${promo.percent}%)
+                        ${promo.expiration ? '<br><small>Expire: ' + promo.expiration + '</small>' : ''}
+                    </div>
+                    <button class="promo-delete" onclick="deletePromo(${index})">Supprimer</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        async function savePromo() {
+            const productId = document.getElementById('promo-product').value;
+            const quantity = document.getElementById('promo-quantity').value;
+            const price = document.getElementById('promo-price').value;
+            const percent = document.getElementById('promo-percent').value;
+            const expiration = document.getElementById('promo-expiration').value;
+
+            if (!productId || !quantity || !price || !percent) {
+                showMessage('promos', 'Remplissez tous les champs', 'error');
+                return;
+            }
+
+            const promo = {
+                id: Date.now(),
+                productId: parseInt(productId),
+                quantity,
+                price: parseFloat(price),
+                percent: parseInt(percent),
+                expiration: expiration || null
+            };
+
+            shopData.promos.push(promo);
+
+            try {
+                await fetch('/api/save-data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(shopData) });
+                showMessage('promos', 'Promo ajoutée!', 'success');
+                document.getElementById('promo-product').value = '';
+                document.getElementById('promo-quantity').value = '';
+                document.getElementById('promo-price').value = '';
+                document.getElementById('promo-percent').value = '';
+                document.getElementById('promo-expiration').value = '';
+                loadPromos();
+            } catch (error) {
+                showMessage('promos', 'Erreur', 'error');
+            }
+        }
+
+        async function deletePromo(index) {
+            if (confirm('Supprimer cette promo?')) {
+                shopData.promos.splice(index, 1);
+                try {
+                    await fetch('/api/save-data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(shopData) });
+                    showMessage('promos', 'Supprimé!', 'success');
+                    loadPromos();
+                } catch (error) {
+                    showMessage('promos', 'Erreur', 'error');
+                }
+            }
         }
 
         function showMessage(type, message, status) {
