@@ -42,6 +42,32 @@
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774653338/aad7hd7eh1cl8co1uqlv.mp4"
       ],
       "createdAt": "2026-03-27T23:15:44.376Z"
+    },
+    {
+      "id": 1774653397175,
+      "name": "DOUBLE STATIC PISTASH",
+      "description": "",
+      "tariffs": "1,2g=20",
+      "stock": "En stock",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774653382/zzsmsgelvlui8hkxtlx7.jpg",
+      "images": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1774653391/hd3dqqiuubxvmhk660mi.mov"
+      ],
+      "createdAt": "2026-03-27T23:16:37.175Z"
+    },
+    {
+      "id": 1774653481785,
+      "name": "DOUBLE STATIC BIRTHDAY",
+      "description": "",
+      "tariffs": "1,2g=20",
+      "stock": "En stock",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774653465/slgaxeruxbpt78szsudw.jpg",
+      "images": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1774653474/ali1uvwftvi1vqlslivs.mov"
+      ],
+      "createdAt": "2026-03-27T23:18:01.785Z"
     }
   ]
 }
