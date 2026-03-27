@@ -476,6 +476,7 @@
     <script>
         const ADMIN_PASSWORD = "Tova$Shop2024!Secure";
         const CLOUDINARY_CLOUD = "diezs6eqa";
+        const UPLOAD_PRESET = "unsigned_upload";
         
         let shopData = { concours: {}, products: [] };
         let galleryImages = [];
@@ -525,7 +526,7 @@
             const widget = cloudinary.createUploadWidget(
                 {
                     cloudName: CLOUDINARY_CLOUD,
-                    uploadPreset: "svr_shop",
+                    uploadPreset: UPLOAD_PRESET,
                     cropping: true,
                     croppingAspectRatio: 16/9,
                     showCompletedButton: true,
@@ -547,7 +548,7 @@
             const widget = cloudinary.createUploadWidget(
                 {
                     cloudName: CLOUDINARY_CLOUD,
-                    uploadPreset: "svr_shop",
+                    uploadPreset: UPLOAD_PRESET,
                     cropping: true,
                     croppingAspectRatio: 1,
                     showCompletedButton: true,
@@ -573,7 +574,7 @@
             const widget = cloudinary.createUploadWidget(
                 {
                     cloudName: CLOUDINARY_CLOUD,
-                    uploadPreset: "svr_shop",
+                    uploadPreset: UPLOAD_PRESET,
                     cropping: true,
                     croppingAspectRatio: 1,
                     showCompletedButton: true,
