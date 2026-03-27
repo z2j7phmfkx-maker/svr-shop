@@ -57,4 +57,39 @@ async function commitToGitHub(shopData) {
   const commitMessage = `🛍️ Update data.json - ${timestamp}`;
   
   try {
-    // Get current file
+    // Get current file SHA
+    const getShaResponse = await axios.get(
+      `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json?ref=${GITHUB_BRANCH}`,
+      {
+        headers: { Authorization: `token ${GITHUB_TOKEN}` }
+      }
+    );
+    
+    const sha = getShaResponse.data.sha;
+    
+    // Commit the file
+    await axios.put(
+      `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json`,
+      {
+        message: commitMessage,
+        content: content,
+        sha: sha,
+        branch: GITHUB_BRANCH
+      },
+      {
+        headers: { Authorization: `token ${GITHUB_TOKEN}` }
+      }
+    );
+    
+    console.log('✅ Commit GitHub réussi:', commitMessage);
+  } catch (error) {
+    console.error('❌ Erreur GitHub commit:', error.response?.data || error.message);
+  }
+}
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 Client: https://svr-shop.onrender.com`);
+  console.log(`⚙️  Admin: https://svr-shop.onrender.com/admin`);
+});
