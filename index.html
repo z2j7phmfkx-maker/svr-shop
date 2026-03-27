@@ -5,142 +5,704 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SVR Shop</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial; background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%); color: #fff; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { font-size: 32px; color: #667eea; margin-bottom: 10px; }
-        .concours { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; margin-bottom: 30px; }
-        .concours img { width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px; margin-bottom: 15px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.3s; }
-        .card:hover { transform: translateY(-5px); border-color: #667eea; }
-        .card img { width: 100%; height: 250px; object-fit: cover; }
-        .card-info { padding: 15px; }
-        .card-name { color: #667eea; font-weight: bold; margin-bottom: 5px; }
-        .card-price { color: #84fab0; font-weight: bold; margin-bottom: 5px; }
-        .card-stock { font-size: 12px; color: #aaa; }
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; }
-        .modal.show { display: flex; align-items: flex-start; justify-content: center; padding-top: 20px; }
-        .modal-content { background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; width: 90%; max-width: 600px; padding: 30px; position: relative; margin-bottom: 20px; }
-        .close { position: absolute; right: 20px; top: 20px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
-        .modal-title { font-size: 24px; color: #667eea; margin-bottom: 15px; }
-        .tariffs { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 3px solid #667eea; }
-        .tariff-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .tariff-qty { color: #84fab0; font-weight: bold; }
-        .tariff-price { color: #f5576c; font-weight: bold; }
-        .tariff-promo { color: #ffd700; font-weight: bold; }
-        .original-price { text-decoration: line-through; color: #aaa; }
-        .admin-link { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* HEADER */
+        header {
+            background: rgba(0, 212, 255, 0.1);
+            border-bottom: 2px solid #00d4ff;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            color: #00d4ff;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .admin-btn {
+            background: #00d4ff;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .admin-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        /* LOADING */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0e27 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-screen.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 212, 255, 0.3);
+            border-top: 4px solid #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* CONCOURS BANNER */
+        .concours-banner {
+            background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            display: none;
+            box-shadow: 0 10px 30px rgba(255, 140, 0, 0.3);
+        }
+
+        .concours-banner.active {
+            display: block;
+        }
+
+        .concours-inner {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .concours-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        .concours-text {
+            flex: 1;
+        }
+
+        .concours-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .concours-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .concours-desc {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        /* CATALOGUE TITLE */
+        .catalogue-title {
+            font-size: 32px;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .catalogue-title span {
+            font-size: 40px;
+        }
+
+        /* PRODUCTS GRID */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .product-card {
+            background: rgba(0, 212, 255, 0.08);
+            border: 2px solid #00d4ff;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0, 212, 255, 0.3);
+            border-color: #00ffff;
+        }
+
+        .product-image-container {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+
+        .product-info {
+            padding: 15px;
+        }
+
+        .product-name {
+            color: #00d4ff;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .product-price {
+            color: #00ff64;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .product-stock {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .product-stock.en-stock {
+            background: rgba(0, 255, 100, 0.2);
+            color: #00ff64;
+        }
+
+        .product-stock.rupture {
+            background: rgba(255, 100, 100, 0.2);
+            color: #ff6464;
+        }
+
+        .product-stock.bientot {
+            background: rgba(255, 200, 100, 0.2);
+            color: #ffc864;
+        }
+
+        .product-icons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .product-icon {
+            width: 30px;
+            height: 30px;
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid #00d4ff;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .product-icon:hover {
+            background: rgba(0, 212, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 500;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            margin-top: 50px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ff4444;
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: #ff6666;
+            transform: rotate(90deg);
+        }
+
+        .modal-title {
+            color: #00d4ff;
+            font-size: 28px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-description {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 20px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .modal-tariffs {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid #00d4ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .tariff-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+            align-items: center;
+        }
+
+        .tariff-item:last-child {
+            border-bottom: none;
+        }
+
+        .tariff-label {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .tariff-price {
+            color: #00ff64;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        /* GALLERY */
+        .gallery-section {
+            margin-top: 25px;
+        }
+
+        .gallery-title {
+            color: #00d4ff;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .gallery-main {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #00d4ff;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .gallery-main:hover {
+            border-color: #00ffff;
+        }
+
+        .gallery-thumbnails {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 8px;
+        }
+
+        .gallery-thumb {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border: 2px solid rgba(0, 212, 255, 0.5);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .gallery-thumb:hover,
+        .gallery-thumb.active {
+            border-color: #00ffff;
+            transform: scale(1.05);
+        }
+
+        /* VIDEO */
+        .video-section {
+            margin-top: 20px;
+        }
+
+        .video-player {
+            width: 100%;
+            height: 250px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            border: 2px solid #00d4ff;
+        }
+
+        /* ADMIN BUTTON FIXED */
+        .admin-fixed {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: #00d4ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+            transition: all 0.3s;
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .admin-fixed:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 15px;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+
+            .admin-fixed {
+                width: 50px;
+                height: 50px;
+                bottom: 20px;
+                right: 20px;
+                font-size: 20px;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="spinner"></div>
+    </div>
+
+    <header>
+        <div class="header-content">
+            <h1>SVR</h1>
+            <span style="color: #00d4ff; font-size: 12px;">mini-application</span>
+        </div>
+    </header>
+
     <div class="container">
-        <div class="header">
-            <h1>🛍️ SVR Shop</h1>
+        <!-- CONCOURS BANNER -->
+        <div class="concours-banner" id="concoursBanner">
+            <div class="concours-inner">
+                <div class="concours-icon">🎁</div>
+                <div class="concours-text">
+                    <div class="concours-title" id="concoursTitle">Concours</div>
+                    <div class="concours-desc" id="concoursDesc">Gagnez des cadeaux!</div>
+                </div>
+                <img id="concoursImageDisplay" class="concours-image" alt="Concours" />
+            </div>
         </div>
-        <div id="concours" class="concours" style="display:none;">
-            <img id="concours-img" alt="">
-            <p id="concours-desc"></p>
+
+        <!-- CATALOGUE TITLE -->
+        <div class="catalogue-title">
+            <span>📦</span>
+            Catalogue
         </div>
-        <div id="grid" class="grid"></div>
+
+        <!-- PRODUCTS GRID -->
+        <div class="products-grid" id="productsGrid"></div>
     </div>
 
-    <div id="modal" class="modal">
+    <!-- PRODUCT MODAL -->
+    <div class="modal" id="productModal">
         <div class="modal-content">
-            <button class="close" onclick="closeModal()">&times;</button>
-            <h2 class="modal-title" id="modal-name"></h2>
-            <p id="modal-desc" style="margin-bottom: 20px;"></p>
-            <div class="tariffs" id="tariffs"></div>
-            <div id="stock" style="margin-bottom: 20px;"></div>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h2 class="modal-title" id="modalTitle"></h2>
+            <p class="modal-description" id="modalDesc"></p>
+
+            <!-- TARIFFS -->
+            <div class="modal-tariffs" id="modalTariffs"></div>
+
+            <!-- GALLERY -->
+            <div class="gallery-section" id="gallerySection" style="display: none;">
+                <div class="gallery-title">Galerie</div>
+                <img id="galleryMain" class="gallery-main" alt="Gallery" />
+                <div class="gallery-thumbnails" id="galleryThumbnails"></div>
+            </div>
+
+            <!-- VIDEO -->
+            <div class="video-section" id="videoSection" style="display: none;">
+                <div class="gallery-title">Vidéo</div>
+                <video id="videoPlayer" class="video-player" controls></video>
+            </div>
         </div>
     </div>
 
-    <a href="/admin" class="admin-link">⚙️ Admin</a>
+    <!-- ADMIN BUTTON -->
+    <a href="/admin" class="admin-fixed">⚙️</a>
 
     <script>
-        let shopData = { concours: {}, products: [], promos: [] };
+        const CLOUDINARY_CLOUD = "diezs6eqa";
+        let shopData = { concours: {}, products: [] };
+        let currentGalleryIndex = 0;
 
+        // INIT
+        window.addEventListener('load', async () => {
+            await loadData();
+            document.getElementById('loadingScreen').classList.add('hidden');
+        });
+
+        // LOAD DATA
         async function loadData() {
             try {
-                const response = await fetch('/data.json');
-                shopData = await response.json();
-            } catch (error) {
-                console.log('Error:', error);
+                const res = await fetch('/data.json');
+                shopData = await res.json();
+                renderConcours();
+                renderProducts();
+                console.log('✅ Data loaded');
+            } catch (e) {
+                console.error('❌ Load error:', e);
+                document.getElementById('loadingScreen').classList.add('hidden');
             }
+        }
 
-            // Concours
-            if (shopData.concours && shopData.concours.image) {
-                document.getElementById('concours').style.display = 'block';
-                document.getElementById('concours-img').src = shopData.concours.image;
-                document.getElementById('concours-desc').textContent = shopData.concours.description;
-            }
+        // RENDER CONCOURS
+        function renderConcours() {
+            if (!shopData.concours || !shopData.concours.image) return;
 
-            // Products
-            const grid = document.getElementById('grid');
+            const banner = document.getElementById('concoursBanner');
+            const title = document.getElementById('concoursTitle');
+            const desc = document.getElementById('concoursDesc');
+            const img = document.getElementById('concoursImageDisplay');
+
+            desc.textContent = shopData.concours.description || 'Gagnez des cadeaux!';
+            img.src = shopData.concours.image;
+            banner.classList.add('active');
+        }
+
+        // RENDER PRODUCTS
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
             grid.innerHTML = '';
 
-            if (!shopData.products || shopData.products.length === 0) {
-                grid.innerHTML = '<p style="color: #aaa;">Aucun produit</p>';
-                return;
-            }
-
-            shopData.products.forEach((product, index) => {
-                const tariffs = product.tariffs.split('|');
-                let minPrice = parseFloat(tariffs[0].split('=')[1]);
-                tariffs.forEach(t => {
-                    const price = parseFloat(t.split('=')[1]);
-                    if (price < minPrice) minPrice = price;
-                });
-
+            shopData.products.forEach(product => {
                 const card = document.createElement('div');
-                card.className = 'card';
+                card.className = 'product-card';
+                card.onclick = () => openModal(product);
+
+                const minPrice = getMinPrice(product.tariffs);
+                const stockClass = product.stock.toLowerCase().replace('é', 'e');
+
                 card.innerHTML = `
-                    <img src="${product.image}" alt="${product.name}">
-                    <div class="card-info">
-                        <div class="card-name">${product.name}</div>
-                        <div class="card-price">À partir de ${minPrice}€</div>
-                        <div class="card-stock">${product.stock}</div>
+                    <div class="product-image-container">
+                        <img src="${product.image}" alt="${product.name}" class="product-image" />
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">À partir de ${minPrice}€</div>
+                        <div class="product-stock ${stockClass}">${product.stock}</div>
+                        <div class="product-icons">
+                            ${product.images && product.images.length > 0 ? '<div class="product-icon">📸</div>' : ''}
+                            ${product.video ? '<div class="product-icon">🎥</div>' : ''}
+                        </div>
                     </div>
                 `;
-                card.onclick = () => openModal(product, index);
+
                 grid.appendChild(card);
             });
         }
 
-        function openModal(product, productIndex) {
-            document.getElementById('modal-name').textContent = product.name;
-            document.getElementById('modal-desc').textContent = product.description;
+        // GET MIN PRICE
+        function getMinPrice(tariffs) {
+            if (!tariffs) return '?';
+            const parts = tariffs.split('|');
+            let min = Infinity;
+            parts.forEach(part => {
+                const price = parseInt(part.split('=')[1]);
+                if (!isNaN(price)) min = Math.min(min, price);
+            });
+            return min === Infinity ? '?' : min;
+        }
 
-            const tariffsList = document.getElementById('tariffs');
-            tariffsList.innerHTML = '';
+        // OPEN MODAL
+        function openModal(product) {
+            document.getElementById('modalTitle').textContent = product.name;
+            document.getElementById('modalDesc').textContent = product.description || '';
 
+            // TARIFFS
+            const tariffDiv = document.getElementById('modalTariffs');
+            tariffDiv.innerHTML = '';
             const tariffs = product.tariffs.split('|');
             tariffs.forEach(tariff => {
-                const [qty, price] = tariff.split('=');
-                const promo = shopData.promos && shopData.promos.find(p => p.productId === productIndex && p.quantity === qty);
-
-                let html = `<div class="tariff-item"><span class="tariff-qty">${qty}</span>`;
-
-                if (promo) {
-                    html += ` <span><span class="original-price">${price}€</span> <span class="tariff-promo">${promo.price}€ (-${promo.percent}%)</span></span>`;
-                } else {
-                    html += ` <span class="tariff-price">${price}€</span>`;
-                }
-
-                html += `</div>`;
-                tariffsList.innerHTML += html;
+                const [label, price] = tariff.split('=');
+                const item = document.createElement('div');
+                item.className = 'tariff-item';
+                item.innerHTML = `
+                    <span class="tariff-label">${label}</span>
+                    <span class="tariff-price">${price}€</span>
+                `;
+                tariffDiv.appendChild(item);
             });
 
-            document.getElementById('stock').innerHTML = `<div style="color: ${product.stock === 'En stock' ? '#84fab0' : '#f5576c'};">${product.stock}</div>`;
-            document.getElementById('modal').classList.add('show');
+            // GALLERY
+            if (product.images && product.images.length > 0) {
+                document.getElementById('gallerySection').style.display = 'block';
+                currentGalleryIndex = 0;
+                const galleryMain = document.getElementById('galleryMain');
+                const galleryThumbs = document.getElementById('galleryThumbnails');
+
+                galleryMain.src = product.images[0];
+                galleryThumbs.innerHTML = '';
+
+                product.images.forEach((img, idx) => {
+                    const thumb = document.createElement('img');
+                    thumb.src = img;
+                    thumb.className = idx === 0 ? 'gallery-thumb active' : 'gallery-thumb';
+                    thumb.onclick = () => {
+                        currentGalleryIndex = idx;
+                        galleryMain.src = img;
+                        document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+                        thumb.classList.add('active');
+                    };
+                    galleryThumbs.appendChild(thumb);
+                });
+            } else {
+                document.getElementById('gallerySection').style.display = 'none';
+            }
+
+            // VIDEO
+            if (product.video) {
+                document.getElementById('videoSection').style.display = 'block';
+                const videoPlayer = document.getElementById('videoPlayer');
+                videoPlayer.src = product.video;
+            } else {
+                document.getElementById('videoSection').style.display = 'none';
+            }
+
+            document.getElementById('productModal').classList.add('active');
         }
 
+        // CLOSE MODAL
         function closeModal() {
-            document.getElementById('modal').classList.remove('show');
+            document.getElementById('productModal').classList.remove('active');
         }
 
-        loadData();
+        // CLOSE MODAL ON OUTSIDE CLICK
+        document.getElementById('productModal').addEventListener('click', (e) => {
+            if (e.target.id === 'productModal') {
+                closeModal();
+            }
+        });
     </script>
 </body>
 </html>
