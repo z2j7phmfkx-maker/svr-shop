@@ -7,12 +7,13 @@
     {
       "id": 1,
       "name": "GARY PAYTON",
-      "description": "Produit premium",
+      "description": "Produit",
       "tariffs": "2g=20|30g=80|20g=150",
       "stock": "En stock",
       "image": "https://via.placeholder.com/250",
       "images": [],
-      "video": ""
+      "videos": [],
+      "createdAt": "2026-03-27T18:44:56.727Z"
     },
     {
       "id": 1774637085505,
