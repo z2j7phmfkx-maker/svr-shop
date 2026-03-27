@@ -180,11 +180,6 @@
             min-height: 100px;
         }
         
-        .form-group input::placeholder,
-        .form-group textarea::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-        
         .upload-area {
             border: 2px dashed #00d4ff;
             border-radius: 8px;
@@ -284,6 +279,65 @@
         }
         
         .gallery-item:hover .gallery-item-remove {
+            opacity: 1;
+        }
+        
+        .videos-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+        
+        .video-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #00d4ff;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px;
+        }
+        
+        .video-item-info {
+            color: #00d4ff;
+            font-size: 11px;
+            text-align: center;
+            margin-bottom: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .video-item-play {
+            width: 100%;
+            height: 80px;
+            background: rgba(0, 212, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            border-radius: 6px;
+        }
+        
+        .video-item-remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .video-item:hover .video-item-remove {
             opacity: 1;
         }
         
@@ -486,8 +540,16 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Vidéo (URL)</label>
-                        <input type="text" id="productVideo" placeholder="https://..." />
+                        <label>Vidéo(s) (jusqu'à 3)</label>
+                        <div class="upload-area" onclick="document.getElementById('videoInput').click()">
+                            <p>🎥 Glisse une vidéo ou clique</p>
+                            <small>Format: MP4, WebM | Max 3 vidéos</small>
+                        </div>
+                        <div id="videosContainer" class="gallery-container">
+                            <div class="gallery-title">Vidéos ajoutées</div>
+                            <div class="videos-items" id="videosItems"></div>
+                        </div>
+                        <input type="file" id="videoInput" accept="video/mp4,video/webm,video/*" multiple onchange="uploadVideos(this)" />
                     </div>
 
                     <div class="buttons">
@@ -509,6 +571,7 @@
         
         let shopData = { concours: {}, products: [] };
         let galleryImages = [];
+        let productVideos = [];
         let concoursImageUrl = null;
         let productImageUrl = null;
         let currentProductId = null;
@@ -584,13 +647,11 @@
                     }
                     
                     showMessage('✅ Image uploadée!', 'success');
-                    console.log('✅ Upload success:', imageUrl);
                 } else {
                     showMessage('❌ Erreur upload', 'error');
                 }
             } catch (error) {
                 showMessage('❌ Erreur: ' + error.message, 'error');
-                console.error('❌ Upload error:', error);
             }
             
             input.value = '';
@@ -631,6 +692,46 @@
             
             renderGallery();
             showMessage(`✅ ${uploadedCount} image(s) ajoutée(s)!`, 'success');
+            input.value = '';
+        }
+
+        async function uploadVideos(input) {
+            if (!input.files.length) return;
+            
+            showMessage('🎥 Upload vidéo(s) en cours...', 'success');
+            let uploadedCount = 0;
+            
+            for (let file of input.files) {
+                if (productVideos.length >= 3) break;
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', UPLOAD_PRESET);
+                formData.append('resource_type', 'video');
+                
+                try {
+                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.secure_url) {
+                        productVideos.push({
+                            url: data.secure_url,
+                            name: file.name,
+                            id: Date.now() + Math.random()
+                        });
+                        uploadedCount++;
+                    }
+                } catch (error) {
+                    console.error('❌ Video upload error:', error);
+                }
+            }
+            
+            renderVideos();
+            showMessage(`✅ ${uploadedCount} vidéo(s) ajoutée(s)!`, 'success');
             input.value = '';
         }
 
@@ -685,6 +786,35 @@
             renderGallery();
         }
 
+        function renderVideos() {
+            const container = document.getElementById('videosContainer');
+            const items = document.getElementById('videosItems');
+            
+            if (productVideos.length === 0) {
+                container.classList.remove('active');
+                return;
+            }
+            
+            container.classList.add('active');
+            items.innerHTML = '';
+            
+            productVideos.forEach((vid, i) => {
+                const el = document.createElement('div');
+                el.className = 'video-item';
+                el.innerHTML = `
+                    <div class="video-item-info">${vid.name.substring(0, 15)}</div>
+                    <div class="video-item-play">🎥</div>
+                    <button class="video-item-remove" onclick="removeVideo(${i})">✕</button>
+                `;
+                items.appendChild(el);
+            });
+        }
+
+        function removeVideo(i) {
+            productVideos.splice(i, 1);
+            renderVideos();
+        }
+
         // CONCOURS
         function loadConcours() {
             if (shopData.concours) {
@@ -721,6 +851,7 @@
                     <p><strong>Tarifs:</strong> ${p.tariffs}</p>
                     <p><strong>Stock:</strong> ${p.stock}</p>
                     <p><strong>Images:</strong> ${(p.images || []).length}</p>
+                    <p><strong>Vidéos:</strong> ${(p.videos || []).length}</p>
                     <div class="product-card-actions">
                         <button class="btn btn-secondary" onclick="editProduct(${p.id})">✏️ Éditer</button>
                         <button class="btn btn-danger" onclick="deleteProduct(${p.id})">🗑️ Supprimer</button>
@@ -739,7 +870,6 @@
             document.getElementById('productDesc').value = product.description || '';
             document.getElementById('productTariffs').value = product.tariffs || '';
             document.getElementById('productStock').value = product.stock || 'En stock';
-            document.getElementById('productVideo').value = product.video || '';
             
             productImageUrl = product.image || null;
             if (productImageUrl) {
@@ -750,6 +880,13 @@
             
             galleryImages = (product.images || []).map(url => ({ url, id: Date.now() + Math.random() }));
             renderGallery();
+
+            productVideos = (product.videos || []).map((url, idx) => ({ 
+                url, 
+                name: `Vidéo ${idx + 1}`,
+                id: Date.now() + Math.random() 
+            }));
+            renderVideos();
         }
 
         function resetForm() {
@@ -758,11 +895,12 @@
             document.getElementById('productDesc').value = '';
             document.getElementById('productTariffs').value = '';
             document.getElementById('productStock').value = 'En stock';
-            document.getElementById('productVideo').value = '';
             productImageUrl = null;
             galleryImages = [];
+            productVideos = [];
             document.getElementById('productImagePreview').style.display = 'none';
             document.getElementById('galleryContainer').classList.remove('active');
+            document.getElementById('videosContainer').classList.remove('active');
         }
 
         async function saveProduct() {
@@ -770,7 +908,6 @@
             const desc = document.getElementById('productDesc').value.trim();
             const tariffs = document.getElementById('productTariffs').value.trim();
             const stock = document.getElementById('productStock').value;
-            const video = document.getElementById('productVideo').value.trim();
 
             if (!name || !tariffs || !productImageUrl) {
                 showMessage('❌ Remplis: Nom, Tarifs et Image', 'error');
@@ -785,7 +922,7 @@
                 stock,
                 image: productImageUrl,
                 images: galleryImages.map(g => g.url),
-                video,
+                videos: productVideos.map(v => v.url),
                 createdAt: new Date().toISOString()
             };
 
