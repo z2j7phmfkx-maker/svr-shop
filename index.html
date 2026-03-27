@@ -383,7 +383,7 @@
             margin-top: 25px;
         }
 
-        .gallery-title {
+        .section-title {
             color: #00d4ff;
             margin-bottom: 12px;
             font-size: 14px;
@@ -429,17 +429,47 @@
             transform: scale(1.05);
         }
 
-        /* VIDEO */
-        .video-section {
+        /* VIDEOS */
+        .videos-section {
             margin-top: 20px;
         }
 
-        .video-player {
-            width: 100%;
-            height: 250px;
+        .videos-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .video-card {
             background: rgba(0, 0, 0, 0.5);
-            border-radius: 10px;
             border: 2px solid #00d4ff;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .video-card:hover {
+            border-color: #00ffff;
+            transform: scale(1.05);
+        }
+
+        .video-preview {
+            width: 100%;
+            height: 100px;
+            background: rgba(0, 212, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+
+        .video-player-modal {
+            width: 100%;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            margin-top: 15px;
         }
 
         /* ADMIN BUTTON FIXED */
@@ -535,15 +565,16 @@
 
             <!-- GALLERY -->
             <div class="gallery-section" id="gallerySection" style="display: none;">
-                <div class="gallery-title">Galerie</div>
+                <div class="section-title">📸 Galerie</div>
                 <img id="galleryMain" class="gallery-main" alt="Gallery" />
                 <div class="gallery-thumbnails" id="galleryThumbnails"></div>
             </div>
 
-            <!-- VIDEO -->
-            <div class="video-section" id="videoSection" style="display: none;">
-                <div class="gallery-title">Vidéo</div>
-                <video id="videoPlayer" class="video-player" controls></video>
+            <!-- VIDEOS -->
+            <div class="videos-section" id="videosSection" style="display: none;">
+                <div class="section-title">🎥 Vidéos</div>
+                <div class="videos-list" id="videosList"></div>
+                <video id="videoPlayerModal" class="video-player-modal" controls style="display: none;"></video>
             </div>
         </div>
     </div>
@@ -555,6 +586,7 @@
         const CLOUDINARY_CLOUD = "diezs6eqa";
         let shopData = { concours: {}, products: [] };
         let currentGalleryIndex = 0;
+        let currentVideoUrl = null;
 
         // INIT
         window.addEventListener('load', async () => {
@@ -613,7 +645,7 @@
                         <div class="product-stock ${stockClass}">${product.stock}</div>
                         <div class="product-icons">
                             ${product.images && product.images.length > 0 ? '<div class="product-icon">📸</div>' : ''}
-                            ${product.video ? '<div class="product-icon">🎥</div>' : ''}
+                            ${product.videos && product.videos.length > 0 ? '<div class="product-icon">🎥</div>' : ''}
                         </div>
                     </div>
                 `;
@@ -680,13 +712,28 @@
                 document.getElementById('gallerySection').style.display = 'none';
             }
 
-            // VIDEO
-            if (product.video) {
-                document.getElementById('videoSection').style.display = 'block';
-                const videoPlayer = document.getElementById('videoPlayer');
-                videoPlayer.src = product.video;
+            // VIDEOS
+            if (product.videos && product.videos.length > 0) {
+                document.getElementById('videosSection').style.display = 'block';
+                const videosList = document.getElementById('videosList');
+                const videoPlayer = document.getElementById('videoPlayerModal');
+                
+                videosList.innerHTML = '';
+
+                product.videos.forEach((videoUrl, idx) => {
+                    const videoCard = document.createElement('div');
+                    videoCard.className = 'video-card';
+                    videoCard.innerHTML = `
+                        <div class="video-preview">🎥</div>
+                    `;
+                    videoCard.onclick = () => {
+                        videoPlayer.src = videoUrl;
+                        videoPlayer.style.display = 'block';
+                    };
+                    videosList.appendChild(videoCard);
+                });
             } else {
-                document.getElementById('videoSection').style.display = 'none';
+                document.getElementById('videosSection').style.display = 'none';
             }
 
             document.getElementById('productModal').classList.add('active');
@@ -695,6 +742,8 @@
         // CLOSE MODAL
         function closeModal() {
             document.getElementById('productModal').classList.remove('active');
+            document.getElementById('videoPlayerModal').pause();
+            document.getElementById('videoPlayerModal').style.display = 'none';
         }
 
         // CLOSE MODAL ON OUTSIDE CLICK
