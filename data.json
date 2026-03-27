@@ -13,6 +13,17 @@
       "image": "https://via.placeholder.com/250",
       "images": [],
       "video": ""
+    },
+    {
+      "id": 1774637085505,
+      "name": "test",
+      "description": "",
+      "tariffs": "1g=10",
+      "stock": "En stock",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774637082/omopijaoqrukxp9njbs0.png",
+      "images": [],
+      "videos": [],
+      "createdAt": "2026-03-27T18:44:45.505Z"
     }
   ]
 }
