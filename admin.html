@@ -180,20 +180,38 @@
             min-height: 100px;
         }
         
-        .upload-btn {
-            background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
-            color: #000;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .upload-area {
+            border: 2px dashed #00d4ff;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
             cursor: pointer;
-            width: 100%;
+            background: rgba(0, 212, 255, 0.05);
+            transition: all 0.3s;
             margin-bottom: 10px;
         }
         
-        .upload-btn:hover {
-            opacity: 0.9;
+        .upload-area:hover {
+            background: rgba(0, 212, 255, 0.15);
+        }
+        
+        .upload-area.dragover {
+            background: rgba(0, 212, 255, 0.25);
+            border-color: #00ffff;
+        }
+        
+        .upload-area p {
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+        
+        input[type="file"] {
+            display: none;
         }
         
         .image-preview {
@@ -400,8 +418,12 @@
 
                 <div class="form-group">
                     <label>Image (16:9)</label>
-                    <button class="upload-btn" onclick="uploadConcoursImage()">📸 Uploader une image</button>
+                    <div class="upload-area" onclick="document.getElementById('concoursImageInput').click()">
+                        <p>📸 Glisse une image ou clique</p>
+                        <small>Format: JPG, PNG</small>
+                    </div>
                     <img id="concoursImagePreview" class="image-preview" />
+                    <input type="file" id="concoursImageInput" accept="image/*" onchange="uploadImage(this, 'concours')" />
                 </div>
 
                 <div class="buttons">
@@ -442,17 +464,25 @@
 
                     <div class="form-group">
                         <label>Image principale (1:1) *</label>
-                        <button class="upload-btn" onclick="uploadProductImage()">📸 Uploader une image</button>
+                        <div class="upload-area" onclick="document.getElementById('productImageInput').click()">
+                            <p>📸 Glisse une image ou clique</p>
+                            <small>Format: JPG, PNG</small>
+                        </div>
                         <img id="productImagePreview" class="image-preview" />
+                        <input type="file" id="productImageInput" accept="image/*" onchange="uploadImage(this, 'product')" />
                     </div>
 
                     <div class="form-group">
                         <label>Galerie (jusqu'à 10 images)</label>
-                        <button class="upload-btn" onclick="uploadGalleryImage()">📷 Ajouter une image</button>
+                        <div class="upload-area" onclick="document.getElementById('galleryInput').click()">
+                            <p>📷 Glisse des images ou clique</p>
+                            <small>Jusqu'à 10 images</small>
+                        </div>
                         <div id="galleryContainer" class="gallery-container">
-                            <div class="gallery-title">Galerie</div>
+                            <div class="gallery-title">Galerie (drag & drop pour réorganiser)</div>
                             <div class="gallery-items" id="galleryItems"></div>
                         </div>
+                        <input type="file" id="galleryInput" accept="image/*" multiple onchange="uploadGallery(this)" />
                     </div>
 
                     <div class="form-group">
@@ -472,7 +502,6 @@
         </div>
     </div>
 
-    <script src="https://upload-widget.cloudinary.com/latest/sources/index.js"></script>
     <script>
         const ADMIN_PASSWORD = "Tova$Shop2024!Secure";
         const CLOUDINARY_CLOUD = "diezs6eqa";
@@ -521,77 +550,88 @@
             }
         }
 
-        // CLOUDINARY UPLOAD
-        function uploadConcoursImage() {
-            const widget = cloudinary.createUploadWidget(
-                {
-                    cloudName: CLOUDINARY_CLOUD,
-                    uploadPreset: UPLOAD_PRESET,
-                    cropping: true,
-                    croppingAspectRatio: 16/9,
-                    showCompletedButton: true,
-                    folder: "svr_shop/concours"
-                },
-                (error, result) => {
-                    if (!error && result && result.event === "success") {
-                        concoursImageUrl = result.info.secure_url;
-                        document.getElementById('concoursImagePreview').src = concoursImageUrl;
-                        document.getElementById('concoursImagePreview').style.display = 'block';
-                        showMessage('✅ Image uploadée!', 'success');
+        // UPLOAD TO CLOUDINARY
+        async function uploadImage(input, type) {
+            if (!input.files.length) return;
+            
+            showMessage('📤 Upload en cours...', 'success');
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', UPLOAD_PRESET);
+            
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.secure_url) {
+                    const imageUrl = data.secure_url;
+                    
+                    if (type === 'concours') {
+                        concoursImageUrl = imageUrl;
+                        const preview = document.getElementById('concoursImagePreview');
+                        preview.src = imageUrl;
+                        preview.style.display = 'block';
+                    } else if (type === 'product') {
+                        productImageUrl = imageUrl;
+                        const preview = document.getElementById('productImagePreview');
+                        preview.src = imageUrl;
+                        preview.style.display = 'block';
                     }
+                    
+                    showMessage('✅ Image uploadée!', 'success');
+                    console.log('✅ Upload success:', imageUrl);
+                } else {
+                    showMessage('❌ Erreur upload', 'error');
                 }
-            );
-            widget.open();
-        }
-
-        function uploadProductImage() {
-            const widget = cloudinary.createUploadWidget(
-                {
-                    cloudName: CLOUDINARY_CLOUD,
-                    uploadPreset: UPLOAD_PRESET,
-                    cropping: true,
-                    croppingAspectRatio: 1,
-                    showCompletedButton: true,
-                    folder: "svr_shop/products"
-                },
-                (error, result) => {
-                    if (!error && result && result.event === "success") {
-                        productImageUrl = result.info.secure_url;
-                        document.getElementById('productImagePreview').src = productImageUrl;
-                        document.getElementById('productImagePreview').style.display = 'block';
-                        showMessage('✅ Image uploadée!', 'success');
-                    }
-                }
-            );
-            widget.open();
-        }
-
-        function uploadGalleryImage() {
-            if (galleryImages.length >= 10) {
-                showMessage('❌ Max 10 images', 'error');
-                return;
+            } catch (error) {
+                showMessage('❌ Erreur: ' + error.message, 'error');
+                console.error('❌ Upload error:', error);
             }
-            const widget = cloudinary.createUploadWidget(
-                {
-                    cloudName: CLOUDINARY_CLOUD,
-                    uploadPreset: UPLOAD_PRESET,
-                    cropping: true,
-                    croppingAspectRatio: 1,
-                    showCompletedButton: true,
-                    folder: "svr_shop/gallery"
-                },
-                (error, result) => {
-                    if (!error && result && result.event === "success") {
+            
+            input.value = '';
+        }
+
+        async function uploadGallery(input) {
+            if (!input.files.length) return;
+            
+            showMessage('📤 Upload galerie en cours...', 'success');
+            let uploadedCount = 0;
+            
+            for (let file of input.files) {
+                if (galleryImages.length >= 10) break;
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', UPLOAD_PRESET);
+                
+                try {
+                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.secure_url) {
                         galleryImages.push({
-                            url: result.info.secure_url,
+                            url: data.secure_url,
                             id: Date.now() + Math.random()
                         });
-                        renderGallery();
-                        showMessage('✅ Image ajoutée!', 'success');
+                        uploadedCount++;
                     }
+                } catch (error) {
+                    console.error('❌ Gallery upload error:', error);
                 }
-            );
-            widget.open();
+            }
+            
+            renderGallery();
+            showMessage(`✅ ${uploadedCount} image(s) ajoutée(s)!`, 'success');
+            input.value = '';
         }
 
         function renderGallery() {
