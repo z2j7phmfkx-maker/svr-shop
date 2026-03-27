@@ -419,6 +419,18 @@
             margin-bottom: 20px;
             border-radius: 5px;
             display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .message.active {
@@ -607,9 +619,10 @@
                 shopData = await res.json();
                 loadConcours();
                 loadProducts();
-                console.log('✅ Data loaded');
+                console.log('✅ Data loaded:', shopData);
             } catch (e) {
                 console.error('❌ Load error:', e);
+                shopData = { concours: {}, products: [] };
             }
         }
 
@@ -652,6 +665,7 @@
                 }
             } catch (error) {
                 showMessage('❌ Erreur: ' + error.message, 'error');
+                console.error('Upload error:', error);
             }
             
             input.value = '';
@@ -664,7 +678,10 @@
             let uploadedCount = 0;
             
             for (let file of input.files) {
-                if (galleryImages.length >= 10) break;
+                if (galleryImages.length >= 10) {
+                    showMessage('⚠️ Maximum 10 images', 'error');
+                    break;
+                }
                 
                 const formData = new FormData();
                 formData.append('file', file);
@@ -702,7 +719,10 @@
             let uploadedCount = 0;
             
             for (let file of input.files) {
-                if (productVideos.length >= 3) break;
+                if (productVideos.length >= 3) {
+                    showMessage('⚠️ Maximum 3 vidéos', 'error');
+                    break;
+                }
                 
                 const formData = new FormData();
                 formData.append('file', file);
@@ -836,7 +856,6 @@
             }
             shopData.concours = { description: desc, image: concoursImageUrl };
             await saveData();
-            showMessage('✅ Concours sauvegardé!', 'success');
         }
 
         // PRODUCTS
@@ -887,6 +906,9 @@
                 id: Date.now() + Math.random() 
             }));
             renderVideos();
+
+            // Scroll to form
+            document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
         }
 
         function resetForm() {
@@ -936,7 +958,6 @@
             await saveData();
             resetForm();
             loadProducts();
-            showMessage('✅ Produit sauvegardé!', 'success');
         }
 
         async function deleteProduct(id) {
@@ -944,23 +965,32 @@
                 shopData.products = shopData.products.filter(p => p.id !== id);
                 await saveData();
                 loadProducts();
-                showMessage('✅ Produit supprimé!', 'success');
             }
         }
 
-        // SAVE
+        // SAVE DATA - VERSION CORRIGÉE
         async function saveData() {
             try {
+                showMessage('💾 Sauvegarde en cours...', 'success');
+                
                 const res = await fetch('/api/save-data', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(shopData)
                 });
+                
                 const result = await res.json();
-                console.log('✅ Save success');
-            } catch (e) {
-                showMessage('❌ Erreur save', 'error');
-                console.error('❌ Save error:', e);
+                
+                if (result.success) {
+                    showMessage('✅ ' + result.message, 'success');
+                    console.log('✅ Save success:', result);
+                } else {
+                    showMessage('❌ ' + (result.message || 'Erreur sauvegarde'), 'error');
+                    console.error('❌ Save error:', result);
+                }
+            } catch (error) {
+                showMessage('❌ Erreur: ' + error.message, 'error');
+                console.error('❌ Save error:', error);
             }
         }
 
@@ -977,7 +1007,7 @@
             const msg = document.getElementById('message');
             msg.textContent = text;
             msg.className = `message active ${type}`;
-            setTimeout(() => msg.classList.remove('active'), 3000);
+            setTimeout(() => msg.classList.remove('active'), 4000);
         }
     </script>
 </body>
