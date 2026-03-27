@@ -68,10 +68,6 @@
             font-size: 16px;
         }
         
-        .login-box input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-        
         .login-box button {
             width: 100%;
             padding: 12px;
@@ -184,42 +180,25 @@
             min-height: 100px;
         }
         
-        .form-group input::placeholder,
-        .form-group textarea::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-        
-        .upload-area {
-            border: 2px dashed #00d4ff;
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
+        .upload-btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+            color: #000;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
             cursor: pointer;
-            background: rgba(0, 212, 255, 0.05);
-            transition: all 0.3s;
-        }
-        
-        .upload-area:hover {
-            background: rgba(0, 212, 255, 0.15);
-        }
-        
-        .upload-area.dragover {
-            background: rgba(0, 212, 255, 0.25);
-            border-color: #00ffff;
-        }
-        
-        .upload-area p {
-            color: #00d4ff;
+            width: 100%;
             margin-bottom: 10px;
         }
         
-        #imageInput, #videoInput, #concoursImageInput, #productImageInput, #galleryInput {
-            display: none;
+        .upload-btn:hover {
+            opacity: 0.9;
         }
         
         .image-preview {
-            width: 100px;
-            height: 100px;
+            width: 150px;
+            height: 150px;
             background: rgba(0, 212, 255, 0.2);
             border-radius: 8px;
             margin-top: 10px;
@@ -290,10 +269,6 @@
             opacity: 1;
         }
         
-        .gallery-item-remove:hover {
-            background: #ff6666;
-        }
-        
         .buttons {
             display: flex;
             gap: 10px;
@@ -326,17 +301,9 @@
             border: 1px solid #00d4ff;
         }
         
-        .btn-secondary:hover {
-            background: rgba(0, 212, 255, 0.3);
-        }
-        
         .btn-danger {
             background: #ff4444;
             color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #ff6666;
         }
         
         .products-list {
@@ -361,7 +328,6 @@
         .product-card p {
             font-size: 13px;
             margin-bottom: 8px;
-            color: rgba(255, 255, 255, 0.8);
         }
         
         .product-card-actions {
@@ -434,12 +400,8 @@
 
                 <div class="form-group">
                     <label>Image (16:9)</label>
-                    <div class="upload-area" onclick="document.getElementById('concoursImageInput').click()">
-                        <p>📸 Glisse une image ou clique</p>
-                        <small>Format: JPG, PNG | Ratio: 16:9</small>
-                    </div>
+                    <button class="upload-btn" onclick="uploadConcoursImage()">📸 Uploader une image</button>
                     <img id="concoursImagePreview" class="image-preview" />
-                    <input type="file" id="concoursImageInput" accept="image/*" onchange="uploadImage(this, 'concours')" />
                 </div>
 
                 <div class="buttons">
@@ -480,25 +442,17 @@
 
                     <div class="form-group">
                         <label>Image principale (1:1) *</label>
-                        <div class="upload-area" onclick="document.getElementById('productImageInput').click()">
-                            <p>📸 Glisse une image ou clique</p>
-                            <small>Format: JPG, PNG | Ratio: 1:1 (carré)</small>
-                        </div>
+                        <button class="upload-btn" onclick="uploadProductImage()">📸 Uploader une image</button>
                         <img id="productImagePreview" class="image-preview" />
-                        <input type="file" id="productImageInput" accept="image/*" onchange="uploadImage(this, 'product')" />
                     </div>
 
                     <div class="form-group">
                         <label>Galerie (jusqu'à 10 images)</label>
-                        <div class="upload-area" onclick="document.getElementById('galleryInput').click()">
-                            <p>📷 Ajoute des photos à la galerie</p>
-                            <small>Glisse ou clique - Jusqu'à 10 images</small>
-                        </div>
+                        <button class="upload-btn" onclick="uploadGalleryImage()">📷 Ajouter une image</button>
                         <div id="galleryContainer" class="gallery-container">
-                            <div class="gallery-title">Galerie (drag & drop pour réorganiser)</div>
+                            <div class="gallery-title">Galerie</div>
                             <div class="gallery-items" id="galleryItems"></div>
                         </div>
-                        <input type="file" id="galleryInput" accept="image/*" multiple onchange="uploadGallery(this)" />
                     </div>
 
                     <div class="form-group">
@@ -518,8 +472,11 @@
         </div>
     </div>
 
+    <script src="https://upload-widget.cloudinary.com/latest/sources/index.js"></script>
     <script>
         const ADMIN_PASSWORD = "Tova$Shop2024!Secure";
+        const CLOUDINARY_CLOUD = "diezs6eqa";
+        
         let shopData = { concours: {}, products: [] };
         let galleryImages = [];
         let concoursImageUrl = null;
@@ -541,7 +498,6 @@
                 console.log('✅ Login success');
             } else {
                 showMessage('❌ Mot de passe incorrect', 'error');
-                console.log('❌ Login failed');
             }
         }
 
@@ -558,10 +514,134 @@
                 shopData = await res.json();
                 loadConcours();
                 loadProducts();
-                console.log('✅ Data loaded:', shopData);
+                console.log('✅ Data loaded');
             } catch (e) {
                 console.error('❌ Load error:', e);
             }
+        }
+
+        // CLOUDINARY UPLOAD
+        function uploadConcoursImage() {
+            const widget = cloudinary.createUploadWidget(
+                {
+                    cloudName: CLOUDINARY_CLOUD,
+                    uploadPreset: "svr_shop",
+                    cropping: true,
+                    croppingAspectRatio: 16/9,
+                    showCompletedButton: true,
+                    folder: "svr_shop/concours"
+                },
+                (error, result) => {
+                    if (!error && result && result.event === "success") {
+                        concoursImageUrl = result.info.secure_url;
+                        document.getElementById('concoursImagePreview').src = concoursImageUrl;
+                        document.getElementById('concoursImagePreview').style.display = 'block';
+                        showMessage('✅ Image uploadée!', 'success');
+                    }
+                }
+            );
+            widget.open();
+        }
+
+        function uploadProductImage() {
+            const widget = cloudinary.createUploadWidget(
+                {
+                    cloudName: CLOUDINARY_CLOUD,
+                    uploadPreset: "svr_shop",
+                    cropping: true,
+                    croppingAspectRatio: 1,
+                    showCompletedButton: true,
+                    folder: "svr_shop/products"
+                },
+                (error, result) => {
+                    if (!error && result && result.event === "success") {
+                        productImageUrl = result.info.secure_url;
+                        document.getElementById('productImagePreview').src = productImageUrl;
+                        document.getElementById('productImagePreview').style.display = 'block';
+                        showMessage('✅ Image uploadée!', 'success');
+                    }
+                }
+            );
+            widget.open();
+        }
+
+        function uploadGalleryImage() {
+            if (galleryImages.length >= 10) {
+                showMessage('❌ Max 10 images', 'error');
+                return;
+            }
+            const widget = cloudinary.createUploadWidget(
+                {
+                    cloudName: CLOUDINARY_CLOUD,
+                    uploadPreset: "svr_shop",
+                    cropping: true,
+                    croppingAspectRatio: 1,
+                    showCompletedButton: true,
+                    folder: "svr_shop/gallery"
+                },
+                (error, result) => {
+                    if (!error && result && result.event === "success") {
+                        galleryImages.push({
+                            url: result.info.secure_url,
+                            id: Date.now() + Math.random()
+                        });
+                        renderGallery();
+                        showMessage('✅ Image ajoutée!', 'success');
+                    }
+                }
+            );
+            widget.open();
+        }
+
+        function renderGallery() {
+            const container = document.getElementById('galleryContainer');
+            const items = document.getElementById('galleryItems');
+            
+            if (galleryImages.length === 0) {
+                container.classList.remove('active');
+                return;
+            }
+            
+            container.classList.add('active');
+            items.innerHTML = '';
+            
+            galleryImages.forEach((img, i) => {
+                const el = document.createElement('div');
+                el.className = 'gallery-item';
+                el.draggable = true;
+                el.innerHTML = `
+                    <img src="${img.url}" alt="gallery">
+                    <button class="gallery-item-remove" onclick="removeGalleryImage(${i})">✕</button>
+                `;
+                
+                el.addEventListener('dragstart', e => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('index', i);
+                });
+                
+                el.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                
+                el.addEventListener('drop', e => {
+                    e.preventDefault();
+                    const dragIdx = parseInt(e.dataTransfer.getData('index'));
+                    if (dragIdx !== i) {
+                        const temp = galleryImages[dragIdx];
+                        galleryImages[dragIdx] = galleryImages[i];
+                        galleryImages[i] = temp;
+                        renderGallery();
+                    }
+                });
+                
+                items.appendChild(el);
+            });
+        }
+
+        function removeGalleryImage(i) {
+            galleryImages.splice(i, 1);
+            renderGallery();
         }
 
         // CONCOURS
@@ -599,7 +679,7 @@
                     <h3>${p.name}</h3>
                     <p><strong>Tarifs:</strong> ${p.tariffs}</p>
                     <p><strong>Stock:</strong> ${p.stock}</p>
-                    <p><strong>Images galerie:</strong> ${(p.images || []).length}</p>
+                    <p><strong>Images:</strong> ${(p.images || []).length}</p>
                     <div class="product-card-actions">
                         <button class="btn btn-secondary" onclick="editProduct(${p.id})">✏️ Éditer</button>
                         <button class="btn btn-danger" onclick="deleteProduct(${p.id})">🗑️ Supprimer</button>
@@ -612,18 +692,21 @@
         function editProduct(id) {
             const product = shopData.products.find(p => p.id === id);
             if (!product) return;
+            
             currentProductId = id;
             document.getElementById('productName').value = product.name || '';
             document.getElementById('productDesc').value = product.description || '';
             document.getElementById('productTariffs').value = product.tariffs || '';
             document.getElementById('productStock').value = product.stock || 'En stock';
             document.getElementById('productVideo').value = product.video || '';
+            
             productImageUrl = product.image || null;
             if (productImageUrl) {
                 const preview = document.getElementById('productImagePreview');
                 preview.src = productImageUrl;
                 preview.style.display = 'block';
             }
+            
             galleryImages = (product.images || []).map(url => ({ url, id: Date.now() + Math.random() }));
             renderGallery();
         }
@@ -687,116 +770,6 @@
             }
         }
 
-        // UPLOAD
-        async function uploadImage(input, type) {
-            if (!input.files.length) return;
-            showMessage('📤 Upload...', 'success');
-            const formData = new FormData();
-            formData.append('image', input.files[0]);
-
-            try {
-                const res = await fetch('https://api.imgbb.com/1/upload?key=32d6a6e7b4e5c0d8f9a1b2c3d4e5f6a7', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await res.json();
-                if (data.success) {
-                    const url = data.data.url;
-                    if (type === 'concours') {
-                        concoursImageUrl = url;
-                        const preview = document.getElementById('concoursImagePreview');
-                        preview.src = url;
-                        preview.style.display = 'block';
-                    } else if (type === 'product') {
-                        productImageUrl = url;
-                        const preview = document.getElementById('productImagePreview');
-                        preview.src = url;
-                        preview.style.display = 'block';
-                    }
-                    showMessage('✅ Image uploadée!', 'success');
-                    console.log('✅ Upload success:', url);
-                } else {
-                    showMessage('❌ Erreur upload', 'error');
-                }
-            } catch (e) {
-                showMessage('❌ Erreur: ' + e.message, 'error');
-                console.error('❌ Upload error:', e);
-            }
-            input.value = '';
-        }
-
-        async function uploadGallery(input) {
-            if (!input.files.length) return;
-            showMessage('📤 Upload galerie...', 'success');
-            let count = 0;
-
-            for (let file of input.files) {
-                if (galleryImages.length >= 10) break;
-
-                const formData = new FormData();
-                formData.append('image', file);
-
-                try {
-                    const res = await fetch('https://api.imgbb.com/1/upload?key=32d6a6e7b4e5c0d8f9a1b2c3d4e5f6a7', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                        galleryImages.push({ url: data.data.url, id: Date.now() + Math.random() });
-                        count++;
-                    }
-                } catch (e) {
-                    console.error('❌ Galery upload error:', e);
-                }
-            }
-
-            renderGallery();
-            showMessage(`✅ ${count} image(s) ajoutée(s)!`, 'success');
-            input.value = '';
-        }
-
-        function renderGallery() {
-            const container = document.getElementById('galleryContainer');
-            const items = document.getElementById('galleryItems');
-            if (galleryImages.length === 0) {
-                container.classList.remove('active');
-                return;
-            }
-            container.classList.add('active');
-            items.innerHTML = '';
-            galleryImages.forEach((img, i) => {
-                const el = document.createElement('div');
-                el.className = 'gallery-item';
-                el.draggable = true;
-                el.innerHTML = `<img src="${img.url}" alt="gallery"><button class="gallery-item-remove" onclick="removeGalleryImage(${i})">✕</button>`;
-                el.addEventListener('dragstart', e => {
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('index', i);
-                });
-                el.addEventListener('dragover', e => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                });
-                el.addEventListener('drop', e => {
-                    e.preventDefault();
-                    const dragIdx = parseInt(e.dataTransfer.getData('index'));
-                    if (dragIdx !== i) {
-                        const temp = galleryImages[dragIdx];
-                        galleryImages[dragIdx] = galleryImages[i];
-                        galleryImages[i] = temp;
-                        renderGallery();
-                    }
-                });
-                items.appendChild(el);
-            });
-        }
-
-        function removeGalleryImage(i) {
-            galleryImages.splice(i, 1);
-            renderGallery();
-        }
-
         // SAVE
         async function saveData() {
             try {
@@ -806,7 +779,7 @@
                     body: JSON.stringify(shopData)
                 });
                 const result = await res.json();
-                console.log('✅ Save result:', result);
+                console.log('✅ Save success');
             } catch (e) {
                 showMessage('❌ Erreur save', 'error');
                 console.error('❌ Save error:', e);
