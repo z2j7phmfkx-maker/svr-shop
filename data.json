@@ -70,13 +70,16 @@
       "name": "DOUBLE STATIC BIRTHDAY",
       "description": "",
       "tariffs": "1,2g=20|3,5g=50|10g=110",
+      "promoTariffs": null,
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774653465/slgaxeruxbpt78szsudw.jpg",
       "images": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774653474/ali1uvwftvi1vqlslivs.mov"
       ],
-      "createdAt": "2026-03-28T06:56:16.399Z"
+      "isNew": true,
+      "newUntil": "2026-04-04",
+      "createdAt": "2026-03-28T07:50:28.762Z"
     },
     {
       "id": 1774680397522,
