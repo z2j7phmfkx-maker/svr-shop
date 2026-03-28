@@ -86,15 +86,6 @@
             line-height: 1.4;
         }
         
-        .concours-banner img {
-            width: 100%;
-            border-radius: 8px;
-            margin-top: 10px;
-            object-fit: cover;
-            aspect-ratio: 16/9;
-            display: none;
-        }
-        
         .container {
             max-width: 100%;
             margin: 0 auto;
@@ -540,7 +531,6 @@
     <div class="concours-banner" id="concoursBanner" style="display: none;">
         <h2>🎁 Concours</h2>
         <p id="concoursDesc"></p>
-        <img id="concoursImage" alt="Concours" />
     </div>
 
     <div class="container">
@@ -591,11 +581,7 @@
                 // Afficher concours
                 if (data.concours && data.concours.description) {
                     document.getElementById('concoursDesc').textContent = data.concours.description;
-                    if (data.concours.image) {
-                        document.getElementById('concoursImage').src = data.concours.image;
-                        document.getElementById('concoursImage').style.display = 'block';
-                        document.getElementById('concoursBanner').style.display = 'block';
-                    }
+                    document.getElementById('concoursBanner').style.display = 'block';
                 }
                 
                 // Afficher produits
@@ -650,7 +636,7 @@
                             ${product.stock}
                         </div>
                         <div class="product-icons">
-                            ${product.images && product.images.length > 0 ? '📸' : ''}
+                            ${product.gallery && product.gallery.length > 0 ? '📸' : ''}
                             ${product.videos && product.videos.length > 0 ? '🎥' : ''}
                         </div>
                     </div>
@@ -676,13 +662,13 @@
             document.getElementById('modalProductDesc').textContent = product.description || '';
             
             // Galerie
-            if (product.images && product.images.length > 0) {
+            if (product.gallery && product.gallery.length > 0) {
                 document.getElementById('gallerySection').style.display = 'block';
-                document.getElementById('modalMainImage').src = product.images[0];
+                document.getElementById('modalMainImage').src = product.gallery[0];
                 
                 const thumbnails = document.getElementById('modalThumbnails');
                 thumbnails.innerHTML = '';
-                product.images.forEach((img, i) => {
+                product.gallery.forEach((img, i) => {
                     const thumb = document.createElement('img');
                     thumb.src = img;
                     thumb.className = `thumbnail ${i === 0 ? 'active' : ''}`;
