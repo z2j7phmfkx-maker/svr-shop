@@ -16,9 +16,6 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const BOT_TOKEN = '8774455983:AAHkE3OlVnrfaZ6-ni3W4d4vL1YLUdtpufs';
 const CHANNEL_ID = -1002988868011;
 
-// In-memory token storage
-let userTokens = {};
-
 // Load data.json
 function loadData() {
   try {
@@ -28,10 +25,10 @@ function loadData() {
   } catch (err) {
     console.error('Erreur lecture data.json:', err);
   }
-  return { concours: { description: '' }, products: [] };
+  return { concours: { description: '' }, products: [], userTokens: {} };
 }
 
-// Save data.json
+// Save data.json locally
 function saveData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
@@ -62,6 +59,42 @@ async function isChannelMember(userId) {
   }
 }
 
+// Commit to GitHub
+async function commitToGithub(data) {
+  if (!GITHUB_TOKEN) {
+    console.warn('⚠️ GITHUB_TOKEN non configuré, commit ignoré');
+    return;
+  }
+
+  try {
+    const fileContent = Buffer.from(JSON.stringify(data, null, 2)).toString('base64');
+    const timestamp = new Date().toISOString();
+
+    // Récupérer le SHA du fichier actuel
+    const getShaUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json?ref=${GITHUB_BRANCH}`;
+    const shaResponse = await axios.get(getShaUrl, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    });
+
+    const sha = shaResponse.data.sha;
+
+    // Mettre à jour le fichier
+    const updateUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json`;
+    await axios.put(updateUrl, {
+      message: `Update data.json - ${timestamp}`,
+      content: fileContent,
+      sha: sha,
+      branch: GITHUB_BRANCH
+    }, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    });
+
+    console.log('✅ GitHub commit réussi');
+  } catch (error) {
+    console.error('❌ Erreur GitHub commit:', error.message);
+  }
+}
+
 // Routes
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -83,6 +116,9 @@ app.get('/api/verify-token', async (req, res) => {
   if (!token || !userId) {
     return res.json({ valid: false });
   }
+
+  const data = loadData();
+  const userTokens = data.userTokens || {};
 
   // Vérifier que le token existe
   if (!userTokens[token]) {
@@ -118,6 +154,9 @@ app.post('/api/generate-token', async (req, res) => {
     return res.json({ success: false, message: 'Utilisateur pas dans le channel' });
   }
 
+  const data = loadData();
+  const userTokens = data.userTokens || {};
+
   // Vérifier si l'utilisateur a déjà un token
   let token = Object.keys(userTokens).find(t => userTokens[t] === userId);
 
@@ -125,7 +164,12 @@ app.post('/api/generate-token', async (req, res) => {
   if (!token) {
     token = generateToken();
     userTokens[token] = userId;
+    data.userTokens = userTokens;
+    saveData(data);
     console.log(`✅ Token généré pour userId ${userId}: ${token}`);
+
+    // Committer sur GitHub
+    await commitToGithub(data);
   } else {
     console.log(`♻️ Token réutilisé pour userId ${userId}: ${token}`);
   }
@@ -141,9 +185,7 @@ app.post('/api/save-data', async (req, res) => {
     console.log('✅ data.json sauvegardé');
 
     // Commit to GitHub
-    if (GITHUB_TOKEN) {
-      await commitToGithub(shopData);
-    }
+    await commitToGithub(shopData);
 
     res.json({ success: true, message: 'Données sauvegardées' });
   } catch (error) {
@@ -152,42 +194,11 @@ app.post('/api/save-data', async (req, res) => {
   }
 });
 
-// Commit to GitHub
-async function commitToGithub(data) {
-  try {
-    const fileContent = Buffer.from(JSON.stringify(data, null, 2)).toString('base64');
-    const timestamp = new Date().toISOString();
-
-    // Récupérer le SHA du fichier actuel
-    const getShaUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json?ref=${GITHUB_BRANCH}`;
-    const shaResponse = await axios.get(getShaUrl, {
-      headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-
-    const sha = shaResponse.data.sha;
-
-    // Mettre à jour le fichier
-    const updateUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json`;
-    await axios.put(updateUrl, {
-      message: `Update data.json - ${timestamp}`,
-      content: fileContent,
-      sha: sha,
-      branch: GITHUB_BRANCH
-    }, {
-      headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-
-    console.log('✅ GitHub commit réussi');
-  } catch (error) {
-    console.error('❌ Erreur GitHub commit:', error.message);
-  }
-}
-
 // Server start
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🤖 BOT_TOKEN configuré`);
   console.log(`📢 CHANNEL_ID: ${CHANNEL_ID}`);
-  console.log(`🔐 Token storage actif`);
+  console.log(`💾 Tokens stockés dans data.json + GitHub`);
 });
