@@ -68,6 +68,19 @@
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774653474/ali1uvwftvi1vqlslivs.mov"
       ],
       "createdAt": "2026-03-27T23:18:01.785Z"
+    },
+    {
+      "id": 1774680397522,
+      "name": "HASH GOLD",
+      "description": "",
+      "tariffs": "3g=20",
+      "stock": "En stock",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774680347/svirrdwfb9djyvz1xclc.jpg",
+      "images": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1774680364/miyxdssuzgehnnnunlpn.mov"
+      ],
+      "createdAt": "2026-03-28T06:46:37.522Z"
     }
   ]
 }
