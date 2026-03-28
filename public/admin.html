@@ -162,6 +162,12 @@
             font-weight: bold;
         }
         
+        .form-group label input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
         .form-group input,
         .form-group textarea,
         .form-group select {
@@ -533,6 +539,19 @@
                     </div>
 
                     <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="productIsNew" />
+                            ✨ Marquer comme nouveau produit
+                        </label>
+                    </div>
+
+                    <div class="form-group" id="newDurationGroup" style="display: none;">
+                        <label>Durée du badge "Nouveau" (en jours)</label>
+                        <input type="number" id="productNewDuration" value="7" min="1" max="90" />
+                        <small>Le badge s'affichera pendant cette durée</small>
+                    </div>
+
+                    <div class="form-group">
                         <label>Stock *</label>
                         <select id="productStock">
                             <option value="En stock">En stock</option>
@@ -604,6 +623,7 @@
         // INIT
         window.addEventListener('load', () => {
             loadData();
+            setupCheckboxListener();
         });
 
         // LOGIN
@@ -623,6 +643,18 @@
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('adminPanel').classList.remove('active');
             document.getElementById('passwordInput').value = '';
+        }
+
+        // Setup checkbox listener
+        function setupCheckboxListener() {
+            const isNewCheckbox = document.getElementById('productIsNew');
+            const newDurationGroup = document.getElementById('newDurationGroup');
+            
+            if (isNewCheckbox) {
+                isNewCheckbox.addEventListener('change', () => {
+                    newDurationGroup.style.display = isNewCheckbox.checked ? 'block' : 'none';
+                });
+            }
         }
 
         // LOAD
@@ -875,13 +907,18 @@
         function loadProducts() {
             const list = document.getElementById('productsList');
             list.innerHTML = '';
+            const today = new Date();
+            
             shopData.products.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
+                const isNewValid = p.isNew && p.newUntil && new Date(p.newUntil) > today;
+                
                 card.innerHTML = `
-                    <h3>${p.name}</h3>
+                    <h3>${p.name}${isNewValid ? ' 🆕' : ''}</h3>
                     <p><strong>Tarifs:</strong> ${p.tariffs}</p>
                     ${p.promoTariffs ? `<p><strong>Promo:</strong> ${p.promoTariffs}</p>` : ''}
+                    ${isNewValid ? `<p><strong>Nouveau jusqu'au:</strong> ${p.newUntil}</p>` : ''}
                     <p><strong>Stock:</strong> ${p.stock}</p>
                     <p><strong>Images:</strong> ${(p.images || []).length}</p>
                     <p><strong>Vidéos:</strong> ${(p.videos || []).length}</p>
@@ -904,6 +941,21 @@
             document.getElementById('productTariffs').value = product.tariffs || '';
             document.getElementById('productPromoTariffs').value = product.promoTariffs || '';
             document.getElementById('productStock').value = product.stock || 'En stock';
+            document.getElementById('productIsNew').checked = product.isNew || false;
+            
+            // Calculer la durée restante
+            if (product.newUntil) {
+                const today = new Date();
+                const expiryDate = new Date(product.newUntil);
+                const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                document.getElementById('productNewDuration').value = Math.max(1, daysLeft);
+            } else {
+                document.getElementById('productNewDuration').value = '7';
+            }
+            
+            // Afficher/masquer le champ durée
+            document.getElementById('newDurationGroup').style.display = 
+                product.isNew ? 'block' : 'none';
             
             productImageUrl = product.image || null;
             if (productImageUrl) {
@@ -932,6 +984,9 @@
             document.getElementById('productTariffs').value = '';
             document.getElementById('productPromoTariffs').value = '';
             document.getElementById('productStock').value = 'En stock';
+            document.getElementById('productIsNew').checked = false;
+            document.getElementById('productNewDuration').value = '7';
+            document.getElementById('newDurationGroup').style.display = 'none';
             productImageUrl = null;
             galleryImages = [];
             productVideos = [];
@@ -946,10 +1001,20 @@
             const tariffs = document.getElementById('productTariffs').value.trim();
             const promoTariffs = document.getElementById('productPromoTariffs').value.trim();
             const stock = document.getElementById('productStock').value;
+            const isNew = document.getElementById('productIsNew').checked;
+            const newDuration = parseInt(document.getElementById('productNewDuration').value) || 7;
 
             if (!name || !tariffs || !productImageUrl) {
                 showMessage('❌ Remplis: Nom, Tarifs et Image', 'error');
                 return;
+            }
+
+            // Calculer la date d'expiration du badge "Nouveau"
+            let newUntil = null;
+            if (isNew) {
+                const expiryDate = new Date();
+                expiryDate.setDate(expiryDate.getDate() + newDuration);
+                newUntil = expiryDate.toISOString().split('T')[0];
             }
 
             const product = {
@@ -962,6 +1027,8 @@
                 image: productImageUrl,
                 images: galleryImages.map(g => g.url),
                 videos: productVideos.map(v => v.url),
+                isNew: isNew,
+                newUntil: newUntil,
                 createdAt: new Date().toISOString()
             };
 
