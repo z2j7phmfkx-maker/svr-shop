@@ -1,12 +1,12 @@
 {
   "concours": {
-    "description": "🚨L’équipe SVR organise un nouveau concours ! 🚨🎁\n\nCette fois ci la règle du jeu est simple : plus tu nous ramèneras des gens plus tu auras de chance de gagner. Les conditions sont les suivantes :\n👉 Être dans ce canal et avoir déjà commandé\n👉 Nous envoyer des personnes fiables, polies et à l’heure (si ton pote nous parle mal tu peux le rayer de ta liste) \n👉 La personne compte seulement si elle commande dans ces dates \n\n🪪 N’oubliez pas que la carte d’identité reste obligatoire ainsi qu’une vidéo de vérification en direct. \n\n3 lots seront disponibles :\n🥇valeur 60 e\n🥈valeur 50 e\n🥉valeur 40 e\n\n🗓️ Le concours commence ce lundi 16 mars et prend fin le jeudi 16 avril inclus  \n\nÀ vous de jouer 👀\n\n-L’équipe SVR"
+    "description": "🚨L'équipe SVR organise un nouveau concours ! 🚨🎁\n\nCette fois ci la règle du jeu est simple : plus tu nous ramèneras des gens plus tu auras de chance de gagner. Les conditions sont les suivantes :\n👉 Être dans ce canal et avoir déjà commandé\n👉 Nous envoyer des personnes fiables, polies et à l'heure (si ton pote nous parle mal tu peux le rayer de ta liste) \n👉 La personne compte seulement si elle commande dans ces dates \n\n🪪 N'oubliez pas que la carte d'identité reste obligatoire ainsi qu'une vidéo de vérification en direct. \n\n3 lots seront disponibles :\n🥇valeur 60 e\n🥈valeur 50 e\n🥉valeur 40 e\n\n🗓️ Le concours commence ce lundi 16 mars et prend fin le jeudi 16 avril inclus  \n\nÀ vous de jouer 👀\n\n-L'équipe SVR"
   },
   "products": [
     {
       "id": 1,
       "name": "GARY PAYTON",
-      "description": "Nommée d’après la star de la NBA, Gary Payton est une variété hybride issue du croisement sélectif de deux variétés parents à la puissante exceptionnelle. Gary Payton est non seulement puissante, mais elle vous permet aussi de rester concentré et productif, ce qui en fait un bon choix pour ceux qui veulent profiter des avantages récréatifs du cannabis tout en étant capables de mener à bien les tâches du quotidien. Gary Payton présente un profil de goûts et d’odeurs unique, dominé par de fortes notes de carburant et de plantes, qui peut être assez prononcé. Alors que certains fumeurs plus portés sur le sucré pourraient être découragés, pour ceux qui apprécient les parfums forts et salés, l’expérience peut être très agréable.",
+      "description": "Nommée d'après la star de la NBA, Gary Payton est une variété hybride issue du croisement sélectif de deux variétés parents à la puissante exceptionnelle. Gary Payton est non seulement puissante, mais elle vous permet aussi de rester concentré et productif, ce qui en fait un bon choix pour ceux qui veulent profiter des avantages récréatifs du cannabis tout en étant capables de mener à bien les tâches du quotidien. Gary Payton présente un profil de goûts et d'odeurs unique, dominé par de fortes notes de carburant et de plantes, qui peut être assez prononcé. Alors que certains fumeurs plus portés sur le sucré pourraient être découragés, pour ceux qui apprécient les parfums forts et salés, l'expérience peut être très agréable.",
       "tariffs": "2g=20|10g=80|20g=150",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774652826/afk3zibwfrsabnlpotyi.jpg",
@@ -19,7 +19,7 @@
     {
       "id": 1774653192399,
       "name": "AMNESIA WHITE",
-      "description": "L’Amnesia White est une variété hybride à 70 % sativa et à 30 % indica. Le goût et l’odeur sont pratiquement identiques à ceux des variétés Haze d’origine. Ils sont épicés et possèdent des notes d’agrumes et une certaine douceur terreuse.",
+      "description": "L'Amnesia White est une variété hybride à 70 % sativa et à 30 % indica. Le goût et l'odeur sont pratiquement identiques à ceux des variétés Haze d'origine. Ils sont épicés et possèdent des notes d'agrumes et une certaine douceur terreuse.",
       "tariffs": "3g=10|10g=60|20g=120",
       "promoTariffs": null,
       "stock": "En stock",
@@ -100,7 +100,7 @@
     {
       "id": 1774680499527,
       "name": "SHERBET",
-      "description": "La Sherbet est une puissante variété de cannabis hybride à dominance indica avec des niveaux de THC de 21–24 %. Elle offre un parfum séduisant de desserts sucrés et d’agrumes, suivi par un délicieux goût de fruits des bois acides. Les effets sont revigorants mais relaxants, apportant une sensation vive et engageante qui est parfaite pour les occasions sociales détendues.",
+      "description": "La Sherbet est une puissante variété de cannabis hybride à dominance indica avec des niveaux de THC de 21–24 %. Elle offre un parfum séduisant de desserts sucrés et d'agrumes, suivi par un délicieux goût de fruits des bois acides. Les effets sont revigorants mais relaxants, apportant une sensation vive et engageante qui est parfaite pour les occasions sociales détendues.",
       "tariffs": "1,2g=20|5g=60|10g=100",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774680416/z9s8khfx3jnl8rjrz6df.jpg",
@@ -113,7 +113,7 @@
     {
       "id": 1774680583821,
       "name": "ALIEN PAYA👽🇺🇸🇪🇸",
-      "description": "L’Alien Paya est principalement une indica avec un taux de THC supérieur à 20%. Le profil aromatique est complexe et multicouche : une fusion de fruits rappelant les fruits tropicaux et des vergers entrelacés avec des notes gazeuses et synthétiques volatiles qui fournissent une expression terpénique moderne distinctive.",
+      "description": "L'Alien Paya est principalement une indica avec un taux de THC supérieur à 20%. Le profil aromatique est complexe et multicouche : une fusion de fruits rappelant les fruits tropicaux et des vergers entrelacés avec des notes gazeuses et synthétiques volatiles qui fournissent une expression terpénique moderne distinctive.",
       "tariffs": "1,2g=20|5g=60|10g=100",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774680538/w2tofvghdso9dnbsiby2.jpg",
@@ -126,7 +126,7 @@
     {
       "id": 1774680669645,
       "name": "ICE O LATOR🥶",
-      "description": "L’Ice-O-Lator est une résine extraite à l’eau et à la glace, sans solvants chimiques. Cette méthode filtre les trichomes à froid pour produire une résine concentrée en cannabinoïdes, souvent plus puissante que le hash classique. Il se consomme en vaporisation, infusion ou cuisine. L’Ice-O-Lator séduit par ses effets puissants, son goût authentique et sa composition naturelle. Il reste réservé aux consommateurs avertis en quête d’une expérience haut de gamme. Celui-ci est issu d’une farm indépendante d’Espagne où tout les produits sont fait avec du savoir faire.",
+      "description": "L'Ice-O-Lator est une résine extraite à l'eau et à la glace, sans solvants chimiques. Cette méthode filtre les trichomes à froid pour produire une résine concentrée en cannabinoïdes, souvent plus puissante que le hash classique. Il se consomme en vaporisation, infusion ou cuisine. L'Ice-O-Lator séduit par ses effets puissants, son goût authentique et sa composition naturelle. Il reste réservé aux consommateurs avertis en quête d'une expérience haut de gamme. Celui-ci est issu d'une farm indépendante d'Espagne où tout les produits sont fait avec du savoir faire.",
       "tariffs": "1g=30|5g=130",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774680658/mmsmbcuiycm0ptticytp.jpg",
@@ -152,7 +152,7 @@
     {
       "id": 1774681270147,
       "name": "120u FORBIDDEN⛔️",
-      "description": "Le 120u désigne un tamis de 120 microns utilisé pour filtrer la résine : il laisse passer surtout les bonnes particules tout en retenant une partie des impuretés, ce qui donne une résine de bonne qualité. Le Forbidden est une variété de cannabis à dominance indica avec une concentration en THC est très élevée à 21–23 % selon le phénotype et la façon dont elle a été cultivée. Le Forbidden présente un riche profil terpénique lui donnant une odeur complexe dominée par des tons de fruits sucrés. Le goût est tout aussi fruité et rappelle les cerises mûres, les pamplemousses, les oranges et des fruits tropicaux comme les bananes et les mangues.",
+      "description": "Le 120u désigne un tamis de 120 microns utilisé pour filtrer la résine : il laisse passer surtout les bonnes particules tout en retenant une partie des impuretés, ce qui donne une résine de bonne qualité. Le Forbidden est une variété de cannabis à dominance indica avec une concentration en THC est très élevée à 21–23 % selon le phénotype et la façon dont elle a été cultivée. Le Forbidden présente un riche profil terpénique lui donnant une odeur complexe dominée par des tons de fruits sucrés. Le goût est tout aussi fruité et rappelle les cerises mûres, les pamplemousses, les oranges et des fruits tropicaux comme les bananes et les mangues.",
       "tariffs": "3g=20€|10g=50|20g=100",
       "promoTariffs": "10g=40|20g=80",
       "isNew": false,
@@ -169,7 +169,7 @@
     {
       "id": 1774681387518,
       "name": "120u GRAPPE PIE X WTC 🍇",
-      "description": "Le 120u désigne un tamis de 120 microns utilisé pour filtrer la résine : il laisse passer surtout les bonnes particules tout en retenant une partie des impuretés, ce qui donne une résine de bonne qualité. Avec une bonne teneur en THC de 22 %, le Grape Pie offre une expérience prononcée, superbe pour détendre tout le corps et élever l'esprit. Cette variété produit des saveurs intenses de raisins qui complètent bien les notes plus poivrées et mentholées.",
+      "description": "Le 120u désigne un tamis de 120 microns utilisé pour filtrer la résine : il laisse passer surtout les bonnes particules tout en retenant une partie des impuretés, ce qui donne une résine de bonne qualité. Avec une bonne teneur en THC de 22 %, le Grape Pie offre une expérience prononcée, superbe pour détendre tout le corps et élever l'esprit. Cette variété produit des saveurs intenses de raisins qui complètent bien les notes plus poivrées et mentholées.",
       "tariffs": "3g=20|10g=50|20g=100",
       "promoTariffs": "10g=40|20g=80",
       "isNew": false,
@@ -186,7 +186,7 @@
     {
       "id": 1774681507311,
       "name": "TROPICANA🌺🏝️🇺🇸🇪🇸",
-      "description": "La Tropicanna regorge de délicieux terpènes et contient aussi beaucoup de THC. Avec 26 % de cannabinoïde, cette variété à dominance sativa se concentre sur une expérience énergisante à tête claire. Des notes de citron, de citron vert et d’orange sont clairement présentes dans la fumée, complétées par des parfums de fruits des bois et d’herbes pour une touche surprenante. Les effets de Tropicanna montent lentement et, au vu de la forte teneur en THC du plant, il est préférable d’y aller doucement. L’effet général est joyeux et élévateur, avec des niveaux renforcés de créativité et de motivation, ce qui fait de Tropicanna une bonne variété en journée dans le cadre d’une consommation modérée.",
+      "description": "La Tropicanna regorge de délicieux terpènes et contient aussi beaucoup de THC. Avec 26 % de cannabinoïde, cette variété à dominance sativa se concentre sur une expérience énergisante à tête claire. Des notes de citron, de citron vert et d'orange sont clairement présentes dans la fumée, complétées par des parfums de fruits des bois et d'herbes pour une touche surprenante. Les effets de Tropicanna montent lentement et, au vu de la forte teneur en THC du plant, il est préférable d'y aller doucement. L'effet général est joyeux et élévateur, avec des niveaux renforcés de créativité et de motivation, ce qui fait de Tropicanna une bonne variété en journée dans le cadre d'une consommation modérée.",
       "tariffs": "1,2g=20|5g=60|10g=100",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774681495/ncapkiqwncrreswivlun.jpg",
@@ -213,5 +213,6 @@
       "videos": [],
       "createdAt": "2026-03-28T07:06:30.675Z"
     }
-  ]
+  ],
+  "userTokens": {}
 }
