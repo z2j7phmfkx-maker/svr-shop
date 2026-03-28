@@ -54,13 +54,16 @@
       "name": "DOUBLE STATIC PISTASH",
       "description": "",
       "tariffs": "1,2g=20|3,5g=50|10g=110",
+      "promoTariffs": null,
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774653382/zzsmsgelvlui8hkxtlx7.jpg",
       "images": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774653391/hd3dqqiuubxvmhk660mi.mov"
       ],
-      "createdAt": "2026-03-28T06:56:43.612Z"
+      "isNew": true,
+      "newUntil": "2026-04-04",
+      "createdAt": "2026-03-28T07:50:21.522Z"
     },
     {
       "id": 1774653481785,
