@@ -20,16 +20,17 @@
       "id": 1774653192399,
       "name": "AMNESIA WHITE",
       "description": "L'Amnesia White est une variété hybride à 70 % sativa et à 30 % indica. Le goût et l'odeur sont pratiquement identiques à ceux des variétés Haze d'origine. Ils sont épicés et possèdent des notes d'agrumes et une certaine douceur terreuse.",
-      "tariffs": "3g=10|10g=60|20g=120",
-      "promoTariffs": null,
+      "tariffs": "3g=20|10g=60|20g=120",
+      "promoTariffs": "",
+      "isNew": false,
+      "newDuration": 0,
+      "newUntil": "",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774653126/pimzdqqrxtpn3bfp37oj.jpg",
-      "images": [],
+      "gallery": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774653141/he8aykky9hmvv9wt2e1s.mov"
       ],
-      "isNew": false,
-      "newUntil": null,
       "createdAt": "2026-03-28T07:48:23.208Z"
     },
     {
@@ -216,7 +217,6 @@
   ],
   "userTokens": {
     "svr_p02wfgqix863umgswuhk3": 8536904445,
-    "svr_psn04c7byb6xkgs1ak9ub": 7083395319,
-    "svr_kle4jbymfam0j52khtmmvlj": 5304380633
+    "svr_psn04c7byb6xkgs1ak9ub": 7083395319
   }
 }
