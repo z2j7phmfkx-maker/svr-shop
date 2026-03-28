@@ -23,6 +23,7 @@
             background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%);
             color: #fff;
             min-height: 100vh;
+            padding-top: 60px;
             padding-bottom: 70px;
         }
         
@@ -30,47 +31,34 @@
             background: rgba(0, 212, 255, 0.05);
             border-bottom: 2px solid #00d4ff;
             padding: 12px 15px;
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 100;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
         }
         
-        .header-left {
+        .header-content {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 12px;
-        }
-        
-        .header-close {
-            color: #00d4ff;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 5px;
-            user-select: none;
+            gap: 0;
         }
         
         .header h1 {
             color: #fff;
-            font-size: 16px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
         
         .header-subtitle {
             color: #888;
             font-size: 11px;
             margin-top: 2px;
-        }
-        
-        .header-menu {
-            color: #00d4ff;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 5px;
-            user-select: none;
         }
         
         .concours-banner {
@@ -477,6 +465,7 @@
         
         @media (max-width: 480px) {
             body {
+                padding-top: 60px;
                 padding-bottom: 70px;
             }
             
@@ -485,7 +474,7 @@
             }
             
             .header h1 {
-                font-size: 15px;
+                font-size: 16px;
             }
             
             .container {
@@ -542,14 +531,10 @@
 </head>
 <body>
     <div class="header">
-        <div class="header-left">
-            <span class="header-close">Fermer</span>
-            <div>
-                <h1>SVR</h1>
-                <div class="header-subtitle">mini-application</div>
-            </div>
+        <div class="header-content">
+            <h1>SVR</h1>
+            <div class="header-subtitle">mini-application</div>
         </div>
-        <span class="header-menu">⋯</span>
     </div>
 
     <div class="concours-banner" id="concoursBanner" style="display: none;">
