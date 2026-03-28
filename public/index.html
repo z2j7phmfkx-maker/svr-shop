@@ -1,867 +1,685 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVR Shop</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow-x: hidden;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%);
-            color: #fff;
-            min-height: 100vh;
-            padding-top: 0;
-            padding-bottom: 70px;
-        }
-        
-        .concours-banner {
-            background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
-            padding: 18px 15px;
-            margin: 12px 12px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.3);
-        }
-        
-        .concours-banner h2 {
-            color: #fff;
-            margin-bottom: 8px;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .concours-banner p {
-            color: rgba(255, 255, 255, 0.95);
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 0 12px;
-        }
-        
-        .catalogue-title {
-            color: #00d4ff;
-            font-size: 18px;
-            font-weight: 600;
-            margin: 18px 0 12px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            letter-spacing: 0.3px;
-        }
-        
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .product-card {
-            background: rgba(0, 212, 255, 0.08);
-            border: 1.5px solid #00d4ff;
-            border-radius: 10px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.2s;
-            user-select: none;
-        }
-        
-        .product-card:active {
-            transform: scale(0.97);
-            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
-        }
-        
-        .product-image {
-            width: 100%;
-            aspect-ratio: 1/1;
-            object-fit: cover;
-            background: rgba(0, 212, 255, 0.1);
-            display: block;
-        }
-        
-        .product-info {
-            padding: 10px;
-        }
-        
-        .product-badges {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 6px;
-            flex-wrap: wrap;
-        }
-        
-        .badge-new {
-            background: linear-gradient(135deg, #00d4ff 0%, #00ffff 100%);
-            color: #000;
-            padding: 3px 8px;
-            border-radius: 14px;
-            font-size: 9px;
-            font-weight: bold;
-            animation: badgePulse 2s infinite;
-        }
-        
-        .badge-promo {
-            background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
-            color: white;
-            padding: 3px 8px;
-            border-radius: 14px;
-            font-size: 9px;
-            font-weight: bold;
-        }
-        
-        @keyframes badgePulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.8;
-                transform: scale(1.05);
-            }
-        }
-        
-        .product-name {
-            color: #00d4ff;
-            font-weight: 600;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            font-size: 12px;
-            line-height: 1.2;
-            letter-spacing: 0.3px;
-        }
-        
-        .product-price {
-            color: #fff;
-            font-size: 12px;
-            margin-bottom: 6px;
-            line-height: 1.3;
-        }
-        
-        .product-price-value {
-            color: #00d4ff;
-            font-weight: 700;
-            font-size: 13px;
-        }
-        
-        .product-stock {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #00ff64;
-            font-size: 11px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-        
-        .stock-indicator {
-            width: 5px;
-            height: 5px;
-            background: #00ff64;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-        
-        .product-stock.rupture {
-            color: #ff4444;
-        }
-        
-        .product-stock.rupture .stock-indicator {
-            background: #ff4444;
-        }
-        
-        .product-stock.bientot {
-            color: #ff8c00;
-        }
-        
-        .product-stock.bientot .stock-indicator {
-            background: #ff8c00;
-        }
-        
-        .product-icons {
-            display: flex;
-            gap: 8px;
-            font-size: 14px;
-        }
-        
-        .admin-link {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: #000;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
-            transition: all 0.2s;
-            z-index: 99;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .admin-link:active {
-            transform: scale(0.92);
-            box-shadow: 0 2px 8px rgba(0, 212, 255, 0.3);
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 1000;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 20px;
-        }
-        
-        .modal.active {
-            display: block;
-        }
-        
-        .modal-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border: 2px solid #00d4ff;
-            border-radius: 10px;
-            padding: 15px;
-            width: 95%;
-            max-width: 100%;
-            margin: 15px auto;
-            position: relative;
-        }
-        
-        .modal-close {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-        }
-        
-        .modal-close:active {
-            background: #ff6666;
-        }
-        
-        .modal h2 {
-            color: #00d4ff;
-            margin-bottom: 8px;
-            margin-top: 8px;
-            font-size: 16px;
-            padding-right: 40px;
-        }
-        
-        .modal p {
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 12px;
-            line-height: 1.5;
-            font-size: 13px;
-        }
-        
-        .gallery-modal {
-            margin-bottom: 15px;
-        }
-        
-        .main-image {
-            width: 100%;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            object-fit: cover;
-            aspect-ratio: 1/1;
-            border: 2px solid #00d4ff;
-            display: block;
-        }
-        
-        .thumbnails {
-            display: flex;
-            gap: 5px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin-bottom: 12px;
-            padding-right: 10px;
-        }
-        
-        .thumbnail {
-            width: 45px;
-            height: 45px;
-            border-radius: 6px;
-            cursor: pointer;
-            border: 2px solid #00d4ff;
-            object-fit: cover;
-            opacity: 0.6;
-            transition: all 0.2s;
-            flex-shrink: 0;
-        }
-        
-        .thumbnail.active {
-            opacity: 1;
-            border-color: #00ffff;
-        }
-        
-        .tariffs-section {
-            background: rgba(0, 212, 255, 0.1);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #00d4ff;
-            margin: 12px 0;
-        }
-        
-        .tariffs-section h3 {
-            color: #00d4ff;
-            margin-bottom: 8px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-        
-        .tariff-item {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin-bottom: 6px;
-            padding: 6px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 6px;
-            font-size: 12px;
-            flex-wrap: wrap;
-        }
-        
-        .tariff-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .tariff-original {
-            text-decoration: line-through;
-            color: #ff6464;
-            font-size: 10px;
-        }
-        
-        .tariff-promo {
-            color: #00ff64;
-            font-weight: 600;
-            font-size: 12px;
-        }
-        
-        .promo-badge {
-            background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
-            color: white;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-size: 9px;
-            font-weight: bold;
-            animation: pulse 1.5s infinite;
-            white-space: nowrap;
-        }
-        
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.8;
-                transform: scale(1.05);
-            }
-        }
-        
-        .videos-section {
-            margin-top: 12px;
-        }
-        
-        .videos-section h3 {
-            color: #00d4ff;
-            margin-bottom: 8px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-        
-        .video-player {
-            width: 100%;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border: 2px solid #00d4ff;
-            max-height: 400px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVR Shop</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        /* AUTH CONTAINER */
-        #authContainer {
-            display: flex;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%);
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            flex-direction: column;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+      min-height: 100vh;
+      padding: 10px;
+    }
 
-        #authContainer div {
-            text-align: center;
-            color: #fff;
-        }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
 
-        #authContainer h1 {
-            color: #00d4ff;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
+    /* Bannière Concours */
+    .concours-banner {
+      background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 20px 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
 
-        #authContainer p {
-            color: #aaa;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
+    .concours-banner:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #00d4ff;
-            border-top-color: #00ff64;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
+    .concours-banner h2 {
+      color: white;
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+    .concours-text {
+      color: white;
+      font-size: 14px;
+      line-height: 1.6;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
 
-        /* DENIED CONTAINER */
-        #deniedContainer {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%);
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        }
+    .concours-text.expanded {
+      max-height: 500px;
+    }
 
-        #deniedContainer div {
-            text-align: center;
-            color: #fff;
-            padding: 20px;
-        }
+    .concours-preview {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 13px;
+      transition: opacity 0.3s ease;
+    }
 
-        #deniedContainer h1 {
-            color: #ff4444;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
+    .concours-preview.hidden {
+      display: none;
+    }
 
-        #deniedContainer p {
-            color: #aaa;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
+    .expand-icon {
+      display: inline-block;
+      margin-left: 5px;
+      font-size: 12px;
+      transition: transform 0.3s ease;
+    }
 
-        #deniedContainer a {
-            background: linear-gradient(135deg, #00d4ff, #00ff64);
-            color: #000;
-            padding: 12px 30px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-block;
-            transition: all 0.3s;
-        }
+    .concours-banner.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
 
-        #deniedContainer a:active {
-            transform: scale(0.95);
-        }
-        
-        @media (max-width: 480px) {
-            body {
-                padding-top: 0;
-                padding-bottom: 70px;
-            }
-            
-            .container {
-                padding: 0 10px;
-            }
-            
-            .products-grid {
-                gap: 8px;
-            }
-            
-            .product-card {
-                border-radius: 8px;
-            }
-            
-            .product-info {
-                padding: 8px;
-            }
-            
-            .product-name {
-                font-size: 11px;
-            }
-            
-            .product-price {
-                font-size: 11px;
-            }
-            
-            .catalogue-title {
-                font-size: 16px;
-            }
-        }
-        
-        @media (max-width: 360px) {
-            .product-name {
-                font-size: 10px;
-            }
-            
-            .product-price {
-                font-size: 10px;
-            }
-            
-            .product-stock {
-                font-size: 10px;
-            }
-        }
-    </style>
+    /* Header */
+    .header {
+      background: white;
+      padding: 15px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      color: #00d4ff;
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 12px;
+    }
+
+    /* Grille Produits */
+    .products-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .product-image {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+    }
+
+    .product-info {
+      padding: 12px;
+    }
+
+    .product-name {
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .product-badges {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+
+    .badge-new {
+      background: #00d4ff;
+      color: white;
+    }
+
+    .badge-promo {
+      background: #ff6b35;
+      color: white;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .product-price {
+      font-size: 12px;
+      color: #666;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .modal.active {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 20px;
+      position: relative;
+      margin: 20px auto;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #00d4ff;
+      margin-bottom: 15px;
+      margin-top: 10px;
+    }
+
+    .modal-description {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 15px;
+    }
+
+    .modal-gallery {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      overflow-x: auto;
+    }
+
+    .gallery-thumb {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .gallery-thumb:hover,
+    .gallery-thumb.active {
+      border-color: #00d4ff;
+      transform: scale(1.05);
+    }
+
+    .modal-main-image {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .modal-tariffs {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .tariff-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 13px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .tariff-row:last-child {
+      border-bottom: none;
+    }
+
+    .tariff-normal {
+      color: #666;
+    }
+
+    .tariff-promo {
+      color: #ff6b35;
+      font-weight: bold;
+      text-decoration: line-through;
+      margin-right: 5px;
+    }
+
+    .tariff-price {
+      font-weight: bold;
+      color: #00d4ff;
+    }
+
+    .modal-videos {
+      margin-top: 15px;
+    }
+
+    .video-player {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .admin-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+    }
+
+    .admin-link a {
+      color: #00d4ff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    /* Auth Container */
+    #authContainer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
+      z-index: 2000;
+    }
+
+    .auth-box {
+      text-align: center;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #00d4ff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .auth-box h2 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .auth-box p {
+      color: #666;
+      font-size: 13px;
+    }
+
+    #deniedContainer {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+      z-index: 2000;
+    }
+
+    .denied-box {
+      text-align: center;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .denied-box h2 {
+      color: #ff6b35;
+      margin-bottom: 15px;
+      font-size: 24px;
+    }
+
+    .denied-box p {
+      color: #666;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .denied-box a {
+      display: inline-block;
+      background: #00d4ff;
+      color: white;
+      padding: 12px 25px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .denied-box a:hover {
+      background: #0099ff;
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 24px;
+      }
+
+      .products-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .modal-content {
+        width: 95%;
+        padding: 15px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- AUTH CONTAINER -->
-    <div id="authContainer">
-        <div>
-            <h1>🔐 Vérification d'accès</h1>
-            <p>Vérification de votre accès en cours...</p>
-            <div class="spinner"></div>
-        </div>
+  <!-- Auth Container -->
+  <div id="authContainer">
+    <div class="auth-box">
+      <div class="spinner"></div>
+      <h2>Vérification d'accès</h2>
+      <p>Veuillez patienter...</p>
     </div>
+  </div>
 
-    <!-- DENIED CONTAINER -->
-    <div id="deniedContainer">
-        <div>
-            <h1>❌ Accès Refusé</h1>
-            <p>Tu dois rejoindre le channel @SVR_TO pour accéder au shop.</p>
-            <a href="https://t.me/SVR_TO">Rejoindre le channel</a>
-        </div>
+  <!-- Denied Container -->
+  <div id="deniedContainer">
+    <div class="denied-box">
+      <h2>❌ Accès Refusé</h2>
+      <p>Tu n'as pas accès à ce shop.</p>
+      <p>Rejoins le channel @SVR_TO pour accéder.</p>
+      <a href="https://t.me/SVR_TO" target="_blank">Rejoindre le channel</a>
     </div>
+  </div>
 
-    <!-- CONCOURS BANNER -->
-    <div class="concours-banner" id="concoursBanner" style="display: none;">
-        <h2>🎁 Concours</h2>
-        <p id="concoursDesc"></p>
-    </div>
-
-    <!-- CATALOGUE -->
+  <!-- Main Content -->
+  <div id="mainContent" style="display: none;">
     <div class="container">
-        <div class="catalogue-title">📦 Catalogue</div>
-        <div class="products-grid" id="productsGrid"></div>
-    </div>
+      <!-- Header -->
+      <div class="header">
+        <h1>SVR Shop</h1>
+        <p>Découvre nos produits exclusifs</p>
+      </div>
 
-    <!-- ADMIN LINK -->
-    <a href="/admin" class="admin-link" title="Admin">⚙️</a>
-
-    <!-- PRODUCT MODAL -->
-    <div class="modal" id="productModal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">✕</button>
-            
-            <h2 id="modalProductName"></h2>
-            <p id="modalProductDesc"></p>
-
-            <!-- Gallery -->
-            <div class="gallery-modal" id="gallerySection" style="display: none;">
-                <img id="modalMainImage" class="main-image" />
-                <div class="thumbnails" id="modalThumbnails"></div>
-            </div>
-
-            <!-- Tariffs -->
-            <div class="tariffs-section" id="tariffsSection" style="display: none;">
-                <h3>💰 Tarifs</h3>
-                <div id="tariffsList"></div>
-            </div>
-
-            <!-- Videos -->
-            <div class="videos-section" id="videosSection" style="display: none;">
-                <h3>🎥 Vidéos</h3>
-                <div id="videosList"></div>
-            </div>
+      <!-- Bannière Concours (Cliquable) -->
+      <div class="concours-banner" id="concoursBanner" onclick="toggleConcours()">
+        <h2>🚨 Concours SVR 🚨</h2>
+        <div class="concours-preview" id="concoursPreview">
+          Clique pour voir les détails <span class="expand-icon">▼</span>
         </div>
+        <div class="concours-text" id="concoursText"></div>
+      </div>
+
+      <!-- Grille Produits -->
+      <div class="products-grid" id="productsGrid"></div>
+
+      <!-- Admin Link -->
+      <div class="admin-link">
+        <a href="/admin">Accès Admin</a>
+      </div>
     </div>
+  </div>
 
-    <script>
-        let products = [];
-        let currentProduct = null;
-        let currentImageIndex = 0;
+  <!-- Modal Produit -->
+  <div class="modal" id="productModal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeModal()">&times;</span>
+      <h3 class="modal-title" id="modalTitle"></h3>
+      <img class="modal-main-image" id="modalMainImage" src="" alt="">
+      
+      <div class="modal-gallery" id="modalGallery"></div>
 
-        // LOAD DATA
-        async function loadData() {
-            try {
-                const res = await fetch('/data.json');
-                const data = await res.json();
-                
-                // Afficher concours
-                if (data.concours && data.concours.description) {
-                    document.getElementById('concoursDesc').textContent = data.concours.description;
-                    document.getElementById('concoursBanner').style.display = 'block';
-                }
-                
-                // Afficher produits
-                products = data.products || [];
-                displayProducts();
-            } catch (e) {
-                console.error('Load error:', e);
-            }
+      <div class="modal-description" id="modalDescription"></div>
+
+      <div class="modal-tariffs" id="modalTariffs"></div>
+
+      <div class="modal-videos" id="modalVideos"></div>
+    </div>
+  </div>
+
+  <script>
+    let shopData = {};
+
+    // Vérifier le token au démarrage
+    async function verifyAccess() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const userId = urlParams.get('userId');
+
+      if (!token || !userId) {
+        showDenied();
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/verify-token?token=${token}&userId=${userId}`);
+        const result = await response.json();
+
+        if (result.valid) {
+          loadShop();
+        } else {
+          showDenied();
+        }
+      } catch (error) {
+        console.error('Erreur vérification:', error);
+        showDenied();
+      }
+    }
+
+    function showDenied() {
+      document.getElementById('authContainer').style.display = 'none';
+      document.getElementById('deniedContainer').style.display = 'flex';
+    }
+
+    async function loadShop() {
+      try {
+        const response = await fetch('/data.json');
+        shopData = await response.json();
+
+        // Afficher le contenu principal
+        document.getElementById('authContainer').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+
+        // Charger le concours
+        loadConcours();
+
+        // Charger les produits
+        loadProducts();
+      } catch (error) {
+        console.error('Erreur chargement données:', error);
+        showDenied();
+      }
+    }
+
+    function loadConcours() {
+      const description = shopData.concours?.description || '';
+      document.getElementById('concoursText').textContent = description;
+    }
+
+    function toggleConcours() {
+      const banner = document.getElementById('concoursBanner');
+      const text = document.getElementById('concoursText');
+      const preview = document.getElementById('concoursPreview');
+
+      banner.classList.toggle('expanded');
+      text.classList.toggle('expanded');
+      preview.classList.toggle('hidden');
+    }
+
+    function loadProducts() {
+      const grid = document.getElementById('productsGrid');
+      grid.innerHTML = '';
+
+      shopData.products?.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.onclick = () => openModal(product);
+
+        let badges = '';
+        if (product.isNew) {
+          badges += '<span class="badge badge-new">✨ NOUVEAU</span>';
+        }
+        if (product.promoTariffs) {
+          badges += '<span class="badge badge-promo">🏷️ PROMO</span>';
         }
 
-        function displayProducts() {
-            const grid = document.getElementById('productsGrid');
-            grid.innerHTML = '';
-            
-            const today = new Date();
-            
-            products.forEach(product => {
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.onclick = () => showProductDetails(product);
-                
-                // Min price
-                const minPrice = Math.min(...product.tariffs.split('|').map(t => {
-                    const [_, price] = t.split('=');
-                    return parseFloat(price);
-                }));
-                
-                // Stock class
-                const stockClass = product.stock.toLowerCase().replace('ô', 'o');
-                
-                // Vérifier si le badge "Nouveau" est valide
-                const isNewValid = product.isNew && product.newUntil && new Date(product.newUntil) > today;
-                const hasPromo = product.promoTariffs ? true : false;
-                
-                // Badges
-                let badgesHTML = '';
-                if (isNewValid) {
-                    badgesHTML += '<span class="badge-new">✨ NOUVEAU</span>';
-                }
-                if (hasPromo) {
-                    badgesHTML += '<span class="badge-promo">🏷️ PROMO</span>';
-                }
-                
-                card.innerHTML = `
-                    <img src="${product.image}" class="product-image" alt="${product.name}" loading="lazy" />
-                    <div class="product-info">
-                        ${badgesHTML ? `<div class="product-badges">${badgesHTML}</div>` : ''}
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-price">À partir de <span class="product-price-value">${minPrice}€</span></div>
-                        <div class="product-stock ${stockClass}">
-                            <span class="stock-indicator"></span>
-                            ${product.stock}
-                        </div>
-                        <div class="product-icons">
-                            ${product.gallery && product.gallery.length > 0 ? '📸' : ''}
-                            ${product.videos && product.videos.length > 0 ? '🎥' : ''}
-                        </div>
-                    </div>
-                `;
-                
-                grid.appendChild(card);
-            });
-        }
+        const price = product.tariffs?.split('|')[0]?.split('=')[1] || 'N/A';
 
-        function showProductDetails(product) {
-            currentProduct = product;
-            currentImageIndex = 0;
-            
-            const today = new Date();
-            const isNewValid = product.isNew && product.newUntil && new Date(product.newUntil) > today;
-            
-            // Nom & desc
-            let titleHTML = product.name;
-            if (isNewValid) {
-                titleHTML += ' <span style="color: #00d4ff; font-size: 12px;">✨ NOUVEAU</span>';
-            }
-            document.getElementById('modalProductName').innerHTML = titleHTML;
-            document.getElementById('modalProductDesc').textContent = product.description || '';
-            
-            // Galerie (image principale + galerie)
-            const allImages = [product.image];
-            if (product.gallery && product.gallery.length > 0) {
-                allImages.push(...product.gallery);
-            }
-            
-            if (allImages.length > 0) {
-                document.getElementById('gallerySection').style.display = 'block';
-                document.getElementById('modalMainImage').src = allImages[0];
-                
-                const thumbnails = document.getElementById('modalThumbnails');
-                thumbnails.innerHTML = '';
-                allImages.forEach((img, i) => {
-                    const thumb = document.createElement('img');
-                    thumb.src = img;
-                    thumb.className = `thumbnail ${i === 0 ? 'active' : ''}`;
-                    thumb.onclick = () => {
-                        currentImageIndex = i;
-                        document.getElementById('modalMainImage').src = img;
-                        document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
-                        thumb.classList.add('active');
-                    };
-                    thumbnails.appendChild(thumb);
-                });
-            } else {
-                document.getElementById('gallerySection').style.display = 'none';
-            }
-            
-            // Tarifs
-            if (product.tariffs) {
-                document.getElementById('tariffsSection').style.display = 'block';
-                displayTariffs(product);
-            } else {
-                document.getElementById('tariffsSection').style.display = 'none';
-            }
-            
-            // Vidéos
-            if (product.videos && product.videos.length > 0) {
-                document.getElementById('videosSection').style.display = 'block';
-                const videosList = document.getElementById('videosList');
-                videosList.innerHTML = '';
-                product.videos.forEach(videoUrl => {
-                    const video = document.createElement('video');
-                    video.src = videoUrl;
-                    video.controls = true;
-                    video.className = 'video-player';
-                    videosList.appendChild(video);
-                });
-            } else {
-                document.getElementById('videosSection').style.display = 'none';
-            }
-            
-            document.getElementById('productModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
+        card.innerHTML = `
+          <img class="product-image" src="${product.image}" alt="${product.name}">
+          <div class="product-info">
+            <div class="product-name">${product.name}</div>
+            <div class="product-badges">${badges}</div>
+            <div class="product-price">À partir de ${price}€</div>
+          </div>
+        `;
 
-        function displayTariffs(product) {
-            // Parser tarifs normaux
-            const normalTariffs = {};
-            product.tariffs.split('|').forEach(t => {
-                const [size, price] = t.split('=');
-                normalTariffs[size.trim()] = parseFloat(price);
-            });
-            
-            // Parser tarifs promo
-            const promoTariffs = {};
-            if (product.promoTariffs) {
-                product.promoTariffs.split('|').forEach(t => {
-                    const [size, price] = t.split('=');
-                    promoTariffs[size.trim()] = parseFloat(price);
-                });
-            }
-            
-            // Afficher
-            const tariffsList = document.getElementById('tariffsList');
-            tariffsList.innerHTML = '';
-            
-            Object.entries(normalTariffs).forEach(([size, normalPrice]) => {
-                const item = document.createElement('div');
-                item.className = 'tariff-item';
-                
-                const promoPrice = promoTariffs[size];
-                
-                if (promoPrice && promoPrice < normalPrice) {
-                    // En promo
-                    item.innerHTML = `
-                        <span>${size}</span>
-                        <span class="tariff-original">${normalPrice}€</span>
-                        <span class="tariff-promo">${promoPrice}€</span>
-                        <span class="promo-badge">PROMO</span>
-                    `;
-                } else {
-                    // Normal
-                    item.innerHTML = `
-                        <span>${size}</span>
-                        <span>${normalPrice}€</span>
-                    `;
-                }
-                
-                tariffsList.appendChild(item);
-            });
-        }
+        grid.appendChild(card);
+      });
+    }
 
-        function closeModal() {
-            document.getElementById('productModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
+    function openModal(product) {
+      document.getElementById('modalTitle').textContent = product.name;
+      document.getElementById('modalMainImage').src = product.image;
+      document.getElementById('modalDescription').textContent = product.description;
 
-        // VERIFY ACCESS
-        async function verifyAccess() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
-            const userId = urlParams.get('userId');
+      // Galerie
+      const gallery = document.getElementById('modalGallery');
+      gallery.innerHTML = '';
+      
+      // Ajouter l'image principale à la galerie
+      const mainThumb = document.createElement('img');
+      mainThumb.className = 'gallery-thumb active';
+      mainThumb.src = product.image;
+      mainThumb.onclick = () => {
+        document.getElementById('modalMainImage').src = product.image;
+        document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+        mainThumb.classList.add('active');
+      };
+      gallery.appendChild(mainThumb);
 
-            if (!token || !userId) {
-                document.getElementById('authContainer').style.display = 'none';
-                document.getElementById('deniedContainer').style.display = 'flex';
-                return;
-            }
+      // Images supplémentaires
+      (product.images || []).forEach(img => {
+        const thumb = document.createElement('img');
+        thumb.className = 'gallery-thumb';
+        thumb.src = img;
+        thumb.onclick = () => {
+          document.getElementById('modalMainImage').src = img;
+          document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+          thumb.classList.add('active');
+        };
+        gallery.appendChild(thumb);
+      });
 
-            try {
-                const res = await fetch(`/api/verify-token?token=${token}&userId=${userId}`);
-                const data = await res.json();
+      // Tarifs
+      const tariffsDiv = document.getElementById('modalTariffs');
+      tariffsDiv.innerHTML = '<strong>Tarifs:</strong><br>';
+      
+      if (product.tariffs) {
+        product.tariffs.split('|').forEach(tariff => {
+          const [size, price] = tariff.split('=');
+          tariffsDiv.innerHTML += `<div class="tariff-row"><span>${size.trim()}</span><span class="tariff-price">${price}€</span></div>`;
+        });
+      }
 
-                if (data.valid) {
-                    document.getElementById('authContainer').style.display = 'none';
-                    document.getElementById('deniedContainer').style.display = 'none';
-                    console.log('✅ Accès autorisé pour userId:', userId);
-                    loadData();
-                } else {
-                    document.getElementById('authContainer').style.display = 'none';
-                    document.getElementById('deniedContainer').style.display = 'flex';
-                    console.log('❌ Accès refusé:', data.message);
-                }
-            } catch (error) {
-                console.error('Error verifying token:', error);
-                document.getElementById('authContainer').style.display = 'none';
-                document.getElementById('deniedContainer').style.display = 'flex';
-            }
-        }
+      if (product.promoTariffs) {
+        tariffsDiv.innerHTML += '<br><strong style="color: #ff6b35;">Tarifs Promo:</strong><br>';
+        product.promoTariffs.split('|').forEach(tariff => {
+          const [size, price] = tariff.split('=');
+          const normalPrice = product.tariffs?.split('|').find(t => t.includes(size))?.split('=')[1];
+          tariffsDiv.innerHTML += `<div class="tariff-row"><span>${size.trim()}</span><span><span class="tariff-promo">${normalPrice}€</span><span class="tariff-price">${price}€</span></span></div>`;
+        });
+      }
 
-        // Load on page load
-        window.addEventListener('load', verifyAccess);
-    </script>
+      // Vidéos
+      const videosDiv = document.getElementById('modalVideos');
+      videosDiv.innerHTML = '';
+      if (product.videos && product.videos.length > 0) {
+        product.videos.forEach(video => {
+          const videoEl = document.createElement('video');
+          videoEl.className = 'video-player';
+          videoEl.controls = true;
+          videoEl.src = video;
+          videosDiv.appendChild(videoEl);
+        });
+      }
+
+      document.getElementById('productModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('productModal').classList.remove('active');
+    }
+
+    // Vérifier l'accès au chargement
+    verifyAccess();
+  </script>
 </body>
 </html>
