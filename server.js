@@ -16,15 +16,20 @@ const GITHUB_BRANCH = 'main';
 const BOT_TOKEN = '8774455983:AAHkE3OlVnrfaZ6-ni3W4d4vL1YLUdtpufs';
 const CHANNEL_ID = -100298886801;
 
-// TEST MODE: Hardcode ton ID
-const TEST_USER_ID = 8536904445;
+// TEST MODE
 const TEST_MODE = true;
 
 console.log('🔐 GitHub Token:', GITHUB_TOKEN ? '✅ Configuré' : '❌ Manquant');
 console.log('🧪 TEST MODE:', TEST_MODE ? '✅ ON' : '❌ OFF');
 
 // ===== TOKEN MANAGEMENT =====
-let userTokens = {};
+let userTokens = {
+  '8536904445': {
+    token: 'svr_shop_test_token_v1',
+    createdAt: new Date(),
+    userId: 8536904445
+  }
+};
 
 function generateToken() {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -32,7 +37,7 @@ function generateToken() {
 
 async function isChannelMember(userId) {
   // En mode test, accepte ton ID
-  if (TEST_MODE && userId === TEST_USER_ID) {
+  if (TEST_MODE && userId === 8536904445) {
     console.log(`✅ TEST MODE: User ${userId} accepté`);
     return true;
   }
@@ -136,16 +141,7 @@ app.post('/api/test-generate-token', (req, res) => {
     return res.json({ success: false, message: 'Test mode disabled' });
   }
 
-  const userId = TEST_USER_ID;
-
-  if (!userTokens[userId]) {
-    userTokens[userId] = {
-      token: generateToken(),
-      createdAt: new Date(),
-      userId: userId
-    };
-  }
-
+  const userId = 8536904445;
   const token = userTokens[userId].token;
   const link = `https://svr-shop.onrender.com?token=${token}`;
 
@@ -227,5 +223,6 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 https://svr-shop.onrender.com`);
-  console.log(`🧪 TEST ENDPOINT: POST /api/test-generate-token`);
+  console.log(`🧪 TEST TOKEN: svr_shop_test_token_v1`);
+  console.log(`🔗 TEST LINK: https://svr-shop.onrender.com?token=svr_shop_test_token_v1`);
 });
