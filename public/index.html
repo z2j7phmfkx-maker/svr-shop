@@ -136,6 +136,43 @@
             font-size: 14px;
         }
         
+        .product-badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .badge-new {
+            background: linear-gradient(135deg, #00d4ff 0%, #00ffff 100%);
+            color: #000;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            animation: badgePulse 2s infinite;
+        }
+        
+        @keyframes badgePulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.05);
+            }
+        }
+        
+        .badge-promo {
+            background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
         .product-price {
             color: #00ff64;
             font-size: 16px;
@@ -435,6 +472,8 @@
             const grid = document.getElementById('productsGrid');
             grid.innerHTML = '';
             
+            const today = new Date();
+            
             products.forEach(product => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
@@ -449,10 +488,24 @@
                 // Stock class
                 const stockClass = `stock-${product.stock.toLowerCase().replace('ô', 'o')}`;
                 
+                // Vérifier si le badge "Nouveau" est valide
+                const isNewValid = product.isNew && product.newUntil && new Date(product.newUntil) > today;
+                const hasPromo = product.promoTariffs ? true : false;
+                
+                // Badges
+                let badgesHTML = '';
+                if (isNewValid) {
+                    badgesHTML += '<span class="badge-new">✨ NOUVEAU</span>';
+                }
+                if (hasPromo) {
+                    badgesHTML += '<span class="badge-promo">🏷️ PROMO</span>';
+                }
+                
                 card.innerHTML = `
                     <img src="${product.image}" class="product-image" alt="${product.name}" />
                     <div class="product-info">
                         <div class="product-name">${product.name}</div>
+                        ${badgesHTML ? `<div class="product-badges">${badgesHTML}</div>` : ''}
                         <div class="product-price">À partir de ${minPrice}€</div>
                         <div class="product-stock ${stockClass}">${product.stock}</div>
                         <div class="product-icons">
@@ -470,8 +523,15 @@
             currentProduct = product;
             currentImageIndex = 0;
             
+            const today = new Date();
+            const isNewValid = product.isNew && product.newUntil && new Date(product.newUntil) > today;
+            
             // Nom & desc
-            document.getElementById('modalProductName').textContent = product.name;
+            let titleHTML = product.name;
+            if (isNewValid) {
+                titleHTML += ' <span style="color: #00d4ff; font-size: 14px;">✨ NOUVEAU</span>';
+            }
+            document.getElementById('modalProductName').innerHTML = titleHTML;
             document.getElementById('modalProductDesc').textContent = product.description || '';
             
             // Galerie
