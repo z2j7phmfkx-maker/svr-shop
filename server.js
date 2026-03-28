@@ -8,192 +8,186 @@ app.use(express.json());
 app.use(express.static('public'));
 
 const DATA_FILE = path.join(__dirname, 'data.json');
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = 'z2j7phmfkx-maker/svr-shop';
 const GITHUB_BRANCH = 'main';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-// Bot config
+// Telegram config
 const BOT_TOKEN = '8774455983:AAHkE3OlVnrfaZ6-ni3W4d4vL1YLUdtpufs';
 const CHANNEL_ID = -100298886801;
 
-console.log('🔐 GitHub Token:', GITHUB_TOKEN ? '✅ Configuré' : '❌ Manquant');
-console.log('🤖 Bot Token:', BOT_TOKEN ? '✅ Configuré' : '❌ Manquant');
-
-// ===== TOKEN MANAGEMENT =====
+// In-memory token storage
 let userTokens = {};
 
-function generateToken() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+// Load data.json
+function loadData() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+    }
+  } catch (err) {
+    console.error('Erreur lecture data.json:', err);
+  }
+  return { concours: { description: '' }, products: [] };
 }
 
+// Save data.json
+function saveData(data) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+}
+
+// Generate random token
+function generateToken() {
+  return 'svr_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
+
+// Check channel membership via Telegram API
 async function isChannelMember(userId) {
   try {
-    const response = await axios.get(
-      `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`,
-      { params: { chat_id: CHANNEL_ID, user_id: userId } }
-    );
-    const status = response.data.result.status;
-    return ['member', 'administrator', 'creator'].includes(status);
+    const response = await axios.get(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`, {
+      params: {
+        chat_id: CHANNEL_ID,
+        user_id: userId
+      }
+    });
+    
+    if (response.data.ok) {
+      const status = response.data.result.status;
+      return ['member', 'administrator', 'creator', 'restricted'].includes(status);
+    }
+    return false;
   } catch (error) {
-    console.error('❌ Error checking member:', error.message);
+    console.error('Erreur vérif channel:', error.message);
     return false;
   }
 }
 
-// ===== ROUTES =====
+// Routes
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/admin.html'));
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 app.get('/data.json', (req, res) => {
-  try {
-    const data = fs.readFileSync(DATA_FILE, 'utf-8');
-    res.json(JSON.parse(data));
-  } catch (e) {
-    res.json({ concours: { description: '' }, products: [] });
-  }
+  const data = loadData();
+  res.json(data);
 });
 
-// ===== TOKEN VERIFICATION (avec userId) =====
+// Verify token
 app.get('/api/verify-token', async (req, res) => {
-  const token = req.query.token;
-  const userIdFromUrl = req.query.userId;
+  const { token, userId } = req.query;
 
-  if (!token || !userIdFromUrl) {
-    return res.json({ valid: false, message: 'Token ou userId manquant' });
+  if (!token || !userId) {
+    return res.json({ valid: false });
   }
 
-  // Check if token exists
-  let tokenOwnerId = null;
-  for (const [id, data] of Object.entries(userTokens)) {
-    if (data.token === token) {
-      tokenOwnerId = id;
-      break;
-    }
-  }
-
-  if (!tokenOwnerId) {
-    return res.json({ valid: false, message: 'Token invalide' });
+  // Vérifier que le token existe
+  if (!userTokens[token]) {
+    return res.json({ valid: false });
   }
 
   // Vérifier que le token appartient à cet utilisateur
-  if (tokenOwnerId !== userIdFromUrl) {
-    console.log(`❌ Token mismatch: token owner=${tokenOwnerId}, url userId=${userIdFromUrl}`);
-    return res.json({ valid: false, message: 'Ce token ne t\'appartient pas' });
+  const tokenOwnerId = userTokens[token];
+  if (tokenOwnerId !== parseInt(userId)) {
+    return res.json({ valid: false });
   }
 
-  // Verify user is still in channel
-  const isMember = await isChannelMember(parseInt(userIdFromUrl));
-  
+  // Vérifier que l'utilisateur est toujours dans le channel
+  const isMember = await isChannelMember(userId);
   if (!isMember) {
-    delete userTokens[userIdFromUrl];
-    return res.json({ valid: false, message: 'Vous n\'êtes plus membre du channel' });
+    return res.json({ valid: false });
   }
 
-  res.json({ valid: true, userId: userIdFromUrl, message: 'Accès autorisé' });
+  return res.json({ valid: true });
 });
 
-// ===== GENERATE TOKEN (for bot) =====
+// Generate token (appelé par le bot)
 app.post('/api/generate-token', async (req, res) => {
-  const userId = req.body.userId;
+  const { userId } = req.body;
 
   if (!userId) {
-    return res.json({ success: false, message: 'User ID manquant' });
+    return res.json({ success: false, message: 'userId manquant' });
   }
 
-  // Verify user is in channel
+  // Vérifier que l'utilisateur est dans le channel
   const isMember = await isChannelMember(userId);
   if (!isMember) {
     return res.json({ success: false, message: 'Utilisateur pas dans le channel' });
   }
 
-  // Generate or get existing token
-  if (!userTokens[userId]) {
-    userTokens[userId] = {
-      token: generateToken(),
-      createdAt: new Date(),
-      userId: userId
-    };
+  // Vérifier si l'utilisateur a déjà un token
+  let token = Object.keys(userTokens).find(t => userTokens[t] === userId);
+
+  // Sinon, générer un nouveau
+  if (!token) {
+    token = generateToken();
+    userTokens[token] = userId;
+    console.log(`✅ Token généré pour userId ${userId}: ${token}`);
+  } else {
+    console.log(`♻️ Token réutilisé pour userId ${userId}: ${token}`);
   }
 
-  res.json({ 
-    success: true, 
-    token: userTokens[userId].token,
-    message: 'Token généré'
-  });
+  return res.json({ success: true, token: token });
 });
 
-// ===== SAVE DATA =====
+// Save shop data
 app.post('/api/save-data', async (req, res) => {
   try {
     const shopData = req.body;
-    
-    // Save locally
-    fs.writeFileSync(DATA_FILE, JSON.stringify(shopData, null, 2));
-    console.log('✅ Local save OK');
-    
-    // Commit to GitHub (async)
+    saveData(shopData);
+    console.log('✅ data.json sauvegardé');
+
+    // Commit to GitHub
     if (GITHUB_TOKEN) {
-      commitToGithub(shopData).catch(err => {
-        console.error('❌ GitHub commit failed:', err.message);
-      });
+      await commitToGithub(shopData);
     }
-    
-    res.status(200).json({
-      success: true,
-      message: 'Données sauvegardées ✅'
-    });
+
+    res.json({ success: true, message: 'Données sauvegardées' });
   } catch (error) {
-    console.error('❌ Save error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur sauvegarde ❌',
-      error: error.message
-    });
+    console.error('Erreur save:', error.message);
+    res.json({ success: false, error: error.message });
   }
 });
 
-// ===== GITHUB COMMIT =====
-async function commitToGithub(shopData) {
+// Commit to GitHub
+async function commitToGithub(data) {
   try {
-    const content = Buffer.from(JSON.stringify(shopData, null, 2)).toString('base64');
-    const timestamp = new Date().toLocaleString('fr-FR');
-    const commitMessage = `🛍️ Update data.json - ${timestamp}`;
-    
-    console.log('📤 Fetching file SHA...');
-    
-    const getShaRes = await axios.get(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json?ref=${GITHUB_BRANCH}`,
-      { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
-    );
-    
-    const sha = getShaRes.data.sha;
-    console.log('✅ SHA fetched:', sha.substring(0, 10) + '...');
-    
-    const updateRes = await axios.put(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json`,
-      {
-        message: commitMessage,
-        content: content,
-        sha: sha,
-        branch: GITHUB_BRANCH
-      },
-      { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
-    );
-    
-    console.log('✅ GitHub commit success!', commitMessage);
+    const fileContent = Buffer.from(JSON.stringify(data, null, 2)).toString('base64');
+    const timestamp = new Date().toISOString();
+
+    // Récupérer le SHA du fichier actuel
+    const getShaUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json?ref=${GITHUB_BRANCH}`;
+    const shaResponse = await axios.get(getShaUrl, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    });
+
+    const sha = shaResponse.data.sha;
+
+    // Mettre à jour le fichier
+    const updateUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json`;
+    await axios.put(updateUrl, {
+      message: `Update data.json - ${timestamp}`,
+      content: fileContent,
+      sha: sha,
+      branch: GITHUB_BRANCH
+    }, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    });
+
+    console.log('✅ GitHub commit réussi');
   } catch (error) {
-    console.error('❌ GitHub error:', error.response?.data?.message || error.message);
-    throw error;
+    console.error('❌ Erreur GitHub commit:', error.message);
   }
 }
 
+// Server start
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 https://svr-shop.onrender.com`);
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`🤖 BOT_TOKEN configuré`);
+  console.log(`📢 CHANNEL_ID: ${CHANNEL_ID}`);
+  console.log(`🔐 Token storage actif`);
 });
