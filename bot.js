@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 
 const BOT_TOKEN = '8774455983:AAHkE3OlVnrfaZ6-ni3W4d4vL1YLUdtpufs';
-const CHANNEL_ID = -100298886801;
+const CHANNEL_ID = -1002988868011;
 const SITE_URL = 'https://svr-shop.onrender.com';
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
@@ -18,7 +18,7 @@ bot.onText(/\/start/, async (msg) => {
   try {
     // Vérifier si l'utilisateur est dans le channel
     const member = await bot.getChatMember(CHANNEL_ID, userId);
-    const isValidStatus = ['member', 'administrator', 'creator'].includes(member.status);
+    const isValidStatus = ['member', 'administrator', 'creator', 'restricted'].includes(member.status);
 
     if (!isValidStatus) {
       bot.sendMessage(userId, 
