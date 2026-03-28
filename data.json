@@ -77,13 +77,16 @@
       "name": "HASH GOLD",
       "description": "",
       "tariffs": "3g=20|10g=50|20g=100",
+      "promoTariffs": "10g=40",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774680347/svirrdwfb9djyvz1xclc.jpg",
       "images": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774680364/miyxdssuzgehnnnunlpn.mov"
       ],
-      "createdAt": "2026-03-28T06:54:39.797Z"
+      "isNew": true,
+      "newUntil": "2026-04-04",
+      "createdAt": "2026-03-28T07:49:04.026Z"
     },
     {
       "id": 1774680499527,
