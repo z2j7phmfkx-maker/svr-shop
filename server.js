@@ -14,7 +14,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 // Telegram config
 const BOT_TOKEN = '8774455983:AAHkE3OlVnrfaZ6-ni3W4d4vL1YLUdtpufs';
-const CHANNEL_ID = -100298886801;
+const CHANNEL_ID = -1002988868011;
 
 // In-memory token storage
 let userTokens = {};
