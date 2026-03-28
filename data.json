@@ -120,6 +120,19 @@
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774680666/u3kju6zr44tatve84bwx.mov"
       ],
       "createdAt": "2026-03-28T06:51:41.377Z"
+    },
+    {
+      "id": 1774681151668,
+      "name": "DRY 73/120u",
+      "description": "Le dry sift est une résine obtenue en tamisant à sec les trichomes des fleurs de cannabis sans eau ni solvant.",
+      "tariffs": "3g=20|10g=60|20g=120",
+      "stock": "En stock",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774681113/ocjxlpzgduqd3cvxxleo.jpg",
+      "images": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1774681133/hhmjes83jdtmzy2lkds3.mov"
+      ],
+      "createdAt": "2026-03-28T06:59:11.668Z"
     }
   ]
 }
