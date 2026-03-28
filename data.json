@@ -73,14 +73,14 @@
       "id": 1774680397522,
       "name": "HASH GOLD",
       "description": "",
-      "tariffs": "3g=20",
+      "tariffs": "3g=20|10g=50|20g=100",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774680347/svirrdwfb9djyvz1xclc.jpg",
       "images": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774680364/miyxdssuzgehnnnunlpn.mov"
       ],
-      "createdAt": "2026-03-28T06:46:37.522Z"
+      "createdAt": "2026-03-28T06:54:39.797Z"
     },
     {
       "id": 1774680499527,
