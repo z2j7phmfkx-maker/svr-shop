@@ -547,7 +547,7 @@
             <h2 id="modalProductName"></h2>
             <p id="modalProductDesc"></p>
 
-            <!-- Galerie -->
+            <!-- Galerie (avec image principale + galerie) -->
             <div class="gallery-modal" id="gallerySection" style="display: none;">
                 <img id="modalMainImage" class="main-image" />
                 <div class="thumbnails" id="modalThumbnails"></div>
@@ -661,14 +661,19 @@
             document.getElementById('modalProductName').innerHTML = titleHTML;
             document.getElementById('modalProductDesc').textContent = product.description || '';
             
-            // Galerie
+            // Galerie (image principale + galerie)
+            const allImages = [product.image];
             if (product.gallery && product.gallery.length > 0) {
+                allImages.push(...product.gallery);
+            }
+            
+            if (allImages.length > 0) {
                 document.getElementById('gallerySection').style.display = 'block';
-                document.getElementById('modalMainImage').src = product.gallery[0];
+                document.getElementById('modalMainImage').src = allImages[0];
                 
                 const thumbnails = document.getElementById('modalThumbnails');
                 thumbnails.innerHTML = '';
-                product.gallery.forEach((img, i) => {
+                allImages.forEach((img, i) => {
                     const thumb = document.createElement('img');
                     thumb.src = img;
                     thumb.className = `thumbnail ${i === 0 ? 'active' : ''}`;
