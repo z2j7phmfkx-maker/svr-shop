@@ -16,32 +16,17 @@ const GITHUB_BRANCH = 'main';
 const BOT_TOKEN = '8774455983:AAHkE3OlVnrfaZ6-ni3W4d4vL1YLUdtpufs';
 const CHANNEL_ID = -100298886801;
 
-// TEST MODE
-const TEST_MODE = true;
-
 console.log('🔐 GitHub Token:', GITHUB_TOKEN ? '✅ Configuré' : '❌ Manquant');
-console.log('🧪 TEST MODE:', TEST_MODE ? '✅ ON' : '❌ OFF');
+console.log('🤖 Bot Token:', BOT_TOKEN ? '✅ Configuré' : '❌ Manquant');
 
 // ===== TOKEN MANAGEMENT =====
-let userTokens = {
-  '8536904445': {
-    token: 'svr_shop_test_token_v1',
-    createdAt: new Date(),
-    userId: 8536904445
-  }
-};
+let userTokens = {};
 
 function generateToken() {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
 async function isChannelMember(userId) {
-  // En mode test, accepte ton ID
-  if (TEST_MODE && userId === 8536904445) {
-    console.log(`✅ TEST MODE: User ${userId} accepté`);
-    return true;
-  }
-
   try {
     const response = await axios.get(
       `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`,
@@ -50,7 +35,7 @@ async function isChannelMember(userId) {
     const status = response.data.result.status;
     return ['member', 'administrator', 'creator'].includes(status);
   } catch (error) {
-    console.error('Error checking member:', error.message);
+    console.error('❌ Error checking member:', error.message);
     return false;
   }
 }
@@ -119,7 +104,7 @@ app.post('/api/generate-token', async (req, res) => {
     return res.json({ success: false, message: 'Utilisateur pas dans le channel' });
   }
 
-  // Generate token
+  // Generate or get existing token
   if (!userTokens[userId]) {
     userTokens[userId] = {
       token: generateToken(),
@@ -132,25 +117,6 @@ app.post('/api/generate-token', async (req, res) => {
     success: true, 
     token: userTokens[userId].token,
     message: 'Token généré'
-  });
-});
-
-// ===== TEST ENDPOINT =====
-app.post('/api/test-generate-token', (req, res) => {
-  if (!TEST_MODE) {
-    return res.json({ success: false, message: 'Test mode disabled' });
-  }
-
-  const userId = 8536904445;
-  const token = userTokens[userId].token;
-  const link = `https://svr-shop.onrender.com?token=${token}`;
-
-  res.json({ 
-    success: true, 
-    userId: userId,
-    token: token,
-    link: link,
-    message: 'Token généré pour test'
   });
 });
 
@@ -223,6 +189,4 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 https://svr-shop.onrender.com`);
-  console.log(`🧪 TEST TOKEN: svr_shop_test_token_v1`);
-  console.log(`🔗 TEST LINK: https://svr-shop.onrender.com?token=svr_shop_test_token_v1`);
 });
