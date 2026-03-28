@@ -101,12 +101,16 @@
     },
     {
       "id": 1774680499527,
-      "name": "SHERBET",
+      "name": "SHERBET🍧",
       "description": "La Sherbet est une puissante variété de cannabis hybride à dominance indica avec des niveaux de THC de 21–24 %. Elle offre un parfum séduisant de desserts sucrés et d'agrumes, suivi par un délicieux goût de fruits des bois acides. Les effets sont revigorants mais relaxants, apportant une sensation vive et engageante qui est parfaite pour les occasions sociales détendues.",
       "tariffs": "1,2g=20|5g=60|10g=100",
+      "promoTariffs": "",
+      "isNew": false,
+      "newDuration": 0,
+      "newUntil": "",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774680416/z9s8khfx3jnl8rjrz6df.jpg",
-      "images": [],
+      "gallery": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774680423/hziz0fdvisj9v8meiw5n.mov"
       ],
@@ -159,7 +163,7 @@
       "id": 1774681270147,
       "name": "120u FORBIDDEN⛔️",
       "description": "Le 120u désigne un tamis de 120 microns utilisé pour filtrer la résine : il laisse passer surtout les bonnes particules tout en retenant une partie des impuretés, ce qui donne une résine de bonne qualité. Le Forbidden est une variété de cannabis à dominance indica avec une concentration en THC est très élevée à 21–23 % selon le phénotype et la façon dont elle a été cultivée. Le Forbidden présente un riche profil terpénique lui donnant une odeur complexe dominée par des tons de fruits sucrés. Le goût est tout aussi fruité et rappelle les cerises mûres, les pamplemousses, les oranges et des fruits tropicaux comme les bananes et les mangues.",
-      "tariffs": "3g=20€|10g=50|20g=100",
+      "tariffs": "3g=20|10g=50|20g=100",
       "promoTariffs": "10g=40|20g=80",
       "isNew": false,
       "newDuration": 0,
