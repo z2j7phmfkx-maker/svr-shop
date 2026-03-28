@@ -67,18 +67,19 @@
     },
     {
       "id": 1774653481785,
-      "name": "DOUBLE STATIC BIRTHDAY",
+      "name": "DOUBLE STATIC BIRTHDAY CAKE🍰",
       "description": "",
       "tariffs": "1,2g=20|3,5g=50|10g=110",
-      "promoTariffs": null,
+      "promoTariffs": "",
+      "isNew": true,
+      "newDuration": 0,
+      "newUntil": "2026-03-28",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774653465/slgaxeruxbpt78szsudw.jpg",
-      "images": [],
+      "gallery": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774653474/ali1uvwftvi1vqlslivs.mov"
       ],
-      "isNew": true,
-      "newUntil": "2026-04-04",
       "createdAt": "2026-03-28T07:50:28.762Z"
     },
     {
