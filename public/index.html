@@ -1,59 +1,3 @@
-
-  <div id="authContainer" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%); align-items: center; justify-content: center; z-index: 10000; flex-direction: column;">
-    <div style="text-align: center; color: #fff;">
-      <h1 style="color: #00d4ff; margin-bottom: 20px;">🔐 Vérification d'accès</h1>
-      <p style="color: #aaa; margin-bottom: 30px; font-size: 14px;">Vérification de votre accès en cours...</p>
-      <div style="width: 40px; height: 40px; border: 3px solid #00d4ff; border-top-color: #00ff64; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-    </div>
-  </div>
-
-  <div id="deniedContainer" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%); align-items: center; justify-content: center; z-index: 10000;">
-    <div style="text-align: center; color: #fff; padding: 20px;">
-      <h1 style="color: #ff4444; margin-bottom: 20px;">❌ Accès Refusé</h1>
-      <p style="color: #aaa; margin-bottom: 30px;">Tu dois rejoindre le channel @SVR_TO pour accéder au shop.</p>
-      <a href="https://t.me/SVR_TO" style="background: linear-gradient(135deg, #00d4ff, #00ff64); color: #000; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Rejoindre le channel</a>
-    </div>
-  </div>
-
-  <style>
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
-
-  <script>
-    async function verifyAccess() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-
-      if (!token) {
-        document.getElementById('authContainer').style.display = 'none';
-        document.getElementById('deniedContainer').style.display = 'flex';
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/verify-token?token=${token}`);
-        const data = await res.json();
-
-        if (data.valid) {
-          document.getElementById('authContainer').style.display = 'none';
-          document.getElementById('deniedContainer').style.display = 'none';
-          console.log('✅ Accès autorisé');
-        } else {
-          document.getElementById('authContainer').style.display = 'none';
-          document.getElementById('deniedContainer').style.display = 'flex';
-        }
-      } catch (error) {
-        console.error('Error verifying token:', error);
-        document.getElementById('authContainer').style.display = 'none';
-        document.getElementById('deniedContainer').style.display = 'flex';
-      }
-    }
-
-    window.addEventListener('load', verifyAccess);
-  </script>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -475,6 +419,99 @@
             border: 2px solid #00d4ff;
             max-height: 400px;
         }
+
+        /* AUTH CONTAINER */
+        #authContainer {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%);
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            flex-direction: column;
+        }
+
+        #authContainer div {
+            text-align: center;
+            color: #fff;
+        }
+
+        #authContainer h1 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        #authContainer p {
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #00d4ff;
+            border-top-color: #00ff64;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* DENIED CONTAINER */
+        #deniedContainer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a15 0%, #1a1a2e 100%);
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        #deniedContainer div {
+            text-align: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        #deniedContainer h1 {
+            color: #ff4444;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        #deniedContainer p {
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        #deniedContainer a {
+            background: linear-gradient(135deg, #00d4ff, #00ff64);
+            color: #000;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        #deniedContainer a:active {
+            transform: scale(0.95);
+        }
         
         @media (max-width: 480px) {
             body {
@@ -527,18 +564,40 @@
     </style>
 </head>
 <body>
+    <!-- AUTH CONTAINER -->
+    <div id="authContainer">
+        <div>
+            <h1>🔐 Vérification d'accès</h1>
+            <p>Vérification de votre accès en cours...</p>
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- DENIED CONTAINER -->
+    <div id="deniedContainer">
+        <div>
+            <h1>❌ Accès Refusé</h1>
+            <p>Tu dois rejoindre le channel @SVR_TO pour accéder au shop.</p>
+            <a href="https://t.me/SVR_TO">Rejoindre le channel</a>
+        </div>
+    </div>
+
+    <!-- CONCOURS BANNER -->
     <div class="concours-banner" id="concoursBanner" style="display: none;">
         <h2>🎁 Concours</h2>
         <p id="concoursDesc"></p>
     </div>
 
+    <!-- CATALOGUE -->
     <div class="container">
         <div class="catalogue-title">📦 Catalogue</div>
         <div class="products-grid" id="productsGrid"></div>
     </div>
 
+    <!-- ADMIN LINK -->
     <a href="/admin" class="admin-link" title="Admin">⚙️</a>
 
+    <!-- PRODUCT MODAL -->
     <div class="modal" id="productModal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeModal()">✕</button>
@@ -546,19 +605,19 @@
             <h2 id="modalProductName"></h2>
             <p id="modalProductDesc"></p>
 
-            <!-- Galerie (avec image principale + galerie) -->
+            <!-- Gallery -->
             <div class="gallery-modal" id="gallerySection" style="display: none;">
                 <img id="modalMainImage" class="main-image" />
                 <div class="thumbnails" id="modalThumbnails"></div>
             </div>
 
-            <!-- Tarifs -->
+            <!-- Tariffs -->
             <div class="tariffs-section" id="tariffsSection" style="display: none;">
                 <h3>💰 Tarifs</h3>
                 <div id="tariffsList"></div>
             </div>
 
-            <!-- Vidéos -->
+            <!-- Videos -->
             <div class="videos-section" id="videosSection" style="display: none;">
                 <h3>🎥 Vidéos</h3>
                 <div id="videosList"></div>
@@ -768,8 +827,41 @@
             document.body.style.overflow = 'auto';
         }
 
+        // VERIFY ACCESS
+        async function verifyAccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const userId = urlParams.get('userId');
+
+            if (!token || !userId) {
+                document.getElementById('authContainer').style.display = 'none';
+                document.getElementById('deniedContainer').style.display = 'flex';
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/verify-token?token=${token}&userId=${userId}`);
+                const data = await res.json();
+
+                if (data.valid) {
+                    document.getElementById('authContainer').style.display = 'none';
+                    document.getElementById('deniedContainer').style.display = 'none';
+                    console.log('✅ Accès autorisé pour userId:', userId);
+                    loadData();
+                } else {
+                    document.getElementById('authContainer').style.display = 'none';
+                    document.getElementById('deniedContainer').style.display = 'flex';
+                    console.log('❌ Accès refusé:', data.message);
+                }
+            } catch (error) {
+                console.error('Error verifying token:', error);
+                document.getElementById('authContainer').style.display = 'none';
+                document.getElementById('deniedContainer').style.display = 'flex';
+            }
+        }
+
         // Load on page load
-        window.addEventListener('load', loadData);
+        window.addEventListener('load', verifyAccess);
     </script>
 </body>
 </html>
