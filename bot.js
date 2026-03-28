@@ -3,7 +3,6 @@ const TelegramBot = require('node-telegram-bot-api');
 const BOT_TOKEN = '8774455983:AAHkE3OlVnrfaZ6-ni3W4d4vL1YLUdtpufs';
 const CHANNEL_ID = -100298886801;
 const SITE_URL = 'https://svr-shop.onrender.com';
-const SERVER_URL = 'http://localhost:10000'; // Local pour développement
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
@@ -31,33 +30,41 @@ bot.onText(/\/start/, async (msg) => {
     }
 
     // Générer un token via le serveur
-    const response = await fetch(`${SERVER_URL}/api/generate-token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: userId })
-    });
+    try {
+      const response = await fetch('https://svr-shop.onrender.com/api/generate-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId })
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!data.success) {
-      bot.sendMessage(userId, '❌ Erreur lors de la génération du token. Réessaie plus tard.');
-      console.error(`❌ Erreur token pour @${userName}:`, data.message);
-      return;
+      if (!data.success) {
+        bot.sendMessage(userId, '❌ Erreur lors de la génération du token. Réessaie plus tard.');
+        console.error(`❌ Erreur token pour @${userName}:`, data.message);
+        return;
+      }
+
+      const token = data.token;
+      const link = `${SITE_URL}?token=${token}&userId=${userId}`;
+
+      // Envoyer le lien au utilisateur
+      bot.sendMessage(userId, 
+        `✅ Bienvenue @${userName}!\n\n` +
+        `🎁 Clique sur le lien ci-dessous pour accéder au shop SVR:\n\n` +
+        `${link}\n\n` +
+        `Ce lien est personnel et unique! 🔐`,
+        { parse_mode: 'HTML' }
+      );
+
+      console.log(`✅ Token généré pour @${userName} (${userId})`);
+
+    } catch (fetchError) {
+      console.error(`❌ Erreur fetch pour @${userName}:`, fetchError.message);
+      bot.sendMessage(userId, 
+        '⚠️ Erreur de connexion au serveur. Réessaie plus tard avec /start'
+      );
     }
-
-    const token = data.token;
-    const link = `${SITE_URL}?token=${token}`;
-
-    // Envoyer le lien au utilisateur
-    bot.sendMessage(userId, 
-      `✅ Bienvenue @${userName}!\n\n` +
-      `🎁 Clique sur le lien ci-dessous pour accéder au shop SVR:\n\n` +
-      `<a href="${link}">🛍️ Accéder au shop</a>\n\n` +
-      `Ce lien est personnel et unique! 🔐`,
-      { parse_mode: 'HTML' }
-    );
-
-    console.log(`✅ Token généré pour @${userName} (${userId})`);
 
   } catch (error) {
     console.error(`❌ Erreur pour @${userName}:`, error.message);
