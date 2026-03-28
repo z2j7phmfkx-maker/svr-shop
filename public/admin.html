@@ -1,1098 +1,1187 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVR Shop - Admin</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        
-        .login-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        .login-screen.hidden {
-            display: none;
-        }
-        
-        .login-box {
-            background: rgba(30, 30, 50, 0.9);
-            border: 2px solid #00d4ff;
-            border-radius: 10px;
-            padding: 40px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.2);
-        }
-        
-        .login-box h2 {
-            margin-bottom: 30px;
-            text-align: center;
-            color: #00d4ff;
-        }
-        
-        .login-box input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #00d4ff;
-            border-radius: 5px;
-            color: #fff;
-            font-size: 16px;
-        }
-        
-        .login-box button {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
-            border: none;
-            border-radius: 5px;
-            color: #000;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        
-        .login-box button:hover {
-            opacity: 0.9;
-        }
-        
-        .admin-panel {
-            display: none;
-        }
-        
-        .admin-panel.active {
-            display: block;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #00d4ff;
-        }
-        
-        .header h1 {
-            color: #00d4ff;
-        }
-        
-        .logout-btn {
-            padding: 10px 20px;
-            background: #ff4444;
-            border: none;
-            border-radius: 5px;
-            color: #fff;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .logout-btn:hover {
-            background: #ff6666;
-        }
-        
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
-        }
-        
-        .tab-btn {
-            padding: 12px 25px;
-            background: rgba(0, 212, 255, 0.1);
-            border: 2px solid transparent;
-            border-radius: 5px;
-            color: #00d4ff;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        
-        .tab-btn.active {
-            border-bottom: 2px solid #00d4ff;
-            background: rgba(0, 212, 255, 0.2);
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #00d4ff;
-            font-weight: bold;
-        }
-        
-        .form-group label input[type="checkbox"] {
-            width: auto;
-            margin-right: 10px;
-            cursor: pointer;
-        }
-        
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #00d4ff;
-            border-radius: 5px;
-            color: #fff;
-            font-size: 14px;
-            font-family: inherit;
-        }
-        
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-        
-        .form-group small {
-            display: block;
-            color: #00d4ff;
-            margin-top: 5px;
-            opacity: 0.7;
-        }
-        
-        .upload-area {
-            border: 2px dashed #00d4ff;
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            background: rgba(0, 212, 255, 0.05);
-            transition: all 0.3s;
-            margin-bottom: 10px;
-        }
-        
-        .upload-area:hover {
-            background: rgba(0, 212, 255, 0.15);
-        }
-        
-        .upload-area.dragover {
-            background: rgba(0, 212, 255, 0.25);
-            border-color: #00ffff;
-        }
-        
-        .upload-area p {
-            color: #00d4ff;
-            margin-bottom: 10px;
-        }
-        
-        input[type="file"] {
-            display: none;
-        }
-        
-        .image-preview {
-            width: 150px;
-            height: 150px;
-            background: rgba(0, 212, 255, 0.2);
-            border-radius: 8px;
-            margin-top: 10px;
-            object-fit: cover;
-            display: none;
-        }
-        
-        .gallery-container {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(0, 212, 255, 0.1);
-            border-radius: 8px;
-            border: 1px solid #00d4ff;
-            display: none;
-        }
-        
-        .gallery-container.active {
-            display: block;
-        }
-        
-        .gallery-title {
-            color: #00d4ff;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-        
-        .gallery-items {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-        }
-        
-        .gallery-item {
-            position: relative;
-            cursor: move;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px solid #00d4ff;
-        }
-        
-        .gallery-item img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            display: block;
-        }
-        
-        .gallery-item-remove {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .gallery-item:hover .gallery-item-remove {
-            opacity: 1;
-        }
-        
-        .videos-items {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-        }
-        
-        .video-item {
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px solid #00d4ff;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 8px;
-        }
-        
-        .video-item-info {
-            color: #00d4ff;
-            font-size: 11px;
-            text-align: center;
-            margin-bottom: 8px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .video-item-play {
-            width: 100%;
-            height: 80px;
-            background: rgba(0, 212, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            border-radius: 6px;
-        }
-        
-        .video-item-remove {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .video-item:hover .video-item-remove {
-            opacity: 1;
-        }
-        
-        .buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-        }
-        
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
-            color: #000;
-            flex: 1;
-        }
-        
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-        
-        .btn-secondary {
-            background: rgba(0, 212, 255, 0.2);
-            color: #00d4ff;
-            border: 1px solid #00d4ff;
-        }
-        
-        .btn-danger {
-            background: #ff4444;
-            color: white;
-        }
-        
-        .products-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .product-card {
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid #00d4ff;
-            border-radius: 8px;
-            padding: 15px;
-        }
-        
-        .product-card h3 {
-            color: #00d4ff;
-            margin-bottom: 10px;
-        }
-        
-        .product-card p {
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-        
-        .product-card-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .product-card-actions button {
-            flex: 1;
-            padding: 8px;
-            font-size: 12px;
-        }
-        
-        .message {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            display: none;
-            animation: slideDown 0.3s ease-out;
-        }
-        
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .message.active {
-            display: block;
-        }
-        
-        .message.success {
-            background: rgba(0, 255, 100, 0.2);
-            color: #00ff64;
-            border: 1px solid #00ff64;
-        }
-        
-        .message.error {
-            background: rgba(255, 0, 100, 0.2);
-            color: #ff6464;
-            border: 1px solid #ff6464;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVR Shop - Admin Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    /* ===== LOGIN SCREEN ===== */
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #00d4ff 0%, #00ff64 100%);
+    }
+
+    .login-box {
+      background: #1a1f2e;
+      padding: 3rem;
+      border-radius: 15px;
+      box-shadow: 0 20px 60px rgba(0, 212, 255, 0.3);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .login-box h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #00d4ff, #00ff64);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .login-box p {
+      color: #aaa;
+      margin-bottom: 2rem;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      background: #0f1419;
+      border: 2px solid #00d4ff;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .login-input:focus {
+      outline: none;
+      border-color: #00ff64;
+      box-shadow: 0 0 20px rgba(0, 255, 100, 0.3);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #00d4ff, #00ff64);
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 255, 100, 0.4);
+    }
+
+    /* ===== ADMIN PANEL ===== */
+    .admin-container {
+      display: none;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    .admin-container.active {
+      display: block;
+    }
+
+    .admin-header {
+      background: linear-gradient(135deg, #00d4ff, #00ff64);
+      padding: 1.5rem;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .admin-header h1 {
+      font-size: 2rem;
+      color: #000;
+    }
+
+    .logout-btn {
+      background: #ff4444;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+    }
+
+    /* ===== TABS ===== */
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 1rem 1.5rem;
+      background: #2a3142;
+      border: 2px solid #00d4ff;
+      color: #00d4ff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn.active {
+      background: #00d4ff;
+      color: #000;
+    }
+
+    .tab-btn:hover {
+      border-color: #00ff64;
+    }
+
+    /* ===== TAB CONTENT ===== */
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== FORM STYLES ===== */
+    .form-section {
+      background: #2a3142;
+      padding: 2rem;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      border: 2px solid #00d4ff;
+    }
+
+    .form-section h2 {
+      color: #00d4ff;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #00ff64;
+      font-weight: bold;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      background: #0f1419;
+      border: 2px solid #00d4ff;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #00ff64;
+      box-shadow: 0 0 20px rgba(0, 255, 100, 0.3);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* ===== UPLOAD ZONES ===== */
+    .upload-zone {
+      border: 3px dashed #00d4ff;
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #0f1419;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+      border-color: #00ff64;
+      background: rgba(0, 255, 100, 0.05);
+    }
+
+    .upload-zone p {
+      color: #aaa;
+      margin-bottom: 0.5rem;
+    }
+
+    .upload-zone input {
+      display: none;
+    }
+
+    /* ===== PREVIEW GALLERY ===== */
+    .gallery-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .gallery-item {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid #00d4ff;
+      aspect-ratio: 1;
+      background: #0f1419;
+    }
+
+    .gallery-item img,
+    .gallery-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .gallery-item-actions {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: rgba(0, 0, 0, 0.7);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .gallery-item:hover .gallery-item-actions {
+      opacity: 1;
+    }
+
+    .gallery-item-btn {
+      background: #ff4444;
+      color: #fff;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.3s ease;
+    }
+
+    .gallery-item-btn:hover {
+      background: #cc0000;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 2rem;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 150px;
+      padding: 1rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn-save {
+      background: linear-gradient(135deg, #00d4ff, #00ff64);
+      color: #000;
+    }
+
+    .btn-save:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 255, 100, 0.4);
+    }
+
+    .btn-reset {
+      background: #ff8c00;
+      color: #fff;
+    }
+
+    .btn-reset:hover {
+      background: #e67e00;
+    }
+
+    .btn-delete {
+      background: #ff4444;
+      color: #fff;
+    }
+
+    .btn-delete:hover {
+      background: #cc0000;
+    }
+
+    /* ===== MESSAGE ===== */
+    .message {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+      animation: slideDown 0.3s ease;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.success {
+      background: #00ff64;
+      color: #000;
+    }
+
+    .message.error {
+      background: #ff4444;
+      color: #fff;
+    }
+
+    /* ===== PRODUCTS LIST ===== */
+    .products-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .product-card {
+      background: #2a3142;
+      border: 2px solid #00d4ff;
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+      border-color: #00ff64;
+    }
+
+    .product-card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    .product-card h3 {
+      color: #00d4ff;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .product-card p {
+      color: #aaa;
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .product-card-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .product-card-actions button {
+      flex: 1;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .edit-product-btn {
+      background: #00d4ff;
+      color: #000;
+    }
+
+    .edit-product-btn:hover {
+      background: #00ff64;
+    }
+
+    .delete-product-btn {
+      background: #ff4444;
+      color: #fff;
+    }
+
+    .delete-product-btn:hover {
+      background: #cc0000;
+    }
+
+    /* ===== CONCOURS SECTION ===== */
+    .concours-image-preview {
+      width: 100%;
+      max-width: 400px;
+      margin-top: 1rem;
+      border-radius: 8px;
+      border: 2px solid #00d4ff;
+      overflow: hidden;
+    }
+
+    .concours-image-preview img {
+      width: 100%;
+      height: auto;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .admin-header {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .admin-header h1 {
+        font-size: 1.5rem;
+      }
+
+      .form-section {
+        padding: 1rem;
+      }
+
+      .tabs {
+        gap: 0.5rem;
+      }
+
+      .tab-btn {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+      }
+
+      .gallery-preview {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      }
+
+      .products-list {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+
+      .btn {
+        min-width: 100px;
+      }
+    }
+
+    /* ===== DRAG DROP REORDER ===== */
+    .gallery-item.dragging {
+      opacity: 0.5;
+    }
+
+    .gallery-item[draggable="true"] {
+      cursor: grab;
+    }
+
+    .gallery-item[draggable="true"]:active {
+      cursor: grabbing;
+    }
+
+    /* ===== CHECKBOX STYLES ===== */
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: #00d4ff;
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      cursor: pointer;
+      font-weight: normal;
+    }
+
+    /* ===== DURATION INPUT ===== */
+    .duration-group {
+      display: none;
+      margin-top: 1rem;
+    }
+
+    .duration-group.show {
+      display: block;
+    }
+
+    /* ===== PROMO INPUT ===== */
+    .promo-group {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 2px solid #00d4ff;
+    }
+
+    /* ===== LOADING ===== */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #00d4ff;
+      border-top-color: #00ff64;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="login-screen" id="loginScreen">
-        <div class="login-box">
-            <h2>🔐 Admin Login</h2>
-            <input type="password" id="passwordInput" placeholder="Mot de passe" />
-            <button onclick="handleLogin()">Se connecter</button>
-        </div>
+  <!-- ===== LOGIN SCREEN ===== -->
+  <div class="login-container" id="loginContainer">
+    <div class="login-box">
+      <h1>🛍️ SVR</h1>
+      <p>Admin Panel</p>
+      <input type="password" class="login-input" id="passwordInput" placeholder="Entrez le mot de passe" />
+      <button class="login-btn" onclick="checkPassword()">Se connecter</button>
     </div>
+  </div>
 
-    <div class="admin-panel" id="adminPanel">
-        <div class="container">
-            <div class="header">
-                <h1>⚙️ SVR Shop Admin</h1>
-                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+  <!-- ===== ADMIN PANEL ===== -->
+  <div class="admin-container" id="adminContainer">
+    <div style="max-width: 1200px; margin: 0 auto;">
+      <!-- HEADER -->
+      <div class="admin-header">
+        <h1>🛍️ SVR Shop - Admin</h1>
+        <button class="logout-btn" onclick="logout()">Déconnexion</button>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('concours')">🎁 Concours</button>
+        <button class="tab-btn" onclick="switchTab('products')">📦 Produits</button>
+      </div>
+
+      <!-- ===== CONCOURS TAB ===== -->
+      <div id="concours-tab" class="tab-content active">
+        <div class="form-section">
+          <h2>📝 Gestion du Concours</h2>
+
+          <div id="concoursMsgBox"></div>
+
+          <div class="form-group">
+            <label>Description du Concours</label>
+            <textarea id="concoursDescription" placeholder="Décrivez votre concours..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Image du Concours (16:9)</label>
+            <div class="upload-zone" id="concoursUploadZone">
+              <p>📸 Glissez une image ou cliquez</p>
+              <input type="file" id="concoursImageInput" accept="image/*" />
             </div>
-
-            <div id="message" class="message"></div>
-
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('concours')">🎁 Concours</button>
-                <button class="tab-btn" onclick="switchTab('products')">📦 Produits</button>
+            <div class="concours-image-preview" id="concoursImagePreview" style="display: none;">
+              <img id="concoursImagePreviewImg" src="" alt="Preview" />
             </div>
+          </div>
 
-            <!-- CONCOURS TAB -->
-            <div id="concours" class="tab-content active">
-                <h2>Gérer le Concours</h2>
-                
-                <div class="form-group">
-                    <label>Description</label>
-                    <textarea id="concoursDesc" placeholder="Description du concours..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Image (16:9)</label>
-                    <div class="upload-area" onclick="document.getElementById('concoursImageInput').click()">
-                        <p>📸 Glisse une image ou clique</p>
-                        <small>Format: JPG, PNG</small>
-                    </div>
-                    <img id="concoursImagePreview" class="image-preview" />
-                    <input type="file" id="concoursImageInput" accept="image/*" onchange="uploadImage(this, 'concours')" />
-                </div>
-
-                <div class="buttons">
-                    <button class="btn btn-primary" onclick="saveConcours()">💾 Sauvegarder</button>
-                </div>
-            </div>
-
-            <!-- PRODUCTS TAB -->
-            <div id="products" class="tab-content">
-                <h2>Gérer les Produits</h2>
-
-                <div style="background: rgba(0, 212, 255, 0.1); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
-                    <h3 style="color: #00d4ff; margin-bottom: 15px;">➕ Ajouter un Produit</h3>
-
-                    <div class="form-group">
-                        <label>Nom *</label>
-                        <input type="text" id="productName" placeholder="Ex: GARY PAYTON" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="productDesc" placeholder="Description du produit..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Tarifs * (ex: 1g=10|2g=20|30g=80)</label>
-                        <input type="text" id="productTariffs" placeholder="1g=10|2g=20" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Tarifs en Promo (optionnel)</label>
-                        <input type="text" id="productPromoTariffs" placeholder="Ex: 10g=40|20g=100" />
-                        <small>Laisse vide si pas de promo</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="productIsNew" />
-                            ✨ Marquer comme nouveau produit
-                        </label>
-                    </div>
-
-                    <div class="form-group" id="newDurationGroup" style="display: none;">
-                        <label>Durée du badge "Nouveau" (en jours)</label>
-                        <input type="number" id="productNewDuration" value="7" min="1" max="90" />
-                        <small>Le badge s'affichera pendant cette durée</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Stock *</label>
-                        <select id="productStock">
-                            <option value="En stock">En stock</option>
-                            <option value="Rupture">Rupture</option>
-                            <option value="Bientôt">Bientôt</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Image principale (1:1) *</label>
-                        <div class="upload-area" onclick="document.getElementById('productImageInput').click()">
-                            <p>📸 Glisse une image ou clique</p>
-                            <small>Format: JPG, PNG</small>
-                        </div>
-                        <img id="productImagePreview" class="image-preview" />
-                        <input type="file" id="productImageInput" accept="image/*" onchange="uploadImage(this, 'product')" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Galerie (jusqu'à 10 images)</label>
-                        <div class="upload-area" onclick="document.getElementById('galleryInput').click()">
-                            <p>📷 Glisse des images ou clique</p>
-                            <small>Jusqu'à 10 images</small>
-                        </div>
-                        <div id="galleryContainer" class="gallery-container">
-                            <div class="gallery-title">Galerie (drag & drop pour réorganiser)</div>
-                            <div class="gallery-items" id="galleryItems"></div>
-                        </div>
-                        <input type="file" id="galleryInput" accept="image/*" multiple onchange="uploadGallery(this)" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Vidéo(s) (jusqu'à 3)</label>
-                        <div class="upload-area" onclick="document.getElementById('videoInput').click()">
-                            <p>🎥 Glisse une vidéo ou clique</p>
-                            <small>Format: MP4, WebM | Max 3 vidéos</small>
-                        </div>
-                        <div id="videosContainer" class="gallery-container">
-                            <div class="gallery-title">Vidéos ajoutées</div>
-                            <div class="videos-items" id="videosItems"></div>
-                        </div>
-                        <input type="file" id="videoInput" accept="video/mp4,video/webm,video/*" multiple onchange="uploadVideos(this)" />
-                    </div>
-
-                    <div class="buttons">
-                        <button class="btn btn-primary" onclick="saveProduct()">💾 Sauvegarder</button>
-                        <button class="btn btn-secondary" onclick="resetForm()">🔄 Réinitialiser</button>
-                    </div>
-                </div>
-
-                <h3 style="color: #00d4ff; margin-top: 30px; margin-bottom: 20px;">📦 Produits existants</h3>
-                <div id="productsList" class="products-list"></div>
-            </div>
+          <div class="btn-group">
+            <button class="btn btn-save" onclick="saveConcours()">💾 Sauvegarder Concours</button>
+            <button class="btn btn-reset" onclick="resetConcoursForm()">🔄 Réinitialiser</button>
+          </div>
         </div>
+      </div>
+
+      <!-- ===== PRODUCTS TAB ===== -->
+      <div id="products-tab" class="tab-content">
+        <!-- ADD/EDIT PRODUCT FORM -->
+        <div class="form-section">
+          <h2 id="productFormTitle">➕ Ajouter un Produit</h2>
+
+          <div id="productMsgBox"></div>
+
+          <div class="form-group">
+            <label>Nom du Produit *</label>
+            <input type="text" id="productName" placeholder="Ex: GARY PAYTON" />
+          </div>
+
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="productDescription" placeholder="Description détaillée du produit..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Tarifs (format: 1g=10|5g=50|10g=130) *</label>
+            <input type="text" id="productTariffs" placeholder="Ex: 1g=20|5g=100|10g=180" />
+          </div>
+
+          <div class="form-group">
+            <label>Tarifs en Promo (optionnel, même format)</label>
+            <input type="text" id="productPromoTariffs" placeholder="Ex: 1g=15|5g=80|10g=150" />
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="isNewProduct" onchange="toggleNewDuration()" />
+            <label for="isNewProduct">✨ Marquer comme NOUVEAU</label>
+          </div>
+
+          <div class="duration-group" id="durationGroup">
+            <div class="form-group">
+              <label>Durée du badge NOUVEAU (en jours) *</label>
+              <input type="number" id="newDuration" placeholder="Ex: 7" min="1" max="30" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Stock *</label>
+            <select id="productStock">
+              <option value="">-- Sélectionnez --</option>
+              <option value="En stock">✅ En stock</option>
+              <option value="Stock limité">⚠️ Stock limité</option>
+              <option value="Rupture">❌ Rupture</option>
+            </select>
+          </div>
+
+          <!-- IMAGE PRINCIPALE -->
+          <div class="form-group">
+            <label>Image Principale (1:1) *</label>
+            <div class="upload-zone" id="mainImageUploadZone">
+              <p>📸 Glissez une image ou cliquez</p>
+              <input type="file" id="mainImageInput" accept="image/*" />
+            </div>
+            <div class="gallery-preview" id="mainImagePreview"></div>
+          </div>
+
+          <!-- GALERIE D'IMAGES -->
+          <div class="form-group">
+            <label>Galerie d'Images (max 10)</label>
+            <div class="upload-zone" id="galleryUploadZone">
+              <p>📸 Glissez des images ou cliquez</p>
+              <input type="file" id="galleryInput" accept="image/*" multiple />
+            </div>
+            <div class="gallery-preview" id="galleryPreview"></div>
+          </div>
+
+          <!-- VIDÉOS -->
+          <div class="form-group">
+            <label>Vidéos (max 3, MP4/WebM)</label>
+            <div class="upload-zone" id="videoUploadZone">
+              <p>🎥 Glissez des vidéos ou cliquez</p>
+              <input type="file" id="videoInput" accept="video/mp4,video/webm" multiple />
+            </div>
+            <div class="gallery-preview" id="videoPreview"></div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-save" onclick="saveProduct()">💾 Sauvegarder Produit</button>
+            <button class="btn btn-reset" onclick="resetProductForm()">🔄 Réinitialiser</button>
+            <button class="btn btn-delete" id="deleteProductBtn" style="display: none;" onclick="deleteProduct()">🗑️ Supprimer</button>
+          </div>
+        </div>
+
+        <!-- PRODUCTS LIST -->
+        <div class="form-section">
+          <h2>📦 Produits Existants</h2>
+          <div class="products-list" id="productsList"></div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        const ADMIN_PASSWORD = "Tova$Shop2024!Secure";
-        const CLOUDINARY_CLOUD = "diezs6eqa";
-        const UPLOAD_PRESET = "unsigned_upload";
-        
-        let shopData = { concours: {}, products: [] };
-        let galleryImages = [];
-        let productVideos = [];
-        let concoursImageUrl = null;
-        let productImageUrl = null;
-        let currentProductId = null;
+  <script>
+    // ===== CONSTANTS =====
+    const ADMIN_PASSWORD = 'Tova$Shop2024!Secure';
+    const CLOUDINARY_CLOUD_NAME = 'diezs6eqa';
+    const CLOUDINARY_UPLOAD_PRESET = 'unsigned_upload';
 
-        // INIT
-        window.addEventListener('load', () => {
-            loadData();
-            setupCheckboxListener();
+    // ===== STATE =====
+    let shopData = {
+      concours: { description: '', image: '' },
+      products: []
+    };
+
+    let isLoggedIn = false;
+    let editingProductId = null;
+    let mainImageURL = '';
+    let galleryImages = [];
+    let videoURLs = [];
+
+    // ===== LOGIN =====
+    function checkPassword() {
+      const password = document.getElementById('passwordInput').value;
+      if (password === ADMIN_PASSWORD) {
+        isLoggedIn = true;
+        document.getElementById('loginContainer').style.display = 'none';
+        document.getElementById('adminContainer').classList.add('active');
+        loadData();
+      } else {
+        alert('❌ Mot de passe incorrect');
+      }
+    }
+
+    function logout() {
+      isLoggedIn = false;
+      editingProductId = null;
+      document.getElementById('loginContainer').style.display = 'flex';
+      document.getElementById('adminContainer').classList.remove('active');
+      document.getElementById('passwordInput').value = '';
+    }
+
+    // ===== LOAD DATA =====
+    async function loadData() {
+      try {
+        const response = await fetch('/data.json');
+        shopData = await response.json();
+        renderConcours();
+        renderProducts();
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    }
+
+    // ===== TABS =====
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tab + '-tab').classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // ===== CONCOURS =====
+    function renderConcours() {
+      document.getElementById('concoursDescription').value = shopData.concours.description || '';
+      if (shopData.concours.image) {
+        document.getElementById('concoursImagePreviewImg').src = shopData.concours.image;
+        document.getElementById('concoursImagePreview').style.display = 'block';
+      }
+    }
+
+    async function saveConcours() {
+      const description = document.getElementById('concoursDescription').value.trim();
+      if (!description) {
+        showMessage('productMsgBox', 'Veuillez remplir la description', 'error');
+        return;
+      }
+
+      shopData.concours = {
+        description: description,
+        image: shopData.concours.image || ''
+      };
+
+      await saveData();
+      showMessage('concoursMsgBox', '✅ Concours sauvegardé!', 'success');
+    }
+
+    function resetConcoursForm() {
+      document.getElementById('concoursDescription').value = '';
+      document.getElementById('concoursImagePreview').style.display = 'none';
+      document.getElementById('concoursImageInput').value = '';
+    }
+
+    // ===== UPLOAD HELPERS =====
+    function setupUploadZone(zoneId, inputId, callback) {
+      const zone = document.getElementById(zoneId);
+      const input = document.getElementById(inputId);
+
+      zone.onclick = () => input.click();
+
+      zone.ondragover = (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+      };
+
+      zone.ondragleave = () => zone.classList.remove('dragover');
+
+      zone.ondrop = (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        callback(files);
+      };
+
+      input.onchange = (e) => callback(e.target.files);
+    }
+
+    async function uploadToCloudinary(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      try {
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+          method: 'POST',
+          body: formData
         });
+        const data = await response.json();
+        return data.secure_url;
+      } catch (error) {
+        console.error('Upload error:', error);
+        return null;
+      }
+    }
 
-        // LOGIN
-        function handleLogin() {
-            const password = document.getElementById('passwordInput').value;
-            if (password === ADMIN_PASSWORD) {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('adminPanel').classList.add('active');
-                loadData();
-                console.log('✅ Login success');
-            } else {
-                showMessage('❌ Mot de passe incorrect', 'error');
-            }
+    // ===== SETUP UPLOADS ON PAGE LOAD =====
+    function setupAllUploads() {
+      // Concours Image
+      setupUploadZone('concoursUploadZone', 'concoursImageInput', async (files) => {
+        if (files.length > 0) {
+          const url = await uploadToCloudinary(files[0]);
+          if (url) {
+            shopData.concours.image = url;
+            document.getElementById('concoursImagePreviewImg').src = url;
+            document.getElementById('concoursImagePreview').style.display = 'block';
+          }
         }
+      });
 
-        function handleLogout() {
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('adminPanel').classList.remove('active');
-            document.getElementById('passwordInput').value = '';
+      // Main Product Image
+      setupUploadZone('mainImageUploadZone', 'mainImageInput', async (files) => {
+        if (files.length > 0) {
+          const url = await uploadToCloudinary(files[0]);
+          if (url) {
+            mainImageURL = url;
+            renderMainImage();
+          }
         }
+      });
 
-        // Setup checkbox listener
-        function setupCheckboxListener() {
-            const isNewCheckbox = document.getElementById('productIsNew');
-            const newDurationGroup = document.getElementById('newDurationGroup');
-            
-            if (isNewCheckbox) {
-                isNewCheckbox.addEventListener('change', () => {
-                    newDurationGroup.style.display = isNewCheckbox.checked ? 'block' : 'none';
-                });
-            }
+      // Gallery Images
+      setupUploadZone('galleryUploadZone', 'galleryInput', async (files) => {
+        for (let file of files) {
+          if (galleryImages.length >= 10) break;
+          const url = await uploadToCloudinary(file);
+          if (url) galleryImages.push(url);
         }
+        renderGallery();
+      });
 
-        // LOAD
-        async function loadData() {
-            try {
-                const res = await fetch('/data.json');
-                shopData = await res.json();
-                loadConcours();
-                loadProducts();
-                console.log('✅ Data loaded:', shopData);
-            } catch (e) {
-                console.error('❌ Load error:', e);
-                shopData = { concours: {}, products: [] };
-            }
+      // Videos
+      setupUploadZone('videoUploadZone', 'videoInput', async (files) => {
+        for (let file of files) {
+          if (videoURLs.length >= 3) break;
+          const url = await uploadToCloudinary(file);
+          if (url) videoURLs.push(url);
         }
+        renderVideos();
+      });
+    }
 
-        // UPLOAD TO CLOUDINARY
-        async function uploadImage(input, type) {
-            if (!input.files.length) return;
-            
-            showMessage('📤 Upload en cours...', 'success');
-            const file = input.files[0];
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', UPLOAD_PRESET);
-            
-            try {
-                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.secure_url) {
-                    const imageUrl = data.secure_url;
-                    
-                    if (type === 'concours') {
-                        concoursImageUrl = imageUrl;
-                        const preview = document.getElementById('concoursImagePreview');
-                        preview.src = imageUrl;
-                        preview.style.display = 'block';
-                    } else if (type === 'product') {
-                        productImageUrl = imageUrl;
-                        const preview = document.getElementById('productImagePreview');
-                        preview.src = imageUrl;
-                        preview.style.display = 'block';
-                    }
-                    
-                    showMessage('✅ Image uploadée!', 'success');
-                } else {
-                    showMessage('❌ Erreur upload', 'error');
-                }
-            } catch (error) {
-                showMessage('❌ Erreur: ' + error.message, 'error');
-                console.error('Upload error:', error);
-            }
-            
-            input.value = '';
+    function renderMainImage() {
+      const preview = document.getElementById('mainImagePreview');
+      preview.innerHTML = '';
+      if (mainImageURL) {
+        const div = document.createElement('div');
+        div.className = 'gallery-item';
+        div.innerHTML = `
+          <img src="${mainImageURL}" />
+          <div class="gallery-item-actions">
+            <button class="gallery-item-btn" onclick="removeMainImage()">Supprimer</button>
+          </div>
+        `;
+        preview.appendChild(div);
+      }
+    }
+
+    function removeMainImage() {
+      mainImageURL = '';
+      renderMainImage();
+    }
+
+    function renderGallery() {
+      const preview = document.getElementById('galleryPreview');
+      preview.innerHTML = '';
+      galleryImages.forEach((url, idx) => {
+        const div = document.createElement('div');
+        div.className = 'gallery-item';
+        div.draggable = true;
+        div.innerHTML = `
+          <img src="${url}" />
+          <div class="gallery-item-actions">
+            <button class="gallery-item-btn" onclick="removeGalleryImage(${idx})">✕</button>
+          </div>
+        `;
+        div.ondragstart = () => {
+          div.classList.add('dragging');
+          div.dataset.dragIdx = idx;
+        };
+        div.ondragover = (e) => e.preventDefault();
+        div.ondrop = () => {
+          const dragIdx = parseInt(document.querySelector('.gallery-item.dragging').dataset.dragIdx);
+          [galleryImages[dragIdx], galleryImages[idx]] = [galleryImages[idx], galleryImages[dragIdx]];
+          renderGallery();
+        };
+        div.ondragend = () => div.classList.remove('dragging');
+        preview.appendChild(div);
+      });
+    }
+
+    function removeGalleryImage(idx) {
+      galleryImages.splice(idx, 1);
+      renderGallery();
+    }
+
+    function renderVideos() {
+      const preview = document.getElementById('videoPreview');
+      preview.innerHTML = '';
+      videoURLs.forEach((url, idx) => {
+        const div = document.createElement('div');
+        div.className = 'gallery-item';
+        div.innerHTML = `
+          <video style="width:100%; height:100%; object-fit:cover;" />
+          <div class="gallery-item-actions">
+            <button class="gallery-item-btn" onclick="removeVideo(${idx})">✕</button>
+          </div>
+        `;
+        div.querySelector('video').src = url;
+        preview.appendChild(div);
+      });
+    }
+
+    function removeVideo(idx) {
+      videoURLs.splice(idx, 1);
+      renderVideos();
+    }
+
+    // ===== PRODUCTS =====
+    function toggleNewDuration() {
+      const checked = document.getElementById('isNewProduct').checked;
+      document.getElementById('durationGroup').classList.toggle('show', checked);
+    }
+
+    function renderProducts() {
+      const container = document.getElementById('productsList');
+      container.innerHTML = '';
+
+      shopData.products.forEach(product => {
+        const div = document.createElement('div');
+        div.className = 'product-card';
+        div.innerHTML = `
+          <img src="${product.image}" />
+          <h3>${product.name}</h3>
+          <p>Stock: ${product.stock}</p>
+          <div class="product-card-actions">
+            <button class="edit-product-btn" onclick="editProduct(${product.id})">✏️ Éditer</button>
+            <button class="delete-product-btn" onclick="deleteProductFromList(${product.id})">🗑️</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function editProduct(id) {
+      const product = shopData.products.find(p => p.id === id);
+      if (!product) return;
+
+      editingProductId = id;
+      document.getElementById('productFormTitle').textContent = '✏️ Éditer Produit';
+      document.getElementById('deleteProductBtn').style.display = 'flex';
+
+      document.getElementById('productName').value = product.name;
+      document.getElementById('productDescription').value = product.description || '';
+      document.getElementById('productTariffs').value = product.tariffs || '';
+      document.getElementById('productPromoTariffs').value = product.promoTariffs || '';
+      document.getElementById('productStock').value = product.stock;
+      document.getElementById('isNewProduct').checked = product.isNew || false;
+      toggleNewDuration();
+      if (product.newDuration) {
+        document.getElementById('newDuration').value = product.newDuration;
+      }
+
+      mainImageURL = product.image || '';
+      galleryImages = product.gallery || [];
+      videoURLs = product.videos || [];
+
+      renderMainImage();
+      renderGallery();
+      renderVideos();
+
+      // Scroll to form
+      document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function saveProduct() {
+      const name = document.getElementById('productName').value.trim();
+      const tariffs = document.getElementById('productTariffs').value.trim();
+      const stock = document.getElementById('productStock').value;
+
+      if (!name || !tariffs || !mainImageURL || !stock) {
+        showMessage('productMsgBox', 'Remplissez tous les champs obligatoires (*, images)', 'error');
+        return;
+      }
+
+      const product = {
+        id: editingProductId || Date.now(),
+        name: name,
+        description: document.getElementById('productDescription').value.trim(),
+        tariffs: tariffs,
+        promoTariffs: document.getElementById('productPromoTariffs').value.trim() || '',
+        isNew: document.getElementById('isNewProduct').checked,
+        newDuration: document.getElementById('isNewProduct').checked ? parseInt(document.getElementById('newDuration').value) || 0 : 0,
+        newUntil: document.getElementById('isNewProduct').checked ? new Date(Date.now() + (parseInt(document.getElementById('newDuration').value) || 0) * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '',
+        stock: stock,
+        image: mainImageURL,
+        gallery: galleryImages,
+        videos: videoURLs,
+        createdAt: editingProductId ? shopData.products.find(p => p.id === editingProductId).createdAt : new Date().toISOString()
+      };
+
+      const idx = shopData.products.findIndex(p => p.id === product.id);
+      if (idx >= 0) {
+        shopData.products[idx] = product;
+      } else {
+        shopData.products.push(product);
+      }
+
+      await saveData();
+      showMessage('productMsgBox', '✅ Produit sauvegardé!', 'success');
+      resetProductForm();
+      renderProducts();
+    }
+
+    function deleteProduct() {
+      if (!editingProductId) return;
+      if (confirm('Êtes-vous sûr de vouloir supprimer ce produit?')) {
+        shopData.products = shopData.products.filter(p => p.id !== editingProductId);
+        saveData();
+        resetProductForm();
+        renderProducts();
+        editingProductId = null;
+      }
+    }
+
+    function deleteProductFromList(id) {
+      if (confirm('Êtes-vous sûr?')) {
+        shopData.products = shopData.products.filter(p => p.id !== id);
+        saveData();
+        renderProducts();
+      }
+    }
+
+    function resetProductForm() {
+      editingProductId = null;
+      document.getElementById('productFormTitle').textContent = '➕ Ajouter un Produit';
+      document.getElementById('deleteProductBtn').style.display = 'none';
+      document.getElementById('productName').value = '';
+      document.getElementById('productDescription').value = '';
+      document.getElementById('productTariffs').value = '';
+      document.getElementById('productPromoTariffs').value = '';
+      document.getElementById('productStock').value = '';
+      document.getElementById('isNewProduct').checked = false;
+      document.getElementById('newDuration').value = '';
+      toggleNewDuration();
+      mainImageURL = '';
+      galleryImages = [];
+      videoURLs = [];
+      renderMainImage();
+      renderGallery();
+      renderVideos();
+    }
+
+    // ===== SAVE DATA =====
+    async function saveData() {
+      try {
+        const response = await fetch('/api/save-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(shopData)
+        });
+        const result = await response.json();
+        if (result.success) {
+          console.log('✅ Data saved:', result.message);
+        } else {
+          console.error('❌ Save failed:', result.message);
         }
+      } catch (error) {
+        console.error('Save error:', error);
+      }
+    }
 
-        async function uploadGallery(input) {
-            if (!input.files.length) return;
-            
-            showMessage('📤 Upload galerie en cours...', 'success');
-            let uploadedCount = 0;
-            
-            for (let file of input.files) {
-                if (galleryImages.length >= 10) {
-                    showMessage('⚠️ Maximum 10 images', 'error');
-                    break;
-                }
-                
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', UPLOAD_PRESET);
-                
-                try {
-                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.secure_url) {
-                        galleryImages.push({
-                            url: data.secure_url,
-                            id: Date.now() + Math.random()
-                        });
-                        uploadedCount++;
-                    }
-                } catch (error) {
-                    console.error('❌ Gallery upload error:', error);
-                }
-            }
-            
-            renderGallery();
-            showMessage(`✅ ${uploadedCount} image(s) ajoutée(s)!`, 'success');
-            input.value = '';
-        }
+    // ===== MESSAGE BOX =====
+    function showMessage(boxId, msg, type) {
+      const box = document.getElementById(boxId);
+      box.className = `message ${type}`;
+      box.textContent = msg;
+      box.classList.add('show');
 
-        async function uploadVideos(input) {
-            if (!input.files.length) return;
-            
-            showMessage('🎥 Upload vidéo(s) en cours...', 'success');
-            let uploadedCount = 0;
-            
-            for (let file of input.files) {
-                if (productVideos.length >= 3) {
-                    showMessage('⚠️ Maximum 3 vidéos', 'error');
-                    break;
-                }
-                
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', UPLOAD_PRESET);
-                formData.append('resource_type', 'video');
-                
-                try {
-                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.secure_url) {
-                        productVideos.push({
-                            url: data.secure_url,
-                            name: file.name,
-                            id: Date.now() + Math.random()
-                        });
-                        uploadedCount++;
-                    }
-                } catch (error) {
-                    console.error('❌ Video upload error:', error);
-                }
-            }
-            
-            renderVideos();
-            showMessage(`✅ ${uploadedCount} vidéo(s) ajoutée(s)!`, 'success');
-            input.value = '';
-        }
+      setTimeout(() => {
+        box.classList.remove('show');
+      }, 3000);
+    }
 
-        function renderGallery() {
-            const container = document.getElementById('galleryContainer');
-            const items = document.getElementById('galleryItems');
-            
-            if (galleryImages.length === 0) {
-                container.classList.remove('active');
-                return;
-            }
-            
-            container.classList.add('active');
-            items.innerHTML = '';
-            
-            galleryImages.forEach((img, i) => {
-                const el = document.createElement('div');
-                el.className = 'gallery-item';
-                el.draggable = true;
-                el.innerHTML = `
-                    <img src="${img.url}" alt="gallery">
-                    <button class="gallery-item-remove" onclick="removeGalleryImage(${i})">✕</button>
-                `;
-                
-                el.addEventListener('dragstart', e => {
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('index', i);
-                });
-                
-                el.addEventListener('dragover', e => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                });
-                
-                el.addEventListener('drop', e => {
-                    e.preventDefault();
-                    const dragIdx = parseInt(e.dataTransfer.getData('index'));
-                    if (dragIdx !== i) {
-                        const temp = galleryImages[dragIdx];
-                        galleryImages[dragIdx] = galleryImages[i];
-                        galleryImages[i] = temp;
-                        renderGallery();
-                    }
-                });
-                
-                items.appendChild(el);
-            });
-        }
+    // ===== INIT =====
+    window.addEventListener('load', () => {
+      setupAllUploads();
+    });
 
-        function removeGalleryImage(i) {
-            galleryImages.splice(i, 1);
-            renderGallery();
-        }
-
-        function renderVideos() {
-            const container = document.getElementById('videosContainer');
-            const items = document.getElementById('videosItems');
-            
-            if (productVideos.length === 0) {
-                container.classList.remove('active');
-                return;
-            }
-            
-            container.classList.add('active');
-            items.innerHTML = '';
-            
-            productVideos.forEach((vid, i) => {
-                const el = document.createElement('div');
-                el.className = 'video-item';
-                el.innerHTML = `
-                    <div class="video-item-info">${vid.name.substring(0, 15)}</div>
-                    <div class="video-item-play">🎥</div>
-                    <button class="video-item-remove" onclick="removeVideo(${i})">✕</button>
-                `;
-                items.appendChild(el);
-            });
-        }
-
-        function removeVideo(i) {
-            productVideos.splice(i, 1);
-            renderVideos();
-        }
-
-        // CONCOURS
-        function loadConcours() {
-            if (shopData.concours) {
-                document.getElementById('concoursDesc').value = shopData.concours.description || '';
-                if (shopData.concours.image) {
-                    concoursImageUrl = shopData.concours.image;
-                    const preview = document.getElementById('concoursImagePreview');
-                    preview.src = concoursImageUrl;
-                    preview.style.display = 'block';
-                }
-            }
-        }
-
-        async function saveConcours() {
-            const desc = document.getElementById('concoursDesc').value;
-            if (!concoursImageUrl) {
-                showMessage('❌ Ajoute une image SVP', 'error');
-                return;
-            }
-            shopData.concours = { description: desc, image: concoursImageUrl };
-            await saveData();
-        }
-
-        // PRODUCTS
-        function loadProducts() {
-            const list = document.getElementById('productsList');
-            list.innerHTML = '';
-            const today = new Date();
-            
-            shopData.products.forEach(p => {
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                const isNewValid = p.isNew && p.newUntil && new Date(p.newUntil) > today;
-                
-                card.innerHTML = `
-                    <h3>${p.name}${isNewValid ? ' 🆕' : ''}</h3>
-                    <p><strong>Tarifs:</strong> ${p.tariffs}</p>
-                    ${p.promoTariffs ? `<p><strong>Promo:</strong> ${p.promoTariffs}</p>` : ''}
-                    ${isNewValid ? `<p><strong>Nouveau jusqu'au:</strong> ${p.newUntil}</p>` : ''}
-                    <p><strong>Stock:</strong> ${p.stock}</p>
-                    <p><strong>Images:</strong> ${(p.images || []).length}</p>
-                    <p><strong>Vidéos:</strong> ${(p.videos || []).length}</p>
-                    <div class="product-card-actions">
-                        <button class="btn btn-secondary" onclick="editProduct(${p.id})">✏️ Éditer</button>
-                        <button class="btn btn-danger" onclick="deleteProduct(${p.id})">🗑️ Supprimer</button>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
-        }
-
-        function editProduct(id) {
-            const product = shopData.products.find(p => p.id === id);
-            if (!product) return;
-            
-            currentProductId = id;
-            document.getElementById('productName').value = product.name || '';
-            document.getElementById('productDesc').value = product.description || '';
-            document.getElementById('productTariffs').value = product.tariffs || '';
-            document.getElementById('productPromoTariffs').value = product.promoTariffs || '';
-            document.getElementById('productStock').value = product.stock || 'En stock';
-            document.getElementById('productIsNew').checked = product.isNew || false;
-            
-            // Calculer la durée restante
-            if (product.newUntil) {
-                const today = new Date();
-                const expiryDate = new Date(product.newUntil);
-                const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-                document.getElementById('productNewDuration').value = Math.max(1, daysLeft);
-            } else {
-                document.getElementById('productNewDuration').value = '7';
-            }
-            
-            // Afficher/masquer le champ durée
-            document.getElementById('newDurationGroup').style.display = 
-                product.isNew ? 'block' : 'none';
-            
-            productImageUrl = product.image || null;
-            if (productImageUrl) {
-                const preview = document.getElementById('productImagePreview');
-                preview.src = productImageUrl;
-                preview.style.display = 'block';
-            }
-            
-            galleryImages = (product.images || []).map(url => ({ url, id: Date.now() + Math.random() }));
-            renderGallery();
-
-            productVideos = (product.videos || []).map((url, idx) => ({ 
-                url, 
-                name: `Vidéo ${idx + 1}`,
-                id: Date.now() + Math.random() 
-            }));
-            renderVideos();
-
-            document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function resetForm() {
-            currentProductId = null;
-            document.getElementById('productName').value = '';
-            document.getElementById('productDesc').value = '';
-            document.getElementById('productTariffs').value = '';
-            document.getElementById('productPromoTariffs').value = '';
-            document.getElementById('productStock').value = 'En stock';
-            document.getElementById('productIsNew').checked = false;
-            document.getElementById('productNewDuration').value = '7';
-            document.getElementById('newDurationGroup').style.display = 'none';
-            productImageUrl = null;
-            galleryImages = [];
-            productVideos = [];
-            document.getElementById('productImagePreview').style.display = 'none';
-            document.getElementById('galleryContainer').classList.remove('active');
-            document.getElementById('videosContainer').classList.remove('active');
-        }
-
-        async function saveProduct() {
-            const name = document.getElementById('productName').value.trim();
-            const desc = document.getElementById('productDesc').value.trim();
-            const tariffs = document.getElementById('productTariffs').value.trim();
-            const promoTariffs = document.getElementById('productPromoTariffs').value.trim();
-            const stock = document.getElementById('productStock').value;
-            const isNew = document.getElementById('productIsNew').checked;
-            const newDuration = parseInt(document.getElementById('productNewDuration').value) || 7;
-
-            if (!name || !tariffs || !productImageUrl) {
-                showMessage('❌ Remplis: Nom, Tarifs et Image', 'error');
-                return;
-            }
-
-            // Calculer la date d'expiration du badge "Nouveau"
-            let newUntil = null;
-            if (isNew) {
-                const expiryDate = new Date();
-                expiryDate.setDate(expiryDate.getDate() + newDuration);
-                newUntil = expiryDate.toISOString().split('T')[0];
-            }
-
-            const product = {
-                id: currentProductId || Date.now(),
-                name,
-                description: desc,
-                tariffs,
-                promoTariffs: promoTariffs || null,
-                stock,
-                image: productImageUrl,
-                images: galleryImages.map(g => g.url),
-                videos: productVideos.map(v => v.url),
-                isNew: isNew,
-                newUntil: newUntil,
-                createdAt: new Date().toISOString()
-            };
-
-            if (currentProductId) {
-                const idx = shopData.products.findIndex(p => p.id === currentProductId);
-                shopData.products[idx] = product;
-            } else {
-                shopData.products.push(product);
-            }
-
-            await saveData();
-            resetForm();
-            loadProducts();
-        }
-
-        async function deleteProduct(id) {
-            if (confirm('Supprimer ce produit?')) {
-                shopData.products = shopData.products.filter(p => p.id !== id);
-                await saveData();
-                loadProducts();
-            }
-        }
-
-        // SAVE DATA
-        async function saveData() {
-            try {
-                showMessage('💾 Sauvegarde en cours...', 'success');
-                
-                const res = await fetch('/api/save-data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(shopData)
-                });
-                
-                const result = await res.json();
-                
-                if (result.success) {
-                    showMessage('✅ ' + result.message, 'success');
-                    console.log('✅ Save success:', result);
-                } else {
-                    showMessage('❌ ' + (result.message || 'Erreur sauvegarde'), 'error');
-                    console.error('❌ Save error:', result);
-                }
-            } catch (error) {
-                showMessage('❌ Erreur: ' + error.message, 'error');
-                console.error('❌ Save error:', error);
-            }
-        }
-
-        // TABS
-        function switchTab(name) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(name).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        // MESSAGES
-        function showMessage(text, type) {
-            const msg = document.getElementById('message');
-            msg.textContent = text;
-            msg.className = `message active ${type}`;
-            setTimeout(() => msg.classList.remove('active'), 4000);
-        }
-    </script>
+    // Prevent login if Enter key
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('passwordInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkPassword();
+      });
+    });
+  </script>
 </body>
 </html>
