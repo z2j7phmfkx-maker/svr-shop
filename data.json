@@ -34,14 +34,14 @@
       "id": 1774653344375,
       "name": "DOUBLE STATIC VANILLA",
       "description": "",
-      "tariffs": "1,2g=20",
+      "tariffs": "1,2g=20|3,5g=50|10g=110",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774653327/jokdcrksq5kiyw51weyr.jpg",
       "images": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774653338/aad7hd7eh1cl8co1uqlv.mp4"
       ],
-      "createdAt": "2026-03-27T23:15:44.376Z"
+      "createdAt": "2026-03-28T06:57:13.476Z"
     },
     {
       "id": 1774653397175,
