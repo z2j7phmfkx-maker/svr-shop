@@ -171,15 +171,16 @@
       "name": "120u GRAPPE PIE X WTC 🍇",
       "description": "Le 120u désigne un tamis de 120 microns utilisé pour filtrer la résine : il laisse passer surtout les bonnes particules tout en retenant une partie des impuretés, ce qui donne une résine de bonne qualité. Avec une bonne teneur en THC de 22 %, le Grape Pie offre une expérience prononcée, superbe pour détendre tout le corps et élever l'esprit. Cette variété produit des saveurs intenses de raisins qui complètent bien les notes plus poivrées et mentholées.",
       "tariffs": "3g=20|10g=50|20g=100",
-      "promoTariffs": "10g=40",
+      "promoTariffs": "10g=40|20g=80",
+      "isNew": false,
+      "newDuration": 0,
+      "newUntil": "",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774681364/ziiniioidlk8rhybfndg.jpg",
-      "images": [],
+      "gallery": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774681380/m0hkefsgijpmnyc7c3ck.mov"
       ],
-      "isNew": false,
-      "newUntil": null,
       "createdAt": "2026-03-28T07:49:49.406Z"
     },
     {
