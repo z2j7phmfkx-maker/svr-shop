@@ -172,6 +172,19 @@
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774681502/iitutqskd3z5pisxlcie.mov"
       ],
       "createdAt": "2026-03-28T07:05:07.311Z"
+    },
+    {
+      "id": 1774681590675,
+      "name": "PUFF THC Fryd",
+      "description": "",
+      "tariffs": "1=60|2=100",
+      "stock": "En stock",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774681570/kdlwbgifrazglz1yno3n.jpg",
+      "images": [
+        "https://res.cloudinary.com/diezs6eqa/image/upload/v1774681578/pseeztnpcblyh1bnciz4.jpg"
+      ],
+      "videos": [],
+      "createdAt": "2026-03-28T07:06:30.675Z"
     }
   ]
 }
