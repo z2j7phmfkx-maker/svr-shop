@@ -94,6 +94,19 @@
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774680423/hziz0fdvisj9v8meiw5n.mov"
       ],
       "createdAt": "2026-03-28T06:48:19.527Z"
+    },
+    {
+      "id": 1774680583821,
+      "name": "ALIEN PAYA",
+      "description": "L’Alien Paya est principalement une indica avec un taux de THC supérieur à 20%. Le profil aromatique est complexe et multicouche : une fusion de fruits rappelant les fruits tropicaux et des vergers entrelacés avec des notes gazeuses et synthétiques volatiles qui fournissent une expression terpénique moderne distinctive.",
+      "tariffs": "1,2g=20",
+      "stock": "En stock",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774680538/w2tofvghdso9dnbsiby2.jpg",
+      "images": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1774680544/zug20tptu06ecl5o6kdp.mov"
+      ],
+      "createdAt": "2026-03-28T06:49:43.821Z"
     }
   ]
 }
