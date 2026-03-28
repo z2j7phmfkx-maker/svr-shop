@@ -8,12 +8,12 @@ const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 console.log('🤖 Bot Telegram démarré!');
 
-// Configurer le menu principal
+// Configurer le menu principal avec bouton "Commencer"
 bot.setMyCommands([
   { command: 'start', description: 'Commencer' }
 ]);
 
-// Commande /start - affiche le bouton
+// Commande /start - affiche le message de bienvenue
 bot.onText(/\/start/, async (msg) => {
   const userId = msg.from.id;
   const userName = msg.from.username || msg.from.first_name;
@@ -27,13 +27,13 @@ bot.onText(/\/start/, async (msg) => {
 
     if (!isValidStatus) {
       bot.sendMessage(userId, 
-        'Acces Refusé\n\n' +
+        '❌ Accès Refusé\n\n' +
         'Pour accéder au shop SVR, tu dois rejoindre le channel @SVR_TO et envoyer tes vérifications:\n\n' +
         '1️⃣ Une pièce d\'identité (Carte ID)\n' +
         '2️⃣ Une vidéo: toi + ta carte + en disant SVR + date du jour\n' +
         '3️⃣ Dire de qui tu viens\n\n' +
-        'Rejoins le channel: https://t.me/SVR_TO\n\n' +
-        'Une fois validé, retape /start pour accéder au shop!'
+        '👉 Rejoins le channel: https://t.me/SVR_TO\n\n' +
+        'Une fois validé, retape /start pour accéder au shop! 🎁'
       );
       console.log(`❌ @${userName} (${userId}) pas dans le channel`);
       return;
@@ -41,14 +41,14 @@ bot.onText(/\/start/, async (msg) => {
 
     // Utilisateur dans le channel - afficher le bouton
     bot.sendMessage(userId,
-      `Bienvenue ${userName}!\n\n` +
-      `Tu es autorisé à accéder au shop SVR!`,
+      `✅ Bienvenue ${userName}!\n\n` +
+      `Tu es autorisé à accéder au shop SVR! 🎁`,
       {
         reply_markup: {
           inline_keyboard: [
             [
               {
-                text: 'Ouvrir la boutique',
+                text: '🛍️ Ouvrir la boutique',
                 callback_data: 'open_shop'
               }
             ]
@@ -63,7 +63,8 @@ bot.onText(/\/start/, async (msg) => {
     console.error(`❌ Erreur pour @${userName}:`, error.message);
     
     bot.sendMessage(userId, 
-      'Une erreur est survenue. Réessaie avec /start'
+      '⚠️ Une erreur est survenue.\n\n' +
+      'Réessaie avec /start'
     );
   }
 });
@@ -75,7 +76,7 @@ bot.on('callback_query', async (query) => {
   const queryId = query.id;
 
   if (query.data === 'open_shop') {
-    console.log(`Bouton cliqué par @${userName} (${userId})`);
+    console.log(`🛍️ Bouton cliqué par @${userName} (${userId})`);
 
     try {
       // Vérifier que l'utilisateur est toujours dans le channel
@@ -84,7 +85,7 @@ bot.on('callback_query', async (query) => {
 
       if (!isValidStatus) {
         bot.answerCallbackQuery(queryId, {
-          text: 'Tu n\'es plus dans le channel',
+          text: '❌ Tu n\'es plus dans le channel',
           show_alert: true
         });
         return;
@@ -101,7 +102,7 @@ bot.on('callback_query', async (query) => {
 
       if (!data.success) {
         bot.answerCallbackQuery(queryId, {
-          text: 'Erreur de connexion',
+          text: '❌ Erreur de connexion',
           show_alert: true
         });
         return;
@@ -112,12 +113,12 @@ bot.on('callback_query', async (query) => {
 
       // Envoyer le lien au utilisateur
       bot.sendMessage(userId, 
-        `Ton lien d'accès au shop:\n\n${link}\n\nCe lien est personnel et unique!`
+        `🎁 Ton lien d'accès au shop:\n\n${link}\n\n🔐 Ce lien est personnel et unique!`
       );
 
       // Notification au bouton
       bot.answerCallbackQuery(queryId, {
-        text: 'Lien envoyé!',
+        text: '✅ Lien envoyé!',
         show_alert: false
       });
 
@@ -126,7 +127,7 @@ bot.on('callback_query', async (query) => {
     } catch (error) {
       console.error(`❌ Erreur pour @${userName}:`, error.message);
       bot.answerCallbackQuery(queryId, {
-        text: 'Erreur serveur',
+        text: '⚠️ Erreur serveur',
         show_alert: true
       });
     }
