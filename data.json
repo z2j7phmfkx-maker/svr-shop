@@ -145,13 +145,16 @@
       "name": "120u FORBIDDEN⛔️",
       "description": "Le 120u désigne un tamis de 120 microns utilisé pour filtrer la résine : il laisse passer surtout les bonnes particules tout en retenant une partie des impuretés, ce qui donne une résine de bonne qualité. Le Forbidden est une variété de cannabis à dominance indica avec une concentration en THC est très élevée à 21–23 % selon le phénotype et la façon dont elle a été cultivée. Le Forbidden présente un riche profil terpénique lui donnant une odeur complexe dominée par des tons de fruits sucrés. Le goût est tout aussi fruité et rappelle les cerises mûres, les pamplemousses, les oranges et des fruits tropicaux comme les bananes et les mangues.",
       "tariffs": "3g=20€|10g=50|20g=100",
+      "promoTariffs": "10g=40",
       "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774681251/w7hii3tuk8of7hhpumqe.jpg",
       "images": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774681264/r7tddpvzat9ruprt6ode.mov"
       ],
-      "createdAt": "2026-03-28T07:05:20.531Z"
+      "isNew": false,
+      "newUntil": null,
+      "createdAt": "2026-03-28T07:49:33.531Z"
     },
     {
       "id": 1774681387518,
