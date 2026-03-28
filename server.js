@@ -58,36 +58,43 @@ app.get('/data.json', (req, res) => {
   }
 });
 
-// ===== TOKEN VERIFICATION =====
+// ===== TOKEN VERIFICATION (avec userId) =====
 app.get('/api/verify-token', async (req, res) => {
   const token = req.query.token;
+  const userIdFromUrl = req.query.userId;
 
-  if (!token) {
-    return res.json({ valid: false, message: 'Token manquant' });
+  if (!token || !userIdFromUrl) {
+    return res.json({ valid: false, message: 'Token ou userId manquant' });
   }
 
   // Check if token exists
-  let userId = null;
+  let tokenOwnerId = null;
   for (const [id, data] of Object.entries(userTokens)) {
     if (data.token === token) {
-      userId = id;
+      tokenOwnerId = id;
       break;
     }
   }
 
-  if (!userId) {
+  if (!tokenOwnerId) {
     return res.json({ valid: false, message: 'Token invalide' });
   }
 
+  // Vérifier que le token appartient à cet utilisateur
+  if (tokenOwnerId !== userIdFromUrl) {
+    console.log(`❌ Token mismatch: token owner=${tokenOwnerId}, url userId=${userIdFromUrl}`);
+    return res.json({ valid: false, message: 'Ce token ne t\'appartient pas' });
+  }
+
   // Verify user is still in channel
-  const isMember = await isChannelMember(parseInt(userId));
+  const isMember = await isChannelMember(parseInt(userIdFromUrl));
   
   if (!isMember) {
-    delete userTokens[userId];
+    delete userTokens[userIdFromUrl];
     return res.json({ valid: false, message: 'Vous n\'êtes plus membre du channel' });
   }
 
-  res.json({ valid: true, userId: userId, message: 'Accès autorisé' });
+  res.json({ valid: true, userId: userIdFromUrl, message: 'Accès autorisé' });
 });
 
 // ===== GENERATE TOKEN (for bot) =====
