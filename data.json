@@ -241,6 +241,23 @@
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774991372/zgm27g592z2ryokd06l1.mp4"
       ],
       "createdAt": "2026-03-31T21:09:41.074Z"
+    },
+    {
+      "id": 1774991687897,
+      "name": "RUNTZ",
+      "description": "",
+      "tariffs": "3g=20|10g=60|20g=110",
+      "promoTariffs": "",
+      "isNew": true,
+      "newDuration": 0,
+      "newUntil": "2026-03-31",
+      "stock": "En stock",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774991629/iap1siqgibo9yrkyuu17.jpg",
+      "gallery": [
+        "https://res.cloudinary.com/diezs6eqa/image/upload/v1774991666/eii1ofssjt4mkvllvhmm.jpg"
+      ],
+      "videos": [],
+      "createdAt": "2026-03-31T21:14:47.898Z"
     }
   ],
   "userTokens": {
