@@ -292,6 +292,23 @@
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774992326/qcdnf17hnuoi6cnnnepr.mov"
       ],
       "createdAt": "2026-03-31T21:25:31.200Z"
+    },
+    {
+      "id": 1774993351068,
+      "name": "KETAMA🇲🇦",
+      "description": "",
+      "tariffs": "2,5g=20|10g=70|20g=130",
+      "promoTariffs": "",
+      "isNew": true,
+      "newDuration": 7,
+      "newUntil": "2026-04-07",
+      "stock": "En stock",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774993338/mnresmu0xmf7ngsbpmsr.jpg",
+      "gallery": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1774993345/zaoxoymhpwkpzfohjnwx.mov"
+      ],
+      "createdAt": "2026-03-31T21:42:31.068Z"
     }
   ],
   "userTokens": {
