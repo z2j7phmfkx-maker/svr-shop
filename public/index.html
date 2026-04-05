@@ -113,30 +113,62 @@
       font-size: 11px;
     }
 
-    /* Bannière Concours */
+    /* Bannière Concours avec image */
     .concours-banner {
-      background: linear-gradient(135deg, rgba(100, 150, 180, 0.15) 0%, rgba(100, 150, 180, 0.05) 100%);
-      border: 2px solid rgba(100, 150, 180, 0.4);
-      border-radius: 12px;
-      padding: 15px;
-      margin: 0 auto 15px;
+      background-image: url('https://www.genspark.ai/api/files/s/yzxHRG1s');
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      margin: 15px auto;
       max-width: 600px;
+      min-height: 140px;
+      border-radius: 12px;
+      overflow: hidden;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 0 20px rgba(100, 150, 180, 0.1);
-      backdrop-filter: blur(10px);
+      box-shadow: 0 0 20px rgba(100, 150, 180, 0.2);
+    }
+
+    .concours-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1;
     }
 
     .concours-banner:hover {
       transform: translateY(-3px);
-      box-shadow: 0 0 30px rgba(100, 150, 180, 0.2);
-      border-color: rgba(100, 150, 180, 0.6);
+      box-shadow: 0 0 30px rgba(100, 150, 180, 0.3);
     }
 
-    .concours-banner h2 {
-      color: #6496b4;
-      margin-bottom: 8px;
-      font-size: 16px;
+    .concours-banner:hover::before {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .concours-content {
+      position: relative;
+      z-index: 2;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 140px;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .concours-preview {
+      color: #a0b0c0;
+      font-size: 12px;
+      transition: opacity 0.3s ease;
+    }
+
+    .concours-preview.hidden {
+      display: none;
     }
 
     .concours-text {
@@ -148,20 +180,11 @@
       transition: max-height 0.4s ease;
       white-space: pre-wrap;
       word-wrap: break-word;
+      margin-top: 15px;
     }
 
     .concours-text.expanded {
       max-height: 3000px;
-    }
-
-    .concours-preview {
-      color: #a0b0c0;
-      font-size: 12px;
-      transition: opacity 0.3s ease;
-    }
-
-    .concours-preview.hidden {
-      display: none;
     }
 
     .expand-icon {
@@ -724,13 +747,14 @@
       </div>
     </div>
 
-    <!-- Bannière Concours (Cliquable) -->
+    <!-- Bannière Concours avec image (sans titre) -->
     <div class="concours-banner" id="concoursBanner" onclick="toggleConcours()">
-      <h2>🚨 Concours SVR 🚨</h2>
-      <div class="concours-preview" id="concoursPreview">
-        Clique pour voir les détails <span class="expand-icon">▼</span>
+      <div class="concours-content">
+        <div class="concours-preview" id="concoursPreview">
+          Clique pour voir les détails <span class="expand-icon">▼</span>
+        </div>
+        <div class="concours-text" id="concoursText"></div>
       </div>
-      <div class="concours-text" id="concoursText"></div>
     </div>
 
     <!-- Section Filtre -->
