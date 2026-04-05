@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SVR Shop - Admin Panel</title>
+  <title>SVR Shop - Admin</title>
   <style>
     * {
       margin: 0;
@@ -13,952 +13,446 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0a0e27 100%);
+      min-height: 100vh;
+      padding: 20px;
       color: #fff;
-      min-height: 100vh;
     }
 
-    /* ===== LOGIN SCREEN ===== */
-    .login-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #00d4ff 0%, #00ff64 100%);
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
     }
 
-    .login-box {
-      background: #1a1f2e;
-      padding: 3rem;
+    .header {
+      background: rgba(15, 20, 40, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 20px;
       border-radius: 15px;
-      box-shadow: 0 20px 60px rgba(0, 212, 255, 0.3);
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
+      margin-bottom: 20px;
+      border: 1px solid rgba(100, 150, 180, 0.2);
     }
 
-    .login-box h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #00d4ff, #00ff64);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .header h1 {
+      color: #6496b4;
+      margin-bottom: 10px;
     }
 
-    .login-box p {
-      color: #aaa;
-      margin-bottom: 2rem;
+    .header p {
+      color: #a0b0c0;
+      font-size: 13px;
     }
 
-    .login-input {
-      width: 100%;
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      background: #0f1419;
-      border: 2px solid #00d4ff;
+    .auth-section {
+      background: rgba(15, 20, 40, 0.8);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(100, 150, 180, 0.2);
+    }
+
+    .auth-section input {
+      padding: 10px;
+      border: 1px solid rgba(100, 150, 180, 0.3);
       border-radius: 8px;
+      background: rgba(20, 28, 50, 0.8);
       color: #fff;
-      font-size: 1rem;
-      transition: all 0.3s ease;
+      margin-right: 10px;
+      margin-bottom: 10px;
     }
 
-    .login-input:focus {
-      outline: none;
-      border-color: #00ff64;
-      box-shadow: 0 0 20px rgba(0, 255, 100, 0.3);
-    }
-
-    .login-btn {
-      width: 100%;
-      padding: 1rem;
-      background: linear-gradient(135deg, #00d4ff, #00ff64);
-      border: none;
-      border-radius: 8px;
-      color: #000;
-      font-size: 1.1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .login-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(0, 255, 100, 0.4);
-    }
-
-    /* ===== ADMIN PANEL ===== */
-    .admin-container {
-      display: none;
-      min-height: 100vh;
-      padding: 1rem;
-    }
-
-    .admin-container.active {
-      display: block;
-    }
-
-    .admin-header {
-      background: linear-gradient(135deg, #00d4ff, #00ff64);
-      padding: 1.5rem;
-      border-radius: 10px;
-      margin-bottom: 2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .admin-header h1 {
-      font-size: 2rem;
-      color: #000;
-    }
-
-    .logout-btn {
-      background: #ff4444;
-      color: #fff;
-      border: none;
-      padding: 0.75rem 1.5rem;
+    .auth-section button {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, rgba(100, 150, 180, 0.4) 0%, rgba(100, 150, 180, 0.2) 100%);
+      border: 1px solid rgba(100, 150, 180, 0.5);
+      color: #6496b4;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
       transition: all 0.3s ease;
     }
 
-    .logout-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+    .auth-section button:hover {
+      background: linear-gradient(135deg, rgba(100, 150, 180, 0.6) 0%, rgba(100, 150, 180, 0.4) 100%);
     }
 
-    /* ===== TABS ===== */
     .tabs {
       display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
+      gap: 10px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
     }
 
     .tab-btn {
-      padding: 1rem 1.5rem;
-      background: #2a3142;
-      border: 2px solid #00d4ff;
-      color: #00d4ff;
+      padding: 10px 20px;
+      background: rgba(20, 28, 50, 0.8);
+      border: 1px solid rgba(100, 150, 180, 0.2);
+      color: #a0b0c0;
       border-radius: 8px;
       cursor: pointer;
-      font-weight: bold;
       transition: all 0.3s ease;
+      font-weight: 600;
     }
 
     .tab-btn.active {
-      background: #00d4ff;
-      color: #000;
+      background: linear-gradient(135deg, rgba(100, 150, 180, 0.4) 0%, rgba(100, 150, 180, 0.2) 100%);
+      border-color: #6496b4;
+      color: #6496b4;
     }
 
-    .tab-btn:hover {
-      border-color: #00ff64;
-    }
-
-    /* ===== TAB CONTENT ===== */
     .tab-content {
       display: none;
-      animation: fadeIn 0.3s ease;
     }
 
     .tab-content.active {
       display: block;
     }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* ===== FORM STYLES ===== */
     .form-section {
-      background: #2a3142;
-      padding: 2rem;
-      border-radius: 10px;
-      margin-bottom: 2rem;
-      border: 2px solid #00d4ff;
-    }
-
-    .form-section h2 {
-      color: #00d4ff;
-      margin-bottom: 1.5rem;
-      font-size: 1.5rem;
+      background: rgba(15, 20, 40, 0.8);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(100, 150, 180, 0.2);
     }
 
     .form-group {
-      margin-bottom: 1.5rem;
+      margin-bottom: 15px;
     }
 
     .form-group label {
       display: block;
-      margin-bottom: 0.5rem;
-      color: #00ff64;
-      font-weight: bold;
+      margin-bottom: 5px;
+      color: #6496b4;
+      font-weight: 600;
+      font-size: 13px;
     }
 
-    .form-group input[type="text"],
-    .form-group input[type="number"],
+    .form-group input,
     .form-group textarea,
     .form-group select {
       width: 100%;
-      padding: 0.75rem;
-      background: #0f1419;
-      border: 2px solid #00d4ff;
+      padding: 10px;
+      border: 1px solid rgba(100, 150, 180, 0.3);
       border-radius: 8px;
+      background: rgba(20, 28, 50, 0.8);
       color: #fff;
-      font-size: 1rem;
-      transition: all 0.3s ease;
+      font-size: 13px;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
     }
 
     .form-group input:focus,
     .form-group textarea:focus,
     .form-group select:focus {
       outline: none;
-      border-color: #00ff64;
-      box-shadow: 0 0 20px rgba(0, 255, 100, 0.3);
+      border-color: #6496b4;
+      box-shadow: 0 0 10px rgba(100, 150, 180, 0.2);
     }
 
-    .form-group textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
-
-    /* ===== UPLOAD ZONES ===== */
-    .upload-zone {
-      border: 3px dashed #00d4ff;
-      border-radius: 8px;
-      padding: 2rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: #0f1419;
-    }
-
-    .upload-zone:hover,
-    .upload-zone.dragover {
-      border-color: #00ff64;
-      background: rgba(0, 255, 100, 0.05);
-    }
-
-    .upload-zone p {
-      color: #aaa;
-      margin-bottom: 0.5rem;
-    }
-
-    .upload-zone input {
-      display: none;
-    }
-
-    /* ===== PREVIEW GALLERY ===== */
-    .gallery-preview {
+    .form-row {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .gallery-item {
-      position: relative;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 2px solid #00d4ff;
-      aspect-ratio: 1;
-      background: #0f1419;
-    }
-
-    .gallery-item img,
-    .gallery-item video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .gallery-item-actions {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      background: rgba(0, 0, 0, 0.7);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .gallery-item:hover .gallery-item-actions {
-      opacity: 1;
-    }
-
-    .gallery-item-btn {
-      background: #ff4444;
-      color: #fff;
-      border: none;
-      padding: 0.5rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      transition: all 0.3s ease;
-    }
-
-    .gallery-item-btn:hover {
-      background: #cc0000;
-    }
-
-    /* ===== BUTTONS ===== */
-    .btn-group {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-top: 2rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
     }
 
     .btn {
-      flex: 1;
-      min-width: 150px;
-      padding: 1rem;
-      border: none;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, rgba(100, 150, 180, 0.4) 0%, rgba(100, 150, 180, 0.2) 100%);
+      border: 1px solid rgba(100, 150, 180, 0.5);
+      color: #6496b4;
       border-radius: 8px;
-      font-weight: bold;
       cursor: pointer;
-      font-size: 1rem;
+      font-weight: bold;
       transition: all 0.3s ease;
+      margin-right: 10px;
+      margin-bottom: 10px;
     }
 
-    .btn-save {
-      background: linear-gradient(135deg, #00d4ff, #00ff64);
-      color: #000;
-    }
-
-    .btn-save:hover {
+    .btn:hover {
+      background: linear-gradient(135deg, rgba(100, 150, 180, 0.6) 0%, rgba(100, 150, 180, 0.4) 100%);
       transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(0, 255, 100, 0.4);
     }
 
-    .btn-reset {
-      background: #ff8c00;
-      color: #fff;
+    .btn-danger {
+      background: linear-gradient(135deg, rgba(220, 100, 100, 0.4) 0%, rgba(220, 100, 100, 0.2) 100%);
+      border-color: rgba(220, 100, 100, 0.5);
+      color: #ff6b6b;
     }
 
-    .btn-reset:hover {
-      background: #e67e00;
+    .btn-danger:hover {
+      background: linear-gradient(135deg, rgba(220, 100, 100, 0.6) 0%, rgba(220, 100, 100, 0.4) 100%);
     }
 
-    .btn-delete {
-      background: #ff4444;
-      color: #fff;
-    }
-
-    .btn-delete:hover {
-      background: #cc0000;
-    }
-
-    /* ===== MESSAGE ===== */
-    .message {
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      display: none;
-      animation: slideDown 0.3s ease;
-    }
-
-    .message.show {
-      display: block;
-    }
-
-    @keyframes slideDown {
-      from {
-        opacity: 0;
-        transform: translateY(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .message.success {
-      background: #00ff64;
-      color: #000;
-    }
-
-    .message.error {
-      background: #ff4444;
-      color: #fff;
-    }
-
-    /* ===== PRODUCTS LIST ===== */
     .products-list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-top: 2rem;
+      gap: 15px;
     }
 
-    .product-card {
-      background: #2a3142;
-      border: 2px solid #00d4ff;
-      border-radius: 8px;
-      padding: 1rem;
-      cursor: pointer;
+    .product-item {
+      background: rgba(20, 28, 50, 0.8);
+      border: 1px solid rgba(100, 150, 180, 0.2);
+      border-radius: 12px;
+      padding: 15px;
       transition: all 0.3s ease;
     }
 
-    .product-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
-      border-color: #00ff64;
+    .product-item:hover {
+      border-color: rgba(100, 150, 180, 0.5);
+      box-shadow: 0 0 20px rgba(100, 150, 180, 0.1);
     }
 
-    .product-card img {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 0.5rem;
-    }
-
-    .product-card h3 {
-      color: #00d4ff;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-    }
-
-    .product-card p {
-      color: #aaa;
-      font-size: 0.8rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .product-card-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-
-    .product-card-actions button {
-      flex: 1;
-      padding: 0.5rem;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
+    .product-name {
+      color: #6496b4;
       font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+
+    .product-info {
+      color: #a0b0c0;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .product-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .product-actions button {
+      flex: 1;
+      padding: 8px;
+      background: linear-gradient(135deg, rgba(100, 150, 180, 0.3) 0%, rgba(100, 150, 180, 0.1) 100%);
+      border: 1px solid rgba(100, 150, 180, 0.4);
+      color: #6496b4;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
       transition: all 0.3s ease;
     }
 
-    .edit-product-btn {
-      background: #00d4ff;
-      color: #000;
+    .product-actions button:hover {
+      background: linear-gradient(135deg, rgba(100, 150, 180, 0.5) 0%, rgba(100, 150, 180, 0.3) 100%);
     }
 
-    .edit-product-btn:hover {
-      background: #00ff64;
+    .success {
+      background: rgba(50, 150, 100, 0.2);
+      border: 1px solid rgba(50, 150, 100, 0.5);
+      color: #6bc34a;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
 
-    .delete-product-btn {
-      background: #ff4444;
-      color: #fff;
+    .error {
+      background: rgba(220, 100, 100, 0.2);
+      border: 1px solid rgba(220, 100, 100, 0.5);
+      color: #ff6b6b;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
 
-    .delete-product-btn:hover {
-      background: #cc0000;
+    .image-preview {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 8px;
+      margin-top: 10px;
+      border: 1px solid rgba(100, 150, 180, 0.2);
     }
 
-    /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
-      .admin-header {
-        flex-direction: column;
-        text-align: center;
+      .form-row {
+        grid-template-columns: 1fr;
       }
 
-      .admin-header h1 {
-        font-size: 1.5rem;
+      .auth-section input {
+        width: 100%;
       }
-
-      .form-section {
-        padding: 1rem;
-      }
-
-      .tabs {
-        gap: 0.5rem;
-      }
-
-      .tab-btn {
-        flex: 1;
-        padding: 0.75rem 1rem;
-        font-size: 0.9rem;
-      }
-
-      .gallery-preview {
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-      }
-
-      .products-list {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      }
-
-      .btn {
-        min-width: 100px;
-      }
-    }
-
-    /* ===== DRAG DROP REORDER ===== */
-    .gallery-item.dragging {
-      opacity: 0.5;
-    }
-
-    .gallery-item[draggable="true"] {
-      cursor: grab;
-    }
-
-    .gallery-item[draggable="true"]:active {
-      cursor: grabbing;
-    }
-
-    /* ===== CHECKBOX STYLES ===== */
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .checkbox-group input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      accent-color: #00d4ff;
-    }
-
-    .checkbox-group label {
-      margin: 0;
-      cursor: pointer;
-      font-weight: normal;
-    }
-
-    /* ===== DURATION INPUT ===== */
-    .duration-group {
-      display: none;
-      margin-top: 1rem;
-    }
-
-    .duration-group.show {
-      display: block;
     }
   </style>
 </head>
 <body>
-  <!-- ===== LOGIN SCREEN ===== -->
-  <div class="login-container" id="loginContainer">
-    <div class="login-box">
-      <h1>🛍️ SVR</h1>
-      <p>Admin Panel</p>
-      <input type="password" class="login-input" id="passwordInput" placeholder="Entrez le mot de passe" />
-      <button class="login-btn" onclick="checkPassword()">Se connecter</button>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>SVR Shop - Admin</h1>
+      <p>Gestion des produits, concours et contenu</p>
     </div>
-  </div>
 
-  <!-- ===== ADMIN PANEL ===== -->
-  <div class="admin-container" id="adminContainer">
-    <div style="max-width: 1200px; margin: 0 auto;">
-      <!-- HEADER -->
-      <div class="admin-header">
-        <h1>🛍️ SVR Shop - Admin</h1>
-        <button class="logout-btn" onclick="logout()">Déconnexion</button>
-      </div>
+    <!-- Auth Section -->
+    <div class="auth-section" id="authSection">
+      <h3 style="margin-bottom: 15px; color: #6496b4;">Authentification</h3>
+      <input type="password" id="password" placeholder="Mot de passe admin" onkeypress="if(event.key==='Enter') login()">
+      <button onclick="login()">Accéder à l'admin</button>
+    </div>
 
-      <!-- TABS -->
+    <!-- Main Content (hidden until authenticated) -->
+    <div id="mainContent" style="display: none;">
+      <!-- Messages -->
+      <div id="message" style="display: none;"></div>
+
+      <!-- Tabs -->
       <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('concours')">🎁 Concours</button>
-        <button class="tab-btn" onclick="switchTab('products')">📦 Produits</button>
+        <button class="tab-btn active" onclick="switchTab('products')">Produits</button>
+        <button class="tab-btn" onclick="switchTab('concours')">Concours</button>
       </div>
 
-      <!-- ===== CONCOURS TAB ===== -->
-      <div id="concours-tab" class="tab-content active">
+      <!-- Tab: Produits -->
+      <div id="products" class="tab-content active">
+        <!-- Ajouter produit -->
         <div class="form-section">
-          <h2>📝 Gestion du Concours</h2>
-
-          <div id="concoursMsgBox"></div>
-
+          <h3 style="margin-bottom: 20px; color: #6496b4;">Ajouter un nouveau produit</h3>
+          
           <div class="form-group">
-            <label>Description du Concours</label>
-            <textarea id="concoursDescription" placeholder="Décrivez votre concours..."></textarea>
+            <label>Nom</label>
+            <input type="text" id="productName" placeholder="Ex: GARY PAYTON">
           </div>
 
-          <div class="btn-group">
-            <button class="btn btn-save" onclick="saveConcours()">💾 Sauvegarder Concours</button>
-            <button class="btn btn-reset" onclick="resetConcoursForm()">🔄 Réinitialiser</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== PRODUCTS TAB ===== -->
-      <div id="products-tab" class="tab-content">
-        <!-- ADD/EDIT PRODUCT FORM -->
-        <div class="form-section">
-          <h2 id="productFormTitle">➕ Ajouter un Produit</h2>
-
-          <div id="productMsgBox"></div>
-
-          <div class="form-group">
-            <label>Nom du Produit *</label>
-            <input type="text" id="productName" placeholder="Ex: GARY PAYTON" />
+          <div class="form-row">
+            <div class="form-group">
+              <label>Catégorie</label>
+              <select id="productCategory">
+                <option value="WEED">WEED</option>
+                <option value="HASH">HASH</option>
+                <option value="EXTRA">EXTRA</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Stock</label>
+              <select id="productStock">
+                <option value="En stock">En stock</option>
+                <option value="Stock limité">Stock limité</option>
+                <option value="Rupture">Rupture</option>
+              </select>
+            </div>
           </div>
 
           <div class="form-group">
             <label>Description</label>
-            <textarea id="productDescription" placeholder="Description détaillée du produit..."></textarea>
+            <textarea id="productDescription" placeholder="Description du produit"></textarea>
           </div>
 
           <div class="form-group">
-            <label>Tarifs (format: 1g=10|5g=50|10g=130) *</label>
-            <input type="text" id="productTariffs" placeholder="Ex: 1g=20|5g=100|10g=180" />
+            <label>Tarifs (format: 2g=20|10g=80|20g=150)</label>
+            <input type="text" id="productTariffs" placeholder="2g=20|10g=80|20g=150">
           </div>
 
           <div class="form-group">
-            <label>Tarifs en Promo (optionnel, même format)</label>
-            <input type="text" id="productPromoTariffs" placeholder="Ex: 1g=15|5g=80|10g=150" />
+            <label>Tarifs Promo (optionnel, même format)</label>
+            <input type="text" id="productPromoTariffs" placeholder="10g=60|20g=120">
           </div>
 
-          <div class="checkbox-group">
-            <input type="checkbox" id="isNewProduct" onchange="toggleNewDuration()" />
-            <label for="isNewProduct">✨ Marquer comme NOUVEAU</label>
+          <div class="form-group">
+            <label>Image principale (URL Cloudinary)</label>
+            <input type="text" id="productImage" placeholder="https://res.cloudinary.com/...">
+            <img id="imagePreview" class="image-preview" style="display: none;">
           </div>
 
-          <div class="duration-group" id="durationGroup">
+          <div class="form-group">
+            <label>Images galerie (URLs Cloudinary, une par ligne)</label>
+            <textarea id="productGallery" placeholder="https://res.cloudinary.com/...&#10;https://res.cloudinary.com/..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Vidéos (URLs, une par ligne)</label>
+            <textarea id="productVideos" placeholder="https://res.cloudinary.com/.../video.mov&#10;https://res.cloudinary.com/.../video.mp4"></textarea>
+          </div>
+
+          <div class="form-row">
             <div class="form-group">
-              <label>Durée du badge NOUVEAU (en jours) *</label>
-              <input type="number" id="newDuration" placeholder="Ex: 7" min="1" max="30" />
+              <label>Nouveau produit?</label>
+              <select id="productIsNew">
+                <option value="false">Non</option>
+                <option value="true">Oui</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Valide jusqu'au (YYYY-MM-DD)</label>
+              <input type="text" id="productNewUntil" placeholder="2026-04-07">
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Stock *</label>
-            <select id="productStock">
-              <option value="">-- Sélectionnez --</option>
-              <option value="En stock">✅ En stock</option>
-              <option value="Stock limité">⚠️ Stock limité</option>
-              <option value="Rupture">❌ Rupture</option>
-            </select>
-          </div>
-
-          <!-- IMAGE PRINCIPALE -->
-          <div class="form-group">
-            <label>Image Principale (1:1) *</label>
-            <div class="upload-zone" id="mainImageUploadZone">
-              <p>📸 Glissez une image ou cliquez</p>
-              <input type="file" id="mainImageInput" accept="image/*" />
-            </div>
-            <div class="gallery-preview" id="mainImagePreview"></div>
-          </div>
-
-          <!-- GALERIE D'IMAGES -->
-          <div class="form-group">
-            <label>Galerie d'Images (max 10)</label>
-            <div class="upload-zone" id="galleryUploadZone">
-              <p>📸 Glissez des images ou cliquez</p>
-              <input type="file" id="galleryInput" accept="image/*" multiple />
-            </div>
-            <div class="gallery-preview" id="galleryPreview"></div>
-          </div>
-
-          <!-- VIDÉOS -->
-          <div class="form-group">
-            <label>Vidéos (max 3, MP4/WebM)</label>
-            <div class="upload-zone" id="videoUploadZone">
-              <p>🎥 Glissez des vidéos ou cliquez</p>
-              <input type="file" id="videoInput" accept="video/mp4,video/webm" multiple />
-            </div>
-            <div class="gallery-preview" id="videoPreview"></div>
-          </div>
-
-          <div class="btn-group">
-            <button class="btn btn-save" onclick="saveProduct()">💾 Sauvegarder Produit</button>
-            <button class="btn btn-reset" onclick="resetProductForm()">🔄 Réinitialiser</button>
-            <button class="btn btn-delete" id="deleteProductBtn" style="display: none;" onclick="deleteProduct()">🗑️ Supprimer</button>
-          </div>
+          <button class="btn" onclick="addProduct()">Ajouter produit</button>
         </div>
 
-        <!-- PRODUCTS LIST -->
+        <!-- Liste des produits -->
         <div class="form-section">
-          <h2>📦 Produits Existants</h2>
+          <h3 style="margin-bottom: 20px; color: #6496b4;">Produits existants</h3>
           <div class="products-list" id="productsList"></div>
+        </div>
+      </div>
+
+      <!-- Tab: Concours -->
+      <div id="concours" class="tab-content">
+        <div class="form-section">
+          <h3 style="margin-bottom: 20px; color: #6496b4;">Éditer le concours</h3>
+          
+          <div class="form-group">
+            <label>Description du concours</label>
+            <textarea id="concoursDescription" placeholder="Décris les détails du concours..." style="min-height: 200px;"></textarea>
+          </div>
+
+          <button class="btn" onclick="saveConcours()">Sauvegarder concours</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // ===== CONSTANTS =====
-    const ADMIN_PASSWORD = 'Tova$Shop2024!Secure';
-    const CLOUDINARY_CLOUD_NAME = 'diezs6eqa';
-    const CLOUDINARY_UPLOAD_PRESET = 'unsigned_upload';
+    const ADMIN_PASSWORD = 'admin123'; // À changer
+    let shopData = {};
+    let isAuthenticated = false;
 
-    // ===== STATE =====
-    let shopData = {
-      concours: { description: '' },
-      products: []
-    };
-
-    let isLoggedIn = false;
-    let editingProductId = null;
-    let mainImageURL = '';
-    let galleryImages = [];
-    let videoURLs = [];
-
-    // ===== LOGIN =====
-    function checkPassword() {
-      const password = document.getElementById('passwordInput').value;
+    async function login() {
+      const password = document.getElementById('password').value;
       if (password === ADMIN_PASSWORD) {
-        isLoggedIn = true;
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('adminContainer').classList.add('active');
-        loadData();
+        isAuthenticated = true;
+        document.getElementById('authSection').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        loadShopData();
       } else {
-        alert('❌ Mot de passe incorrect');
+        showMessage('Mot de passe incorrect', 'error');
       }
     }
 
-    function logout() {
-      isLoggedIn = false;
-      editingProductId = null;
-      document.getElementById('loginContainer').style.display = 'flex';
-      document.getElementById('adminContainer').classList.remove('active');
-      document.getElementById('passwordInput').value = '';
-    }
-
-    // ===== LOAD DATA =====
-    async function loadData() {
+    async function loadShopData() {
       try {
         const response = await fetch('/data.json');
         shopData = await response.json();
-        renderConcours();
-        renderProducts();
+        
+        loadProducts();
+        loadConcours();
       } catch (error) {
-        console.error('Error loading data:', error);
+        showMessage('Erreur chargement données', 'error');
       }
     }
 
-    // ===== TABS =====
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    function loadProducts() {
+      const list = document.getElementById('productsList');
+      list.innerHTML = '';
 
-      document.getElementById(tab + '-tab').classList.add('active');
-      event.target.classList.add('active');
-    }
-
-    // ===== CONCOURS =====
-    function renderConcours() {
-      document.getElementById('concoursDescription').value = shopData.concours.description || '';
-    }
-
-    async function saveConcours() {
-      const description = document.getElementById('concoursDescription').value.trim();
-      if (!description) {
-        showMessage('concoursMsgBox', 'Veuillez remplir la description', 'error');
-        return;
-      }
-
-      shopData.concours = {
-        description: description
-      };
-
-      await saveData();
-      showMessage('concoursMsgBox', '✅ Concours sauvegardé!', 'success');
-    }
-
-    function resetConcoursForm() {
-      document.getElementById('concoursDescription').value = '';
-    }
-
-    // ===== UPLOAD HELPERS =====
-    function setupUploadZone(zoneId, inputId, callback) {
-      const zone = document.getElementById(zoneId);
-      const input = document.getElementById(inputId);
-
-      zone.onclick = () => input.click();
-
-      zone.ondragover = (e) => {
-        e.preventDefault();
-        zone.classList.add('dragover');
-      };
-
-      zone.ondragleave = () => zone.classList.remove('dragover');
-
-      zone.ondrop = (e) => {
-        e.preventDefault();
-        zone.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        callback(files);
-      };
-
-      input.onchange = (e) => callback(e.target.files);
-    }
-
-    async function uploadToCloudinary(file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-      try {
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await response.json();
-        return data.secure_url;
-      } catch (error) {
-        console.error('Upload error:', error);
-        return null;
-      }
-    }
-
-    // ===== SETUP UPLOADS ON PAGE LOAD =====
-    function setupAllUploads() {
-      // Main Product Image
-      setupUploadZone('mainImageUploadZone', 'mainImageInput', async (files) => {
-        if (files.length > 0) {
-          const url = await uploadToCloudinary(files[0]);
-          if (url) {
-            mainImageURL = url;
-            renderMainImage();
-          }
-        }
-      });
-
-      // Gallery Images
-      setupUploadZone('galleryUploadZone', 'galleryInput', async (files) => {
-        for (let file of files) {
-          if (galleryImages.length >= 10) break;
-          const url = await uploadToCloudinary(file);
-          if (url) galleryImages.push(url);
-        }
-        renderGallery();
-      });
-
-      // Videos
-      setupUploadZone('videoUploadZone', 'videoInput', async (files) => {
-        for (let file of files) {
-          if (videoURLs.length >= 3) break;
-          const url = await uploadToCloudinary(file);
-          if (url) videoURLs.push(url);
-        }
-        renderVideos();
-      });
-    }
-
-    function renderMainImage() {
-      const preview = document.getElementById('mainImagePreview');
-      preview.innerHTML = '';
-      if (mainImageURL) {
+      shopData.products?.forEach(product => {
         const div = document.createElement('div');
-        div.className = 'gallery-item';
+        div.className = 'product-item';
         div.innerHTML = `
-          <img src="${mainImageURL}" />
-          <div class="gallery-item-actions">
-            <button class="gallery-item-btn" onclick="removeMainImage()">Supprimer</button>
+          <div class="product-name">${product.name}</div>
+          <div class="product-info">
+            <strong>Catégorie:</strong> ${product.category || 'N/A'} | 
+            <strong>Stock:</strong> ${product.stock} | 
+            <strong>Tarif:</strong> À partir de ${product.tariffs?.split('|')[0]?.split('=')[1]}€
+          </div>
+          <div class="product-actions">
+            <button onclick="editProduct(${product.id})">Éditer</button>
+            <button onclick="deleteProduct(${product.id})" style="background: linear-gradient(135deg, rgba(220, 100, 100, 0.3) 0%, rgba(220, 100, 100, 0.1) 100%); color: #ff6b6b;">Supprimer</button>
           </div>
         `;
-        preview.appendChild(div);
-      }
-    }
-
-    function removeMainImage() {
-      mainImageURL = '';
-      renderMainImage();
-    }
-
-    function renderGallery() {
-      const preview = document.getElementById('galleryPreview');
-      preview.innerHTML = '';
-      galleryImages.forEach((url, idx) => {
-        const div = document.createElement('div');
-        div.className = 'gallery-item';
-        div.draggable = true;
-        div.innerHTML = `
-          <img src="${url}" />
-          <div class="gallery-item-actions">
-            <button class="gallery-item-btn" onclick="removeGalleryImage(${idx})">✕</button>
-          </div>
-        `;
-        div.ondragstart = () => {
-          div.classList.add('dragging');
-          div.dataset.dragIdx = idx;
-        };
-        div.ondragover = (e) => e.preventDefault();
-        div.ondrop = () => {
-          const dragIdx = parseInt(document.querySelector('.gallery-item.dragging').dataset.dragIdx);
-          [galleryImages[dragIdx], galleryImages[idx]] = [galleryImages[idx], galleryImages[dragIdx]];
-          renderGallery();
-        };
-        div.ondragend = () => div.classList.remove('dragging');
-        preview.appendChild(div);
-      });
-    }
-
-    function removeGalleryImage(idx) {
-      galleryImages.splice(idx, 1);
-      renderGallery();
-    }
-
-    function renderVideos() {
-      const preview = document.getElementById('videoPreview');
-      preview.innerHTML = '';
-      videoURLs.forEach((url, idx) => {
-        const div = document.createElement('div');
-        div.className = 'gallery-item';
-        div.innerHTML = `
-          <video style="width:100%; height:100%; object-fit:cover;" />
-          <div class="gallery-item-actions">
-            <button class="gallery-item-btn" onclick="removeVideo(${idx})">✕</button>
-          </div>
-        `;
-        div.querySelector('video').src = url;
-        preview.appendChild(div);
-      });
-    }
-
-    function removeVideo(idx) {
-      videoURLs.splice(idx, 1);
-      renderVideos();
-    }
-
-    // ===== PRODUCTS =====
-    function toggleNewDuration() {
-      const checked = document.getElementById('isNewProduct').checked;
-      document.getElementById('durationGroup').classList.toggle('show', checked);
-    }
-
-    function renderProducts() {
-      const container = document.getElementById('productsList');
-      container.innerHTML = '';
-
-      shopData.products.forEach(product => {
-        const div = document.createElement('div');
-        div.className = 'product-card';
-        div.innerHTML = `
-          <img src="${product.image}" />
-          <h3>${product.name}</h3>
-          <p>Stock: ${product.stock}</p>
-          <div class="product-card-actions">
-            <button class="edit-product-btn" onclick="editProduct(${product.id})">✏️ Éditer</button>
-            <button class="delete-product-btn" onclick="deleteProductFromList(${product.id})">🗑️</button>
-          </div>
-        `;
-        container.appendChild(div);
+        list.appendChild(div);
       });
     }
 
@@ -966,112 +460,115 @@
       const product = shopData.products.find(p => p.id === id);
       if (!product) return;
 
-      editingProductId = id;
-      document.getElementById('productFormTitle').textContent = '✏️ Éditer Produit';
-      document.getElementById('deleteProductBtn').style.display = 'flex';
-
       document.getElementById('productName').value = product.name;
+      document.getElementById('productCategory').value = product.category || 'WEED';
+      document.getElementById('productStock').value = product.stock;
       document.getElementById('productDescription').value = product.description || '';
       document.getElementById('productTariffs').value = product.tariffs || '';
       document.getElementById('productPromoTariffs').value = product.promoTariffs || '';
-      document.getElementById('productStock').value = product.stock;
-      document.getElementById('isNewProduct').checked = product.isNew || false;
-      toggleNewDuration();
-      if (product.newDuration) {
-        document.getElementById('newDuration').value = product.newDuration;
+      document.getElementById('productImage').value = product.image || '';
+      document.getElementById('productGallery').value = (product.gallery || []).join('\n');
+      document.getElementById('productVideos').value = (product.videos || []).join('\n');
+      document.getElementById('productIsNew').value = product.isNew ? 'true' : 'false';
+      document.getElementById('productNewUntil').value = product.newUntil || '';
+
+      if (product.image) {
+        document.getElementById('imagePreview').src = product.image;
+        document.getElementById('imagePreview').style.display = 'block';
       }
 
-      mainImageURL = product.image || '';
-      galleryImages = product.gallery || [];
-      videoURLs = product.videos || [];
+      // Changer le titre et le bouton
+      document.querySelector('.form-section h3').textContent = `Éditer: ${product.name}`;
+      document.querySelector('.form-section button').textContent = 'Mettre à jour';
+      document.querySelector('.form-section button').onclick = () => updateProduct(id);
 
-      renderMainImage();
-      renderGallery();
-      renderVideos();
-
-      // Scroll to form
+      // Scroll vers le formulaire
       document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
     }
 
-    async function saveProduct() {
-      const name = document.getElementById('productName').value.trim();
-      const tariffs = document.getElementById('productTariffs').value.trim();
-      const stock = document.getElementById('productStock').value;
+    function addProduct() {
+      const product = {
+        id: Date.now(),
+        name: document.getElementById('productName').value,
+        category: document.getElementById('productCategory').value,
+        stock: document.getElementById('productStock').value,
+        description: document.getElementById('productDescription').value,
+        tariffs: document.getElementById('productTariffs').value,
+        promoTariffs: document.getElementById('productPromoTariffs').value,
+        image: document.getElementById('productImage').value,
+        gallery: document.getElementById('productGallery').value.split('\n').filter(x => x.trim()),
+        videos: document.getElementById('productVideos').value.split('\n').filter(x => x.trim()),
+        isNew: document.getElementById('productIsNew').value === 'true',
+        newUntil: document.getElementById('productNewUntil').value,
+        createdAt: new Date().toISOString()
+      };
 
-      if (!name || !tariffs || !mainImageURL || !stock) {
-        showMessage('productMsgBox', 'Remplissez tous les champs obligatoires (*, images)', 'error');
+      if (!product.name || !product.tariffs) {
+        showMessage('Remplis au minimum le nom et les tarifs', 'error');
         return;
       }
 
-      const product = {
-        id: editingProductId || Date.now(),
-        name: name,
-        description: document.getElementById('productDescription').value.trim(),
-        tariffs: tariffs,
-        promoTariffs: document.getElementById('productPromoTariffs').value.trim() || '',
-        isNew: document.getElementById('isNewProduct').checked,
-        newDuration: document.getElementById('isNewProduct').checked ? parseInt(document.getElementById('newDuration').value) || 0 : 0,
-        newUntil: document.getElementById('isNewProduct').checked ? new Date(Date.now() + (parseInt(document.getElementById('newDuration').value) || 0) * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '',
-        stock: stock,
-        image: mainImageURL,
-        gallery: galleryImages,
-        videos: videoURLs,
-        createdAt: editingProductId ? shopData.products.find(p => p.id === editingProductId).createdAt : new Date().toISOString()
-      };
-
-      const idx = shopData.products.findIndex(p => p.id === product.id);
-      if (idx >= 0) {
-        shopData.products[idx] = product;
-      } else {
-        shopData.products.push(product);
-      }
-
-      await saveData();
-      showMessage('productMsgBox', '✅ Produit sauvegardé!', 'success');
-      resetProductForm();
-      renderProducts();
+      shopData.products.push(product);
+      saveData();
+      clearProductForm();
     }
 
-    function deleteProduct() {
-      if (!editingProductId) return;
-      if (confirm('Êtes-vous sûr de vouloir supprimer ce produit?')) {
-        shopData.products = shopData.products.filter(p => p.id !== editingProductId);
-        saveData();
-        resetProductForm();
-        renderProducts();
-        editingProductId = null;
-      }
+    function updateProduct(id) {
+      const product = shopData.products.find(p => p.id === id);
+      if (!product) return;
+
+      product.name = document.getElementById('productName').value;
+      product.category = document.getElementById('productCategory').value;
+      product.stock = document.getElementById('productStock').value;
+      product.description = document.getElementById('productDescription').value;
+      product.tariffs = document.getElementById('productTariffs').value;
+      product.promoTariffs = document.getElementById('productPromoTariffs').value;
+      product.image = document.getElementById('productImage').value;
+      product.gallery = document.getElementById('productGallery').value.split('\n').filter(x => x.trim());
+      product.videos = document.getElementById('productVideos').value.split('\n').filter(x => x.trim());
+      product.isNew = document.getElementById('productIsNew').value === 'true';
+      product.newUntil = document.getElementById('productNewUntil').value;
+
+      saveData();
+      clearProductForm();
     }
 
-    function deleteProductFromList(id) {
-      if (confirm('Êtes-vous sûr?')) {
+    function deleteProduct(id) {
+      if (confirm('Supprimer ce produit?')) {
         shopData.products = shopData.products.filter(p => p.id !== id);
         saveData();
-        renderProducts();
       }
     }
 
-    function resetProductForm() {
-      editingProductId = null;
-      document.getElementById('productFormTitle').textContent = '➕ Ajouter un Produit';
-      document.getElementById('deleteProductBtn').style.display = 'none';
+    function clearProductForm() {
       document.getElementById('productName').value = '';
+      document.getElementById('productCategory').value = 'WEED';
+      document.getElementById('productStock').value = 'En stock';
       document.getElementById('productDescription').value = '';
       document.getElementById('productTariffs').value = '';
       document.getElementById('productPromoTariffs').value = '';
-      document.getElementById('productStock').value = '';
-      document.getElementById('isNewProduct').checked = false;
-      document.getElementById('newDuration').value = '';
-      toggleNewDuration();
-      mainImageURL = '';
-      galleryImages = [];
-      videoURLs = [];
-      renderMainImage();
-      renderGallery();
-      renderVideos();
+      document.getElementById('productImage').value = '';
+      document.getElementById('productGallery').value = '';
+      document.getElementById('productVideos').value = '';
+      document.getElementById('productIsNew').value = 'false';
+      document.getElementById('productNewUntil').value = '';
+      document.getElementById('imagePreview').style.display = 'none';
+      document.querySelector('.form-section h3').textContent = 'Ajouter un nouveau produit';
+      document.querySelector('.form-section button').textContent = 'Ajouter produit';
+      document.querySelector('.form-section button').onclick = () => addProduct();
     }
 
-    // ===== SAVE DATA =====
+    function loadConcours() {
+      document.getElementById('concoursDescription').value = shopData.concours?.description || '';
+    }
+
+    function saveConcours() {
+      shopData.concours = {
+        description: document.getElementById('concoursDescription').value
+      };
+      saveData();
+    }
+
     async function saveData() {
       try {
         const response = await fetch('/api/save-data', {
@@ -1079,38 +576,41 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(shopData)
         });
+
         const result = await response.json();
         if (result.success) {
-          console.log('✅ Data saved:', result.message);
+          showMessage('Données sauvegardées avec succès!', 'success');
+          loadProducts();
         } else {
-          console.error('❌ Save failed:', result.message);
+          showMessage('Erreur sauvegarde: ' + result.message, 'error');
         }
       } catch (error) {
-        console.error('Save error:', error);
+        showMessage('Erreur: ' + error.message, 'error');
       }
     }
 
-    // ===== MESSAGE BOX =====
-    function showMessage(boxId, msg, type) {
-      const box = document.getElementById(boxId);
-      box.className = `message ${type}`;
-      box.textContent = msg;
-      box.classList.add('show');
-
-      setTimeout(() => {
-        box.classList.remove('show');
-      }, 3000);
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      event.target.classList.add('active');
     }
 
-    // ===== INIT =====
-    window.addEventListener('load', () => {
-      setupAllUploads();
-    });
+    function showMessage(msg, type) {
+      const div = document.getElementById('message');
+      div.textContent = msg;
+      div.className = type;
+      div.style.display = 'block';
+      setTimeout(() => div.style.display = 'none', 5000);
+    }
 
-    // Prevent login if Enter key
+    // Preview image
     document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('passwordInput')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') checkPassword();
+      document.getElementById('productImage').addEventListener('change', function() {
+        if (this.value) {
+          document.getElementById('imagePreview').src = this.value;
+          document.getElementById('imagePreview').style.display = 'block';
+        }
       });
     });
   </script>
