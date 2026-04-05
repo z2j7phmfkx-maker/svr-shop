@@ -113,15 +113,17 @@
       font-size: 11px;
     }
 
-    /* Bannière Concours avec image */
+    /* Bannière Concours avec image Cloudinary */
     .concours-banner {
-      background-image: url('https://www.genspark.ai/api/files/s/yzxHRG1s');
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%),
+                  url('https://res.cloudinary.com/diezs6eqa/image/upload/v1775412560/Illustration_sans_titre_uj29od.jpg');
       background-size: cover;
       background-position: center;
+      background-attachment: fixed;
       position: relative;
       margin: 15px auto;
       max-width: 600px;
-      min-height: 140px;
+      min-height: 150px;
       border-radius: 12px;
       overflow: hidden;
       cursor: pointer;
@@ -129,41 +131,28 @@
       box-shadow: 0 0 20px rgba(100, 150, 180, 0.2);
     }
 
-    .concours-banner::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 1;
-    }
-
     .concours-banner:hover {
       transform: translateY(-3px);
       box-shadow: 0 0 30px rgba(100, 150, 180, 0.3);
     }
 
-    .concours-banner:hover::before {
-      background: rgba(0, 0, 0, 0.3);
-    }
-
     .concours-content {
       position: relative;
       z-index: 2;
-      padding: 20px;
+      padding: 25px;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 140px;
+      min-height: 150px;
       flex-direction: column;
       text-align: center;
     }
 
     .concours-preview {
-      color: #a0b0c0;
-      font-size: 12px;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
       transition: opacity 0.3s ease;
     }
 
@@ -172,15 +161,16 @@
     }
 
     .concours-text {
-      color: #a0b0c0;
+      color: #ffffff;
       font-size: 12px;
-      line-height: 1.5;
+      line-height: 1.6;
       max-height: 0;
       overflow: hidden;
       transition: max-height 0.4s ease;
       white-space: pre-wrap;
       word-wrap: break-word;
       margin-top: 15px;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
     }
 
     .concours-text.expanded {
@@ -190,7 +180,7 @@
     .expand-icon {
       display: inline-block;
       margin-left: 5px;
-      font-size: 11px;
+      font-size: 12px;
       transition: transform 0.3s ease;
     }
 
@@ -711,6 +701,15 @@
       .logo-text {
         font-size: 50px;
       }
+
+      .concours-banner {
+        min-height: 130px;
+      }
+
+      .concours-content {
+        padding: 20px;
+        min-height: 130px;
+      }
     }
   </style>
 </head>
@@ -747,7 +746,7 @@
       </div>
     </div>
 
-    <!-- Bannière Concours avec image (sans titre) -->
+    <!-- Bannière Concours avec image Cloudinary (sans titre) -->
     <div class="concours-banner" id="concoursBanner" onclick="toggleConcours()">
       <div class="concours-content">
         <div class="concours-preview" id="concoursPreview">
