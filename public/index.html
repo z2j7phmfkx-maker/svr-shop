@@ -71,46 +71,60 @@
       margin: 0 auto 15px;
     }
 
-    /* Header avec Logo */
+    /* Header avec Logo - NOUVELLE FORME */
     .header {
-      background: rgba(15, 20, 40, 0.85);
+      background: linear-gradient(135deg, rgba(15, 20, 40, 0.95) 0%, rgba(20, 28, 50, 0.95) 100%);
       backdrop-filter: blur(10px);
-      padding: 12px 15px;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 8px 32px rgba(100, 150, 180, 0.15);
+      padding: 25px 30px;
+      border-radius: 30px;
+      box-shadow: 
+        0 8px 32px rgba(100, 150, 180, 0.15),
+        0 0 20px rgba(100, 150, 180, 0.1);
       border: 1px solid rgba(100, 150, 180, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 30px;
     }
 
     .logo {
-      width: 100px;
-      height: 60px;
-      margin: 0 auto 8px;
+      width: 140px;
+      height: 100px;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
 
     .logo-text {
-      font-size: 65px;
+      font-size: 100px;
       font-weight: bold;
       color: #6496b4;
-      text-shadow: 0 0 15px rgba(100, 150, 180, 0.3);
-      letter-spacing: 6px;
+      text-shadow: 0 0 20px rgba(100, 150, 180, 0.4);
+      letter-spacing: 10px;
       direction: rtl;
       font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
     }
 
+    .header-content {
+      text-align: left;
+      flex-grow: 1;
+    }
+
     .header h1 {
       color: #6496b4;
-      font-size: 18px;
-      margin-bottom: 3px;
+      font-size: 32px;
+      margin-bottom: 5px;
       text-shadow: 0 0 8px rgba(100, 150, 180, 0.2);
+      font-weight: 700;
+      letter-spacing: 2px;
     }
 
     .header p {
-      color: #a0b0c0;
-      font-size: 11px;
+      color: #8ab4d4;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
     }
 
     /* Bannière Concours avec image Cloudinary */
@@ -672,11 +686,60 @@
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
       }
+
+      .header {
+        padding: 20px;
+        gap: 20px;
+      }
+
+      .logo {
+        width: 110px;
+        height: 80px;
+      }
+
+      .logo-text {
+        font-size: 85px;
+        letter-spacing: 8px;
+      }
+
+      .header h1 {
+        font-size: 26px;
+      }
+
+      .header p {
+        font-size: 12px;
+      }
     }
 
     @media (max-width: 480px) {
+      .header {
+        flex-direction: column;
+        text-align: center;
+        padding: 15px;
+        gap: 15px;
+        border-radius: 20px;
+      }
+
+      .logo {
+        width: 100px;
+        height: 70px;
+      }
+
+      .logo-text {
+        font-size: 75px;
+        letter-spacing: 6px;
+      }
+
+      .header-content {
+        text-align: center;
+      }
+
       .header h1 {
-        font-size: 16px;
+        font-size: 20px;
+      }
+
+      .header p {
+        font-size: 11px;
       }
 
       .modal-content {
@@ -696,10 +759,6 @@
       body::before {
         font-size: 70px;
         letter-spacing: 15px;
-      }
-
-      .logo-text {
-        font-size: 50px;
       }
 
       .concours-banner {
@@ -736,13 +795,15 @@
   <!-- Main Content -->
   <div id="mainContent" style="display: none;">
     <div class="header-wrapper">
-      <!-- Header avec Logo -->
+      <!-- Header avec Logo - NOUVELLE FORME -->
       <div class="header">
         <div class="logo">
           <div class="logo-text">דהר</div>
         </div>
-        <h1>SVR Shop</h1>
-        <p>Découvre nos produits</p>
+        <div class="header-content">
+          <h1>SVR SHOP</h1>
+          <p>Découvre nos produits exclusifs</p>
+        </div>
       </div>
     </div>
 
@@ -911,22 +972,12 @@
           badges += '<span class="badge badge-promo">🏷️ PROMO</span>';
         }
 
-        // Prix normal
-        const normalPrice = product.tariffs?.split('|')[0]?.split('=')[1] || 'N/A';
-        
-        // Prix promo
-        const promoPrice = product.promoTariffs?.split('|')[0]?.split('=')[1] || null;
+        // Afficher le prix promo s'il existe, sinon le prix normal
+        const displayPrice = product.promoTariffs?.split('|')[0]?.split('=')[1] 
+                            || product.tariffs?.split('|')[0]?.split('=')[1] 
+                            || 'N/A';
 
-        let priceHTML = `<div class="product-price">À partir de <span>${normalPrice}€</span></div>`;
-        
-        if (promoPrice) {
-          priceHTML = `
-            <div class="product-price">
-              <span style="text-decoration: line-through; color: #6a7080; margin-right: 5px;">${normalPrice}€</span>
-              <span>${promoPrice}€</span>
-            </div>
-          `;
-        }
+        const priceHTML = `<div class="product-price">À partir de <span>${displayPrice}€</span></div>`;
 
         card.innerHTML = `
           <img class="product-image" src="${product.image}" alt="${product.name}" loading="lazy">
