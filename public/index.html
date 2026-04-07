@@ -972,10 +972,8 @@
           badges += '<span class="badge badge-promo">🏷️ PROMO</span>';
         }
 
-        // Afficher le prix promo s'il existe, sinon le prix normal
-        const displayPrice = product.promoTariffs?.split('|')[0]?.split('=')[1] 
-                            || product.tariffs?.split('|')[0]?.split('=')[1] 
-                            || 'N/A';
+        // Afficher SEULEMENT le prix normal (pas le prix promo)
+        const displayPrice = product.tariffs?.split('|')[0]?.split('=')[1] || 'N/A';
 
         const priceHTML = `<div class="product-price">À partir de <span>${displayPrice}€</span></div>`;
 
