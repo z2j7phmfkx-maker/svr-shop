@@ -965,9 +965,18 @@
         card.onclick = () => openModal(product);
 
         let badges = '';
+        
+        // Vérifier si le produit est toujours "NOUVEAU"
         if (product.isNew) {
-          badges += '<span class="badge badge-new">✨ NOUVEAU</span>';
+          const today = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
+          const newUntilDate = product.newUntil;
+          
+          // Afficher le badge NOUVEAU seulement si la date d'aujourd'hui <= newUntilDate
+          if (newUntilDate && today <= newUntilDate) {
+            badges += '<span class="badge badge-new">✨ NOUVEAU</span>';
+          }
         }
+        
         if (product.promoTariffs) {
           badges += '<span class="badge badge-promo">🏷️ PROMO</span>';
         }
