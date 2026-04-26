@@ -109,13 +109,15 @@
       "description": "La Sherbet est une puissante variété de cannabis hybride à dominance indica avec des niveaux de THC de 21–24 %. Elle offre un parfum séduisant de desserts sucrés et d'agrumes, suivi par un délicieux goût de fruits des bois acides. Les effets sont revigorants mais relaxants, apportant une sensation vive et engageante qui est parfaite pour les occasions sociales détendues.",
       "tariffs": "1,2g=20|5g=60|10g=100",
       "isNew": false,
-      "stock": "Stock limité",
+      "stock": "En stock",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774680416/z9s8khfx3jnl8rjrz6df.jpg",
       "gallery": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774680423/hziz0fdvisj9v8meiw5n.mov"
       ],
-      "createdAt": "2026-03-28T06:52:56.780Z"
+      "createdAt": "2026-03-28T06:52:56.780Z",
+      "promoTariffs": "",
+      "newUntil": ""
     },
     {
       "id": 1774680583821,
