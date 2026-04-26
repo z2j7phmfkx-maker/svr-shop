@@ -213,7 +213,7 @@
     },
     {
       "id": 1774991687897,
-      "name": "RUNTZ",
+      "name": "RUNTZ⚡️",
       "category": "HASH",
       "description": "La Runtz est une résine obtenue en tamisant à sec les trichomes des fleurs de cannabis sans eau ni solvant. Elle offre un excellent ratio qualité-puissance avec des saveurs subtiles et une puissance remarquable pour les connaisseurs.",
       "tariffs": "3g=20|10g=60|20g=110",
@@ -225,7 +225,8 @@
         "https://res.cloudinary.com/diezs6eqa/image/upload/v1774992680/gebdigm2okigur3xmzwi.jpg"
       ],
       "videos": [],
-      "createdAt": "2026-03-31T21:14:47.898Z"
+      "createdAt": "2026-03-31T21:14:47.898Z",
+      "promoTariffs": ""
     },
     {
       "id": 1774992200109,
