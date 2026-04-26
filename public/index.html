@@ -352,6 +352,13 @@
       box-shadow: 0 0 8px rgba(220, 100, 100, 0.3);
     }
 
+    .badge-stock {
+      background: rgba(255, 200, 87, 0.4);
+      color: #ffc857;
+      border: 1px solid rgba(255, 200, 87, 0.6);
+      box-shadow: 0 0 8px rgba(255, 200, 87, 0.3);
+    }
+
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
@@ -977,8 +984,14 @@
           }
         }
         
+        // Badge PROMO
         if (product.promoTariffs) {
           badges += '<span class="badge badge-promo">🏷️ PROMO</span>';
+        }
+
+        // Badge STOCK LIMITÉ
+        if (product.stock === 'Stock limité') {
+          badges += '<span class="badge badge-stock">⚠️ STOCK LIMITÉ</span>';
         }
 
         // Afficher SEULEMENT le prix normal (pas le prix promo)
