@@ -246,13 +246,14 @@
       "tariffs": "2,5g=20|10g=70|20g=130",
       "isNew": true,
       "newUntil": "2026-04-07",
-      "stock": "En stock",
+      "stock": "Stock limité",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774992322/u11qlijcclgqkflf7nt2.jpg",
       "gallery": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774992326/qcdnf17hnuoi6cnnnepr.mov"
       ],
-      "createdAt": "2026-03-31T21:25:31.200Z"
+      "createdAt": "2026-03-31T21:25:31.200Z",
+      "promoTariffs": ""
     },
     {
       "id": 1774993351068,
