@@ -5,7 +5,7 @@
   "products": [
     {
       "id": 1,
-      "name": "GARY PAYTON",
+      "name": "GARY PAYTON🏀",
       "category": "WEED",
       "description": "Nommée d'après la star de la NBA, Gary Payton est une variété hybride issue du croisement sélectif de deux variétés parents à la puissante exceptionnelle. Gary Payton est non seulement puissante, mais elle vous permet aussi de rester concentré et productif, ce qui en fait un bon choix pour ceux qui veulent profiter des avantages récréatifs du cannabis tout en étant capables de mener à bien les tâches du quotidien. Gary Payton présente un profil de goûts et d'odeurs unique, dominé par de fortes notes de carburant et de plantes.",
       "tariffs": "2g=20|10g=80|20g=150",
@@ -15,7 +15,10 @@
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774652837/qbab4f1fxsns6hjnnpnc.mov"
       ],
-      "createdAt": "2026-03-27T23:09:41.243Z"
+      "createdAt": "2026-03-27T23:09:41.243Z",
+      "promoTariffs": "",
+      "isNew": false,
+      "newUntil": ""
     },
     {
       "id": 1774653192399,
