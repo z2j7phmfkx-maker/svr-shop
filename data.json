@@ -177,13 +177,16 @@
       "category": "WEED",
       "description": "La Tropicanna regorge de délicieux terpènes et contient aussi beaucoup de THC. Avec 26 % de cannabinoïde, cette variété à dominance sativa se concentre sur une expérience énergisante à tête claire. Des notes de citron, de citron vert et d'orange sont clairement présentes dans la fumée, complétées par des parfums de fruits des bois et d'herbes pour une touche surprenante. Les effets sont joyeux et élévateurs, avec des niveaux renforcés de créativité et de motivation.",
       "tariffs": "1,2g=20|5g=60|10g=100",
-      "stock": "En stock",
+      "stock": "Stock limité",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774681495/ncapkiqwncrreswivlun.jpg",
       "gallery": [],
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774681502/iitutqskd3z5pisxlcie.mov"
       ],
-      "createdAt": "2026-03-28T07:05:07.311Z"
+      "createdAt": "2026-03-28T07:05:07.311Z",
+      "promoTariffs": "",
+      "isNew": false,
+      "newUntil": ""
     },
     {
       "id": 1774681590675,
