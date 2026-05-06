@@ -14,10 +14,11 @@ function loadData() {
   }
 }
 
-// Envoyer un message à tous les utilisateurs
+// Envoyer un message à tous les utilisateurs et nettoyer la liste
 async function notifyAllUsers(message) {
   const data = loadData();
-  const users = data.telegram_users || [];
+  let users = data.telegram_users || [];
+  let validUsers = [];
 
   for (const userId of users) {
     try {
@@ -26,10 +27,26 @@ async function notifyAllUsers(message) {
         text: message,
         parse_mode: 'HTML'
       });
-      console.log(`Message envoyé à ${userId}`);
+      console.log(`✅ Message envoyé à ${userId}`);
+      validUsers.push(userId); // Ajouter seulement si succès
     } catch (error) {
-      console.error(`Erreur envoi à ${userId}:`, error.message);
+      // Vérifier si l'erreur est "user not found" ou "bot was kicked"
+      if (error.response?.data?.description?.includes('user is') || 
+          error.response?.data?.description?.includes('was kicked')) {
+        console.log(`❌ Utilisateur ${userId} a quitté - suppression`);
+        // Ne pas l'ajouter à validUsers = suppression automatique
+      } else {
+        console.error(`⚠️ Erreur envoi à ${userId}:`, error.message);
+        validUsers.push(userId); // Garder en cas d'erreur temporaire
+      }
     }
+  }
+
+  // Sauvegarder la liste nettoyée
+  if (validUsers.length !== users.length) {
+    data.telegram_users = validUsers;
+    fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
+    console.log(`📊 Liste nettoyée: ${validUsers.length} utilisateurs valides (${users.length - validUsers.length} supprimés)`);
   }
 }
 
@@ -88,7 +105,7 @@ function addUserToNotifications(userId) {
   if (!data.telegram_users.includes(userId)) {
     data.telegram_users.push(userId);
     fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
-    console.log(`Utilisateur ${userId} ajouté aux notifications`);
+    console.log(`✅ Utilisateur ${userId} ajouté aux notifications`);
   }
 }
 
