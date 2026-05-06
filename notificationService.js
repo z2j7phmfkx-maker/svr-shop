@@ -1,16 +1,30 @@
 const axios = require('axios');
 const fs = require('fs');
+const path = require('path');
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+const DATA_FILE = path.join(__dirname, 'data.json');
 
 // Charger les données
 function loadData() {
   try {
-    return JSON.parse(fs.readFileSync('data.json', 'utf8'));
+    if (fs.existsSync(DATA_FILE)) {
+      return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    }
   } catch (error) {
-    console.error('Erreur lecture data.json:', error);
-    return { telegram_users: [] };
+    console.error('❌ Erreur lecture data.json:', error);
+  }
+  return { telegram_users: [], products: [], shop_settings: {} };
+}
+
+// Sauvegarder les données
+function saveData(data) {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+    console.log('✅ data.json sauvegardé via notificationService');
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde data.json:', error);
   }
 }
 
@@ -28,16 +42,14 @@ async function notifyAllUsers(message) {
         parse_mode: 'HTML'
       });
       console.log(`✅ Message envoyé à ${userId}`);
-      validUsers.push(userId); // Ajouter seulement si succès
+      validUsers.push(userId);
     } catch (error) {
-      // Vérifier si l'erreur est "user not found" ou "bot was kicked"
       if (error.response?.data?.description?.includes('user is') || 
           error.response?.data?.description?.includes('was kicked')) {
         console.log(`❌ Utilisateur ${userId} a quitté - suppression`);
-        // Ne pas l'ajouter à validUsers = suppression automatique
       } else {
         console.error(`⚠️ Erreur envoi à ${userId}:`, error.message);
-        validUsers.push(userId); // Garder en cas d'erreur temporaire
+        validUsers.push(userId);
       }
     }
   }
@@ -45,7 +57,7 @@ async function notifyAllUsers(message) {
   // Sauvegarder la liste nettoyée
   if (validUsers.length !== users.length) {
     data.telegram_users = validUsers;
-    fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
+    saveData(data);
     console.log(`📊 Liste nettoyée: ${validUsers.length} utilisateurs valides (${users.length - validUsers.length} supprimés)`);
   }
 }
@@ -54,6 +66,11 @@ async function notifyAllUsers(message) {
 async function checkShopHours() {
   const data = loadData();
   const settings = data.shop_settings || {};
+  
+  if (!settings.opening_time || !settings.closing_time) {
+    return; // Pas d'horaires configurés
+  }
+
   const now = new Date();
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -104,7 +121,7 @@ function addUserToNotifications(userId) {
   
   if (!data.telegram_users.includes(userId)) {
     data.telegram_users.push(userId);
-    fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
+    saveData(data);
     console.log(`✅ Utilisateur ${userId} ajouté aux notifications`);
   }
 }
