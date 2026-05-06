@@ -219,10 +219,18 @@ let bot;
 if (BOT_TOKEN) {
   bot = new Telegraf(BOT_TOKEN);
 
-  bot.on('message', (ctx) => {
+  bot.on('message', async (ctx) => {
     const userId = ctx.chat.id;
     const username = ctx.chat.username || ctx.chat.first_name || 'Utilisateur';
     const data = loadData();
+
+    // Vérifier si l'utilisateur est membre du canal
+    const isMember = await isChannelMember(userId);
+    
+    if (!isMember) {
+      ctx.reply('❌ Tu n\'es pas membre du canal. Rejoins-le d\'abord ! 👍');
+      return;
+    }
 
     let isNewUser = false;
 
@@ -243,6 +251,7 @@ if (BOT_TOKEN) {
     }
 
     saveData(data);
+    await commitToGithub(`Utilisateur ${username} (${userId}) affilié au token ${token}`);
 
     // Lien sécurisé avec token
     const shopLink = `https://svr-shop.onrender.com?token=${token}`;
