@@ -2,6 +2,13 @@
   "concours": {
     "description": ""
   },
+  "shop_settings": {
+    "opening_time": "10:00",
+    "closing_time": "22:00",
+    "closed_days": ["dimanche"],
+    "timezone": "Europe/Paris"
+  },
+  "telegram_users": [],
   "products": [
     {
       "id": 1,
