@@ -16,6 +16,9 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const BOT_TOKEN = '8774455983:AAHkE3OlVnrfaZ6-ni3W4d4vL1YLUdtpufs';
 const CHANNEL_ID = -1002988868011;
 
+// Import notification service
+const notifications = require('./notificationService');
+
 // Load data.json
 function loadData() {
   try {
@@ -25,7 +28,18 @@ function loadData() {
   } catch (err) {
     console.error('Erreur lecture data.json:', err);
   }
-  return { concours: { description: '' }, products: [], userTokens: {} };
+  return { 
+    concours: { description: '' }, 
+    shop_settings: {
+      opening_time: '10:00',
+      closing_time: '22:00',
+      closed_days: ['dimanche'],
+      timezone: 'Europe/Paris'
+    },
+    telegram_users: [],
+    products: [], 
+    userTokens: {} 
+  };
 }
 
 // Save data.json locally
@@ -177,21 +191,101 @@ app.post('/api/generate-token', async (req, res) => {
   return res.json({ success: true, token: token });
 });
 
-// Save shop data
+// Save shop data avec détection des changements
 app.post('/api/save-data', async (req, res) => {
   try {
-    const shopData = req.body;
-    saveData(shopData);
+    const newData = req.body;
+    const oldData = loadData();
+
+    // Comparer les produits pour détecter les changements
+    const oldProducts = oldData.products || [];
+    const newProducts = newData.products || [];
+
+    for (const newProduct of newProducts) {
+      const oldProduct = oldProducts.find(p => p.id === newProduct.id);
+
+      if (!oldProduct) {
+        // Nouveau produit ajouté
+        const price = newProduct.tariffs?.split('|')[0]?.split('=')[1];
+        await notifications.notifyNewProduct(newProduct.name, price, newProduct.category);
+      } else {
+        // Produit modifié - vérifier les changements de stock
+        if (oldProduct.stock !== newProduct.stock) {
+          if (newProduct.stock === 'Rupture de stock') {
+            await notifications.notifyOutOfStock(newProduct.name);
+          } else if (newProduct.stock === 'Stock limité' && oldProduct.stock !== 'Stock limité') {
+            const price = newProduct.tariffs?.split('|')[0]?.split('=')[1];
+            await notifications.notifyLimitedStock(newProduct.name, price);
+          } else if (newProduct.stock === 'En stock' && oldProduct.stock === 'Rupture de stock') {
+            const price = newProduct.tariffs?.split('|')[0]?.split('=')[1];
+            await notifications.notifyBackInStock(newProduct.name, price);
+          }
+        }
+      }
+    }
+
+    // Sauvegarder les données
+    saveData(newData);
     console.log('✅ data.json sauvegardé');
 
     // Commit to GitHub
-    await commitToGithub(shopData);
+    await commitToGithub(newData);
 
-    res.json({ success: true, message: 'Données sauvegardées' });
+    res.json({ success: true, message: 'Données sauvegardées et notifications envoyées' });
   } catch (error) {
     console.error('Erreur save:', error.message);
     res.json({ success: false, error: error.message });
   }
+});
+
+// Nouvel endpoint pour les commandes
+app.post('/api/order', async (req, res) => {
+    try {
+        const order = req.body;
+
+        // Formater la commande pour Telegram
+        const items = order.items.map(item => 
+            `<b>${item.name}</b>\n  ${item.size} x${item.quantity} = ${item.price * item.quantity}€`
+        ).join('\n');
+
+        // Récupérer le username du client via Telegram
+        let username = 'Utilisateur inconnu';
+        try {
+            const userInfo = await axios.get(
+                `https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=${order.userId}`
+            );
+            username = userInfo.data.result.username || userInfo.data.result.first_name || `ID: ${order.userId}`;
+        } catch (e) {
+            console.log('Impossible de récupérer le username');
+        }
+
+        const message = `
+📦 <b>NOUVELLE COMMANDE !</b>
+
+<b>Détails :</b>
+${items}
+
+💰 <b>Total : ${order.total}€</b>
+
+👤 <b>Client :</b> @${username}
+⏰ <b>Heure :</b> ${new Date(order.timestamp).toLocaleString('fr-FR')}
+
+⚠️ <i>Prépare la commande et contacte le client</i>
+        `;
+
+        // Envoyer au propriétaire
+        const OWNER_TELEGRAM_ID = process.env.OWNER_TELEGRAM_ID;
+        await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            chat_id: OWNER_TELEGRAM_ID,
+            text: message,
+            parse_mode: 'HTML'
+        });
+
+        res.json({ success: true, message: 'Commande reçue' });
+    } catch (error) {
+        console.error('Erreur commande:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
 });
 
 // Server start
@@ -202,3 +296,8 @@ app.listen(PORT, () => {
   console.log(`📢 CHANNEL_ID: ${CHANNEL_ID}`);
   console.log(`💾 Tokens stockés dans data.json + GitHub`);
 });
+
+// Vérifier les horaires toutes les minutes
+setInterval(() => {
+    notifications.checkShopHours();
+}, 60000);
