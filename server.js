@@ -219,25 +219,31 @@ ${items}
 });
 
 // Bot Telegram
-const bot = new Telegraf(BOT_TOKEN);
+let bot;
+if (BOT_TOKEN) {
+  bot = new Telegraf(BOT_TOKEN);
 
-bot.on('message', (ctx) => {
-  const userId = ctx.chat.id;
-  const username = ctx.chat.username || ctx.chat.first_name || 'Utilisateur';
-  const data = loadData();
+  bot.on('message', (ctx) => {
+    const userId = ctx.chat.id;
+    const username = ctx.chat.username || ctx.chat.first_name || 'Utilisateur';
+    const data = loadData();
 
-  // Ajouter l'utilisateur à la liste de notifications s'il n'y est pas
-  if (!data.telegram_users.includes(userId)) {
-    data.telegram_users.push(userId);
-    saveData(data);
-    console.log(`✅ Nouvel utilisateur enregistré : ${username} (${userId})`);
-  }
+    // Ajouter l'utilisateur à la liste de notifications s'il n'y est pas
+    if (!data.telegram_users.includes(userId)) {
+      data.telegram_users.push(userId);
+      saveData(data);
+      console.log(`✅ Nouvel utilisateur enregistré : ${username} (${userId})`);
+    }
 
-  // Message de bienvenue
-  ctx.reply(`✅ Bienvenue @${username} !\n\nTu recevras maintenant :\n📢 Les horaires d'ouverture/fermeture\n✨ Les nouveaux produits\n⚠️ Les ruptures de stock\n🔥 Les offres limitées\n\n🔗 Accès à la boutique : https://svr-shop.onrender.com`);
-});
+    // Message de bienvenue
+    ctx.reply(`✅ Bienvenue @${username} !\n\nTu recevras maintenant :\n📢 Les horaires d'ouverture/fermeture\n✨ Les nouveaux produits\n⚠️ Les ruptures de stock\n🔥 Les offres limitées\n\n🔗 Accès à la boutique : https://svr-shop.onrender.com`);
+  });
 
-bot.launch();
+  bot.launch().catch(err => console.error('❌ Erreur bot Telegram:', err));
+  console.log('✅ Bot Telegram lancé');
+} else {
+  console.warn('⚠️ TELEGRAM_BOT_TOKEN non défini - bot désactivé');
+}
 
 // Vérifier les horaires d'ouverture toutes les minutes
 setInterval(() => {
@@ -263,6 +269,6 @@ app.listen(PORT, () => {
 });
 
 process.on('SIGINT', () => {
-  bot.stop();
+  if (bot) bot.stop();
   process.exit();
 });
