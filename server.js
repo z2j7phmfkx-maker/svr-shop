@@ -1,89 +1,92 @@
 const express = require('express');
-const axios = require('axios');
-const fs = require('fs');
 const path = require('path');
 const { Telegraf } = require('telegraf');
+const axios = require('axios');
+const fs = require('fs');
 const notificationService = require('./notificationService');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(express.json());
+app.use(express.static('public'));
+
+// Configuration
 const DATA_FILE = path.join(__dirname, 'data.json');
+const PORT = process.env.PORT || 10000;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHANNEL_ID = process.env.CHANNEL_ID;
 const OWNER_TELEGRAM_ID = process.env.OWNER_TELEGRAM_ID;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = 'z2j7phmfkx-maker/svr-shop';
-const SITE_URL = 'https://svr-shop.onrender.com';
+const SITE_URL = process.env.SITE_URL || 'https://svr-shop.onrender.com';
 
-app.use(express.json());
-app.use(express.static('public'));
-
-// Charger data.json
+// Utilitaires
 function loadData() {
   try {
-    return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-  } catch (e) {
-    console.error('Erreur lecture data.json:', e);
-    return { products: [], shop_settings: {}, telegram_users: [], userTokens: {} };
+    if (fs.existsSync(DATA_FILE)) {
+      return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    }
+  } catch (err) {
+    console.error('❌ Erreur lors du chargement de data.json:', err.message);
   }
+  return { telegram_users: [], userTokens: {}, shop_settings: {}, products: [] };
 }
 
-// Sauvegarder data.json
 function saveData(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
-
-// Commit sur GitHub
-async function commitToGithub(message) {
   try {
-    const data = fs.readFileSync(DATA_FILE, 'utf8');
-    const content = Buffer.from(data).toString('base64');
-    
-    const response = await axios.get(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json`,
-      { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
-    );
-
-    await axios.put(
-      `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json`,
-      {
-        message: message,
-        content: content,
-        sha: response.data.sha,
-        branch: 'main'
-      },
-      { headers: { Authorization: `token ${GITHUB_TOKEN}` } }
-    );
-
-    console.log(`✅ Commit GitHub: ${message}`);
-  } catch (error) {
-    console.error('❌ Erreur commit GitHub:', error.message);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+    console.log('✅ data.json sauvegardé');
+  } catch (err) {
+    console.error('❌ Erreur lors de la sauvegarde:', err.message);
   }
 }
 
-// Vérifier si l'utilisateur est membre du channel
-async function isChannelMember(userId) {
+async function commitToGithub(message, data) {
+  if (!GITHUB_TOKEN) {
+    console.warn('⚠️ GITHUB_TOKEN non défini, commit ignoré');
+    return;
+  }
   try {
-    console.log(`🔍 Vérification canal pour utilisateur ${userId}, channel: ${CHANNEL_ID}`);
-    const member = await axios.get(
-      `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`,
-      { params: { chat_id: CHANNEL_ID, user_id: userId } }
-    );
-    const isValidStatus = ['member', 'administrator', 'creator', 'restricted'].includes(member.data.result.status);
-    console.log(`Status: ${member.data.result.status}, Valid: ${isValidStatus}`);
-    return isValidStatus;
-  } catch (error) {
-    console.error(`❌ Erreur vérification channel:`, error.response?.data || error.message);
+    const content = Buffer.from(JSON.stringify(data, null, 2)).toString('base64');
+    const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json`;
+    const response = await axios.get(url, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    });
+    await axios.put(url, {
+      message,
+      content,
+      sha: response.data.sha
+    }, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    });
+    console.log(`✅ Commit GitHub: "${message}"`);
+  } catch (err) {
+    console.error('❌ Erreur commit GitHub:', err.response?.data?.message || err.message);
+  }
+}
+
+async function isChannelMember(userId) {
+  if (!BOT_TOKEN || !CHANNEL_ID) return false;
+  try {
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`;
+    const response = await axios.post(url, {
+      chat_id: CHANNEL_ID,
+      user_id: userId
+    });
+    const status = response.data.result.status;
+    const valid = ['member', 'administrator', 'creator', 'restricted'].includes(status);
+    console.log(`🔍 Vérification canal pour utilisateur ${userId}, status: ${status}, Valid: ${valid}`);
+    return valid;
+  } catch (err) {
+    console.error('❌ Erreur vérification canal:', err.response?.data?.description || err.message);
     return false;
   }
 }
 
-// Générer un token unique
 function generateToken() {
-  return 'svr_' + Math.random().toString(36).substring(2, 15);
+  return 'svr_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-// Routes
+// Routes Express
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -97,129 +100,112 @@ app.get('/data.json', (req, res) => {
   res.json(data);
 });
 
-// Vérifier un token
-app.post('/api/verify-token', async (req, res) => {
-  const { token } = req.body;
+app.post('/api/verify-token', (req, res) => {
+  const { token, userId } = req.body;
   const data = loadData();
-
-  if (data.userTokens[token]) {
-    const userId = data.userTokens[token];
+  
+  if (data.userTokens[token] && data.userTokens[token].toString() === userId.toString()) {
     return res.json({ valid: true, userId });
   }
-
   res.json({ valid: false });
 });
 
-// Générer un token
 app.post('/api/generate-token', async (req, res) => {
-  const { userId } = req.body;
+  const { userId, userName } = req.body;
   
-  console.log(`🔑 Demande de token pour utilisateur ${userId}`);
-
-  const isMember = await isChannelMember(userId);
-
-  if (!isMember) {
-    console.log(`❌ Utilisateur ${userId} n'est pas dans le channel`);
-    return res.status(403).json({ success: false, error: 'Utilisateur non membre du channel' });
+  if (!userId) {
+    return res.status(400).json({ error: 'userId manquant' });
   }
-
-  const token = generateToken();
-  const data = loadData();
-  data.userTokens[token] = userId;
-  saveData(data);
   
-  await commitToGithub(`Nouveau token généré pour utilisateur ${userId}`);
-
-  console.log(`✅ Token généré: ${token} pour ${userId}`);
-  res.json({ success: true, token });
+  const isMember = await isChannelMember(userId);
+  if (!isMember) {
+    return res.status(403).json({ error: 'Accès refusé - pas membre du canal' });
+  }
+  
+  const data = loadData();
+  let token = data.userTokens[userId];
+  
+  if (!token) {
+    token = generateToken();
+    data.userTokens[token] = userId;
+    saveData(data);
+    await commitToGithub(`Token généré pour @${userName} (${userId})`, data);
+  }
+  
+  const link = `${SITE_URL}?token=${token}&userId=${userId}`;
+  res.json({ token, link });
 });
 
-// Sauvegarder les données (produits, paramètres)
 app.post('/api/save-data', async (req, res) => {
-  const newData = req.body;
+  const { products, shop_settings } = req.body;
   const oldData = loadData();
-
+  const newData = { ...oldData, products, shop_settings };
+  
   saveData(newData);
-  await commitToGithub('Mise à jour boutique (produits/paramètres)');
-
-  // Vérifier les changements et notifier
-  if (newData.products && oldData.products) {
-    for (const newProduct of newData.products) {
-      const oldProduct = oldData.products.find(p => p.id === newProduct.id);
-
+  
+  // Vérifier les changements de stock
+  for (const newProd of products) {
+    const oldProd = oldData.products.find(p => p.id === newProd.id);
+    
+    if (!oldProd) {
       // Nouveau produit
-      if (!oldProduct) {
-        const price = newProduct.tariffs?.split('|')[0]?.split('=')[1] || 'N/A';
-        await notificationService.notifyNewProduct(newProduct.name, price, newProduct.category);
-      }
-
-      // Produit en rupture
-      if (oldProduct && oldProduct.stock !== 'Rupture de stock' && newProduct.stock === 'Rupture de stock') {
-        await notificationService.notifyOutOfStock(newProduct.name);
-      }
-
-      // Stock limité
-      if (oldProduct && oldProduct.stock !== 'Stock limité' && newProduct.stock === 'Stock limité') {
-        const price = newProduct.tariffs?.split('|')[0]?.split('=')[1] || 'N/A';
-        await notificationService.notifyLimitedStock(newProduct.name, price);
-      }
-
+      await notificationService.notifyNewProduct(newProd.name, newProd.price, newProd.category);
+    } else if (newProd.stock === 0 && oldProd.stock > 0) {
+      // Rupture de stock
+      await notificationService.notifyOutOfStock(newProd.name);
+    } else if (newProd.stock > 0 && oldProd.stock === 0) {
       // Retour en stock
-      if (oldProduct && oldProduct.stock === 'Rupture de stock' && newProduct.stock === 'En stock') {
-        const price = newProduct.tariffs?.split('|')[0]?.split('=')[1] || 'N/A';
-        await notificationService.notifyBackInStock(newProduct.name, price);
-      }
+      await notificationService.notifyBackInStock(newProd.name, newProd.price);
+    } else if (newProd.stock <= 3 && newProd.stock > 0 && oldProd.stock > 3) {
+      // Stock limité
+      await notificationService.notifyLimitedStock(newProd.name, newProd.price);
     }
   }
-
+  
+  await commitToGithub('Mise à jour produits/paramètres', newData);
   res.json({ success: true });
 });
 
-// Recevoir une commande
 app.post('/api/order', async (req, res) => {
-  try {
-    const order = req.body;
-    
-    // Récupérer le username du client
-    let username = 'Utilisateur inconnu';
-    try {
-      const userInfo = await axios.get(
-        `https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=${order.userId}`
-      );
-      username = userInfo.data.result.username || userInfo.data.result.first_name || 'Utilisateur';
-    } catch (e) {
-      console.log('Impossible de récupérer le username');
+  const { userId, items, total } = req.body;
+  const data = loadData();
+  
+  let userName = 'Utilisateur inconnu';
+  for (const [token, id] of Object.entries(data.userTokens)) {
+    if (id.toString() === userId.toString()) {
+      userName = `@user_${userId}`;
+      break;
     }
+  }
+  
+  let itemsText = items.map(item => 
+    `• ${item.name} - ${item.quantity}x ${item.selectedQuantity}g = ${item.price}€`
+  ).join('\n');
+  
+  const message = `
+📦 *Nouvelle commande*
 
-    // Formater les articles
-    const items = order.items.map(item => 
-      `<b>${item.name}</b>\n  ${item.size} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`
-    ).join('\n');
+👤 Client: ${userName}
+🆔 ID: ${userId}
 
-    // Message pour le propriétaire
-    const message = `
-📦 <b>NOUVELLE COMMANDE !</b>
+*Articles:*
+${itemsText}
 
-${items}
-
-💰 <b>Total : ${order.total.toFixed(2)}€</b>
-
-👤 <b>Client :</b> @${username}
-⏰ <b>Heure :</b> ${new Date(order.timestamp).toLocaleString('fr-FR')}
-⚠️ <i>Prépare la commande et contacte le client</i>
-    `;
-
-    // Envoyer notification Telegram au propriétaire
+*Total:* ${total}€
+⏰ ${new Date().toLocaleString('fr-FR')}
+  `;
+  
+  try {
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       chat_id: OWNER_TELEGRAM_ID,
       text: message,
-      parse_mode: 'HTML'
+      parse_mode: 'Markdown'
     });
-
-    res.json({ success: true, message: 'Commande reçue et notification envoyée' });
-  } catch (error) {
-    console.error('Erreur commande:', error);
-    res.status(500).json({ success: false, message: error.message });
+    console.log('✅ Notification commande envoyée');
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Erreur envoi notification:', err.response?.data?.description || err.message);
+    res.status(500).json({ error: 'Erreur lors de l\'envoi' });
   }
 });
 
@@ -227,136 +213,86 @@ ${items}
 let bot;
 if (BOT_TOKEN) {
   bot = new Telegraf(BOT_TOKEN);
-
-  // Commande /start
-  bot.command('start', async (ctx) => {
+  
+  bot.start(async (ctx) => {
     const userId = ctx.from.id;
-    const userName = ctx.from.username || ctx.from.first_name;
-
-    console.log(`📨 /start reçu de @${userName} (${userId})`);
-
-    try {
-      // Vérifier si l'utilisateur est dans le channel
-      const isMember = await isChannelMember(userId);
-
-      if (!isMember) {
-        ctx.reply(
-          '❌ Accès Refusé\n\n' +
-          'Pour accéder au shop SVR, tu dois rejoindre le channel @SVR_TO et envoyer tes vérifications:\n\n' +
-          '1️⃣ Une pièce d\'identité (Carte ID)\n' +
-          '2️⃣ Une vidéo: toi + ta carte + en disant SVR + date du jour\n' +
-          '3️⃣ Dire de qui tu viens\n\n' +
-          '👉 Rejoins le channel: https://t.me/SVR_TO\n\n' +
-          'Une fois validé, retape /start pour accéder au shop! 🎁'
-        );
-        console.log(`❌ @${userName} (${userId}) pas dans le channel`);
-        return;
-      }
-
-      // Utilisateur dans le channel - afficher le bouton
-      ctx.reply(
-        `✅ Bienvenue ${userName}!\n\n` +
-        `Tu es autorisé à accéder au shop SVR! 🎁`,
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: '🛍️ Ouvrir la boutique',
-                  callback_data: 'open_shop'
-                }
-              ]
-            ]
-          }
-        }
-      );
-
-      console.log(`✅ Bouton affiché pour @${userName} (${userId})`);
-
-    } catch (error) {
-      console.error(`❌ Erreur pour @${userName}:`, error.message);
-      ctx.reply('⚠️ Une erreur est survenue.\n\nRéessaie avec /start');
+    const userName = ctx.from.username || ctx.from.first_name || `User${userId}`;
+    const data = loadData();
+    
+    // Vérifier si déjà membre
+    const isExisting = data.userTokens[userId];
+    
+    // Vérifier l'appartenance au canal
+    const isMember = await isChannelMember(userId);
+    
+    if (!isMember) {
+      return ctx.reply('❌ Accès refusé - Tu dois être membre de @SVR_TO pour accéder à la boutique.\n\n🔗 Rejoins le canal: https://t.me/SVR_TO');
     }
-  });
-
-  // Gestion du bouton "Ouvrir la boutique"
-  bot.action('open_shop', async (ctx) => {
-    const userId = ctx.from.id;
-    const userName = ctx.from.username || ctx.from.first_name;
-
-    console.log(`🛍️ Bouton cliqué par @${userName} (${userId})`);
-
-    try {
-      // Vérifier que l'utilisateur est toujours dans le channel
-      const isMember = await isChannelMember(userId);
-
-      if (!isMember) {
-        ctx.answerCbQuery('❌ Tu n\'es plus dans le channel', { show_alert: true });
-        return;
-      }
-
-      const data = loadData();
+    
+    // Si nouvel utilisateur
+    if (!isExisting) {
+      const token = generateToken();
+      data.userTokens[token] = userId;
       
-      // Chercher si l'utilisateur a déjà un token
-      let token = Object.keys(data.userTokens).find(t => data.userTokens[t] === userId);
-      
-      if (!token) {
-        // Si pas de token, en générer un nouveau
-        token = generateToken();
-        data.userTokens[token] = userId;
-        saveData(data);
-        await commitToGithub(`Token généré pour @${userName} (${userId})`);
-        console.log(`✅ Nouveau token généré: ${token}`);
-      } else {
-        console.log(`ℹ️ Token existant réutilisé: ${token}`);
+      // Ajouter aux utilisateurs Telegram
+      if (!data.telegram_users.includes(userId)) {
+        data.telegram_users.push(userId);
       }
-
+      
+      saveData(data);
+      await commitToGithub(`Nouvel utilisateur: @${userName} (${userId})`, data);
+      
       const link = `${SITE_URL}?token=${token}&userId=${userId}`;
+      const welcomeMessage = `
+✅ *Bienvenue @${userName} !*
 
-      // Envoyer le lien au utilisateur
-      ctx.reply(
-        `🎁 Ton lien d'accès au shop:\n\n${link}\n\n🔐 Ce lien est personnel et unique!`
-      );
+Tu recevras maintenant :
+📢 Les horaires d'ouverture/fermeture
+✨ Les nouveaux produits
+⚠️ Les ruptures de stock
+🔥 Les offres limitées
 
-      // Notification au bouton
-      ctx.answerCbQuery('✅ Lien envoyé!');
+🛍️ *Accès à la boutique :* ${link}
 
-    } catch (error) {
-      console.error(`❌ Erreur pour @${userName}:`, error.message);
-      ctx.answerCbQuery('⚠️ Erreur serveur', { show_alert: true });
+⚠️ _Ne le partage pas, il est unique à toi !_ 👍
+      `;
+      
+      return ctx.reply(welcomeMessage, { parse_mode: 'Markdown', disable_web_page_preview: true });
+    }
+    
+    // Utilisateur existant
+    const token = Object.keys(data.userTokens).find(t => data.userTokens[t].toString() === userId.toString());
+    if (token) {
+      const link = `${SITE_URL}?token=${token}&userId=${userId}`;
+      return ctx.reply(`Tu as déjà accès à la boutique ! 👍\n\n🔗 Ton lien : ${link}`, { disable_web_page_preview: true });
     }
   });
-
-  bot.launch().catch(err => console.error('❌ Erreur bot Telegram:', err));
+  
+  bot.launch();
   console.log('✅ Bot Telegram lancé');
+  
+  process.once('SIGINT', () => bot.stop('SIGINT'));
+  process.once('SIGTERM', () => bot.stop('SIGTERM'));
 } else {
-  console.warn('⚠️ TELEGRAM_BOT_TOKEN non défini - bot désactivé');
+  console.warn('⚠️ BOT_TOKEN non défini, bot désactivé');
 }
 
-// Vérifier les horaires d'ouverture toutes les minutes
+// Synchronisation au démarrage
+const data = loadData();
+if (data.userTokens && typeof data.userTokens === 'object') {
+  const userIds = Object.values(data.userTokens);
+  const telegramUsers = new Set(data.telegram_users || []);
+  userIds.forEach(id => telegramUsers.add(id));
+  data.telegram_users = Array.from(telegramUsers);
+  saveData(data);
+  console.log(`✅ ${data.telegram_users.length} utilisateurs synchronisés`);
+}
+
+// Vérification horaires chaque minute
 setInterval(() => {
   notificationService.checkShopHours();
 }, 60000);
 
-// Synchroniser les utilisateurs existants au démarrage
-const data = loadData();
-if (data.userTokens && Object.values(data.userTokens).length > 0) {
-  const tokenUserIds = Object.values(data.userTokens);
-  const newUsers = tokenUserIds.filter(id => !data.telegram_users.includes(id));
-  
-  if (newUsers.length > 0) {
-    data.telegram_users.push(...newUsers);
-    saveData(data);
-    console.log(`✅ ${newUsers.length} utilisateurs synchronisés au démarrage`);
-  }
-}
-
-// Démarrer le serveur
 app.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-});
-
-process.on('SIGINT', () => {
-  if (bot) bot.stop();
-  process.exit();
 });
