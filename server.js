@@ -13,6 +13,7 @@ const CHANNEL_ID = process.env.CHANNEL_ID;
 const OWNER_TELEGRAM_ID = process.env.OWNER_TELEGRAM_ID;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = 'z2j7phmfkx-maker/svr-shop';
+const SITE_URL = 'https://svr-shop.onrender.com';
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -68,8 +69,9 @@ async function isChannelMember(userId) {
       `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`,
       { params: { chat_id: CHANNEL_ID, user_id: userId } }
     );
-    console.log(`✅ Réponse API:`, member.data);
-    return member.data.ok;
+    const isValidStatus = ['member', 'administrator', 'creator', 'restricted'].includes(member.data.result.status);
+    console.log(`Status: ${member.data.result.status}, Valid: ${isValidStatus}`);
+    return isValidStatus;
   } catch (error) {
     console.error(`❌ Erreur vérification channel:`, error.response?.data || error.message);
     return false;
@@ -111,10 +113,14 @@ app.post('/api/verify-token', async (req, res) => {
 // Générer un token
 app.post('/api/generate-token', async (req, res) => {
   const { userId } = req.body;
+  
+  console.log(`🔑 Demande de token pour utilisateur ${userId}`);
+
   const isMember = await isChannelMember(userId);
 
   if (!isMember) {
-    return res.status(403).json({ error: 'Utilisateur non membre du channel' });
+    console.log(`❌ Utilisateur ${userId} n'est pas dans le channel`);
+    return res.status(403).json({ success: false, error: 'Utilisateur non membre du channel' });
   }
 
   const token = generateToken();
@@ -124,7 +130,8 @@ app.post('/api/generate-token', async (req, res) => {
   
   await commitToGithub(`Nouveau token généré pour utilisateur ${userId}`);
 
-  res.json({ token });
+  console.log(`✅ Token généré: ${token} pour ${userId}`);
+  res.json({ success: true, token });
 });
 
 // Sauvegarder les données (produits, paramètres)
@@ -221,57 +228,96 @@ let bot;
 if (BOT_TOKEN) {
   bot = new Telegraf(BOT_TOKEN);
 
-  bot.on('message', async (ctx) => {
-    const userId = ctx.chat.id;
-    const username = ctx.chat.username || ctx.chat.first_name || 'Utilisateur';
-    const data = loadData();
+  // Commande /start
+  bot.command('start', async (ctx) => {
+    const userId = ctx.from.id;
+    const userName = ctx.from.username || ctx.from.first_name;
 
-    console.log(`📨 Message reçu de ${username} (${userId})`);
+    console.log(`📨 /start reçu de @${userName} (${userId})`);
 
-    // Vérifier si l'utilisateur est membre du canal
-    const isMember = await isChannelMember(userId);
-    
-    if (!isMember) {
-      console.log(`❌ ${username} n'est pas membre du canal`);
-      ctx.reply('❌ Tu n\'es pas membre du canal. Rejoins-le d\'abord ! 👍');
-      return;
+    try {
+      // Vérifier si l'utilisateur est dans le channel
+      const isMember = await isChannelMember(userId);
+
+      if (!isMember) {
+        ctx.reply(
+          '❌ Accès Refusé\n\n' +
+          'Pour accéder au shop SVR, tu dois rejoindre le channel @SVR_TO et envoyer tes vérifications:\n\n' +
+          '1️⃣ Une pièce d\'identité (Carte ID)\n' +
+          '2️⃣ Une vidéo: toi + ta carte + en disant SVR + date du jour\n' +
+          '3️⃣ Dire de qui tu viens\n\n' +
+          '👉 Rejoins le channel: https://t.me/SVR_TO\n\n' +
+          'Une fois validé, retape /start pour accéder au shop! 🎁'
+        );
+        console.log(`❌ @${userName} (${userId}) pas dans le channel`);
+        return;
+      }
+
+      // Utilisateur dans le channel - afficher le bouton
+      ctx.reply(
+        `✅ Bienvenue ${userName}!\n\n` +
+        `Tu es autorisé à accéder au shop SVR! 🎁`,
+        {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '🛍️ Ouvrir la boutique',
+                  callback_data: 'open_shop'
+                }
+              ]
+            ]
+          }
+        }
+      );
+
+      console.log(`✅ Bouton affiché pour @${userName} (${userId})`);
+
+    } catch (error) {
+      console.error(`❌ Erreur pour @${userName}:`, error.message);
+      ctx.reply('⚠️ Une erreur est survenue.\n\nRéessaie avec /start');
     }
+  });
 
-    console.log(`✅ ${username} est membre du canal`);
+  // Gestion du bouton "Ouvrir la boutique"
+  bot.action('open_shop', async (ctx) => {
+    const userId = ctx.from.id;
+    const userName = ctx.from.username || ctx.from.first_name;
 
-    let isNewUser = false;
+    console.log(`🛍️ Bouton cliqué par @${userName} (${userId})`);
 
-    // Ajouter l'utilisateur à la liste de notifications s'il n'y est pas
-    if (!data.telegram_users.includes(userId)) {
-      data.telegram_users.push(userId);
-      isNewUser = true;
-    }
+    try {
+      // Vérifier que l'utilisateur est toujours dans le channel
+      const isMember = await isChannelMember(userId);
 
-    // Vérifier si l'utilisateur a déjà un token
-    let token = Object.keys(data.userTokens).find(t => data.userTokens[t] === userId);
-    
-    if (!token) {
-      // Générer un token UNIQUE pour cet utilisateur (une seule fois)
-      token = generateToken();
+      if (!isMember) {
+        ctx.answerCbQuery('❌ Tu n\'es plus dans le channel', { show_alert: true });
+        return;
+      }
+
+      // Générer un token
+      const token = generateToken();
+      const data = loadData();
       data.userTokens[token] = userId;
-      isNewUser = true;
-    }
+      saveData(data);
+      
+      await commitToGithub(`Token généré pour @${userName} (${userId})`);
 
-    saveData(data);
-    await commitToGithub(`Utilisateur ${username} (${userId}) affilié au token ${token}`);
+      const link = `${SITE_URL}?token=${token}`;
 
-    // Lien sécurisé avec token
-    const shopLink = `https://svr-shop.onrender.com?token=${token}`;
+      // Envoyer le lien au utilisateur
+      ctx.reply(
+        `🎁 Ton lien d'accès au shop:\n\n${link}\n\n🔐 Ce lien est personnel et unique!`
+      );
 
-    if (isNewUser) {
-      console.log(`✅ Nouvel utilisateur enregistré : ${username} (${userId}) - Token: ${token}`);
+      // Notification au bouton
+      ctx.answerCbQuery('✅ Lien envoyé!');
 
-      // Message de bienvenue avec lien sécurisé
-      ctx.reply(`✅ Bienvenue @${username} !\n\nTu recevras maintenant :\n📢 Les horaires d'ouverture/fermeture\n✨ Les nouveaux produits\n⚠️ Les ruptures de stock\n🔥 Les offres limitées\n\n🔗 Voici ton lien personnel pour accéder à la boutique :\n${shopLink}\n\n⚠️ Ne le partage pas, il est unique à toi !`);
-    } else {
-      // Utilisateur existant - lui renvoyer son lien
-      console.log(`ℹ️ Utilisateur existant : ${username} (${userId})`);
-      ctx.reply(`Voici ton lien d'accès à la boutique :\n${shopLink}\n\n⚠️ Ne le partage pas, il est unique à toi ! 👍`);
+      console.log(`✅ Token généré pour @${userName} (${userId}): ${token}`);
+
+    } catch (error) {
+      console.error(`❌ Erreur pour @${userName}:`, error.message);
+      ctx.answerCbQuery('⚠️ Erreur serveur', { show_alert: true });
     }
   });
 
