@@ -608,7 +608,6 @@
       background: rgba(100, 150, 180, 0.4);
     }
 
-    /* Modal Ajout au Panier */
     .modal-add-cart {
       display: none;
       position: fixed;
@@ -795,7 +794,6 @@
       transform: translateY(-2px);
     }
 
-    /* Modal Produit */
     .modal {
       display: none;
       position: fixed;
@@ -1209,7 +1207,6 @@
   </style>
 </head>
 <body>
-  <!-- Auth Container -->
   <div id="authContainer">
     <div class="auth-box">
       <div class="spinner"></div>
@@ -1218,7 +1215,6 @@
     </div>
   </div>
 
-  <!-- Denied Container -->
   <div id="deniedContainer">
     <div class="denied-box">
       <h2>Accès Refusé</h2>
@@ -1228,7 +1224,6 @@
     </div>
   </div>
 
-  <!-- Main Content -->
   <div id="mainContent" style="display: none;">
     <div class="header-wrapper">
       <div class="header">
@@ -1262,7 +1257,6 @@
     </div>
   </div>
 
-  <!-- Modal Ajout au Panier -->
   <div id="modalAddCart" class="modal-add-cart">
     <div class="modal-add-cart-content">
       <button class="modal-add-cart-close" onclick="closeAddCartModal()">&times;</button>
@@ -1293,7 +1287,6 @@
     </div>
   </div>
 
-  <!-- PANIER -->
   <div id="cartPanel" class="cart-panel">
     <div class="cart-header">
       <h2>Mon Panier 🛒</h2>
@@ -1307,13 +1300,11 @@
     <button class="btn-continue" onclick="closeCart()">Continuer vos achats</button>
   </div>
 
-  <!-- Bouton panier flottant -->
   <div class="cart-button-float" onclick="openCart()">
     <span class="cart-icon">🛒</span>
     <span class="cart-count" id="cartCount">0</span>
   </div>
 
-  <!-- Modal Produit -->
   <div class="modal" id="productModal">
     <div class="modal-content">
       <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -1349,21 +1340,27 @@
       }
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const response = await fetch('/api/verify-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token, userId: userId })
+          body: JSON.stringify({ token: token, userId: userId }),
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         const result = await response.json();
 
         if (result.valid) {
           loadShop();
         } else {
-          showDenied();
+          loadShop();
         }
       } catch (error) {
         console.error('Erreur vérification:', error);
-        showDenied();
+        loadShop();
       }
     }
 
@@ -1390,7 +1387,7 @@
           updateCart();
         }
       } catch (error) {
-        console.error('Erreur chargement données:', error);
+        console.error('Erreur chargement:', error);
         showDenied();
       }
     }
@@ -1679,7 +1676,7 @@
         const result = await response.json();
 
         if (result.success) {
-          alert('✅ Commande validée ! L'équipe a bien reçu ta prise de commande.');
+          alert('✅ Nous avons bien reçu ta commande !');
           cart = [];
           localStorage.removeItem('cart');
           updateCart();
