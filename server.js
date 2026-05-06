@@ -63,13 +63,15 @@ async function commitToGithub(message) {
 // Vérifier si l'utilisateur est membre du channel
 async function isChannelMember(userId) {
   try {
+    console.log(`🔍 Vérification canal pour utilisateur ${userId}, channel: ${CHANNEL_ID}`);
     const member = await axios.get(
       `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`,
       { params: { chat_id: CHANNEL_ID, user_id: userId } }
     );
+    console.log(`✅ Réponse API:`, member.data);
     return member.data.ok;
   } catch (error) {
-    console.error('Erreur vérification channel:', error);
+    console.error(`❌ Erreur vérification channel:`, error.response?.data || error.message);
     return false;
   }
 }
@@ -224,13 +226,18 @@ if (BOT_TOKEN) {
     const username = ctx.chat.username || ctx.chat.first_name || 'Utilisateur';
     const data = loadData();
 
+    console.log(`📨 Message reçu de ${username} (${userId})`);
+
     // Vérifier si l'utilisateur est membre du canal
     const isMember = await isChannelMember(userId);
     
     if (!isMember) {
+      console.log(`❌ ${username} n'est pas membre du canal`);
       ctx.reply('❌ Tu n\'es pas membre du canal. Rejoins-le d\'abord ! 👍');
       return;
     }
+
+    console.log(`✅ ${username} est membre du canal`);
 
     let isNewUser = false;
 
@@ -263,6 +270,7 @@ if (BOT_TOKEN) {
       ctx.reply(`✅ Bienvenue @${username} !\n\nTu recevras maintenant :\n📢 Les horaires d'ouverture/fermeture\n✨ Les nouveaux produits\n⚠️ Les ruptures de stock\n🔥 Les offres limitées\n\n🔗 Voici ton lien personnel pour accéder à la boutique :\n${shopLink}\n\n⚠️ Ne le partage pas, il est unique à toi !`);
     } else {
       // Utilisateur existant - lui renvoyer son lien
+      console.log(`ℹ️ Utilisateur existant : ${username} (${userId})`);
       ctx.reply(`Voici ton lien d'accès à la boutique :\n${shopLink}\n\n⚠️ Ne le partage pas, il est unique à toi ! 👍`);
     }
   });
