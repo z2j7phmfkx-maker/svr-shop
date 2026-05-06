@@ -244,17 +244,17 @@ if (BOT_TOKEN) {
 
     saveData(data);
 
+    // Lien sécurisé avec token
+    const shopLink = `https://svr-shop.onrender.com?token=${token}`;
+
     if (isNewUser) {
       console.log(`✅ Nouvel utilisateur enregistré : ${username} (${userId}) - Token: ${token}`);
-      
-      // Lien sécurisé avec token
-      const shopLink = `https://svr-shop.onrender.com?token=${token}`;
 
       // Message de bienvenue avec lien sécurisé
       ctx.reply(`✅ Bienvenue @${username} !\n\nTu recevras maintenant :\n📢 Les horaires d'ouverture/fermeture\n✨ Les nouveaux produits\n⚠️ Les ruptures de stock\n🔥 Les offres limitées\n\n🔗 Voici ton lien personnel pour accéder à la boutique :\n${shopLink}\n\n⚠️ Ne le partage pas, il est unique à toi !`);
     } else {
-      // Utilisateur existant qui envoie un message - on ne fait rien
-      ctx.reply('Tu as déjà accès à la boutique ! 👍');
+      // Utilisateur existant - lui renvoyer son lien
+      ctx.reply(`Voici ton lien d'accès à la boutique :\n${shopLink}\n\n⚠️ Ne le partage pas, il est unique à toi ! 👍`);
     }
   });
 
