@@ -127,13 +127,15 @@
       "description": "Les Puff THC Fryd sont des cartouches vapeur premium pré-remplies avec une concentration élevée en THC. Pratiques et discrètes, elles offrent une expérience rapide et concentrée idéale pour une consommation mobile.",
       "tariffs": "1=60|2=100",
       "isNew": false,
-      "stock": "En stock",
+      "stock": "Rupture",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774681570/kdlwbgifrazglz1yno3n.jpg",
       "gallery": [
         "https://res.cloudinary.com/diezs6eqa/image/upload/v1774685208/dkruaexvotwa5y7bopxv.jpg"
       ],
       "videos": [],
-      "createdAt": "2026-03-28T07:06:30.675Z"
+      "createdAt": "2026-03-28T07:06:30.675Z",
+      "promoTariffs": "",
+      "newUntil": ""
     },
     {
       "id": 1774991687897,
