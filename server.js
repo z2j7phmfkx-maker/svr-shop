@@ -290,11 +290,31 @@ ${items}
 
 // Server start
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🤖 BOT_TOKEN configuré`);
   console.log(`📢 CHANNEL_ID: ${CHANNEL_ID}`);
   console.log(`💾 Tokens stockés dans data.json + GitHub`);
+
+  // Synchroniser les anciens utilisateurs avec les nouveaux au démarrage
+  const data = loadData();
+  if (data.userTokens && data.telegram_users) {
+    const oldUserIds = Object.values(data.userTokens);
+    let newUsersAdded = 0;
+    
+    oldUserIds.forEach(userId => {
+      if (!data.telegram_users.includes(userId)) {
+        data.telegram_users.push(userId);
+        newUsersAdded++;
+      }
+    });
+    
+    if (newUsersAdded > 0) {
+      saveData(data);
+      console.log(`✅ ${newUsersAdded} utilisateurs ajoutés aux notifications`);
+    }
+    console.log(`📊 Total utilisateurs notifiés: ${data.telegram_users.length}`);
+  }
 });
 
 // Vérifier les horaires toutes les minutes
