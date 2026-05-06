@@ -3,11 +3,9 @@
     "description": ""
   },
   "shop_settings": {
-    "opening_time": "10:00",
-    "closing_time": "22:00",
-    "closed_days": [
-      "dimanche"
-    ],
+    "opening_time": "14:00",
+    "closing_time": "00:00",
+    "closed_days": [],
     "timezone": "Europe/Paris"
   },
   "telegram_users": [
