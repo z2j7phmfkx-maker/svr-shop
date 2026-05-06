@@ -35,7 +35,6 @@
       position: relative;
     }
 
-    /* Pattern "דהר" en background */
     body::before {
       content: 'דהר    דהר    דהר\A\Aדהר    דהר    דהר\A\Aדהר    דהר    דהר';
       position: fixed;
@@ -71,7 +70,6 @@
       margin: 0 auto 15px;
     }
 
-    /* Header avec Logo - NOUVELLE FORME */
     .header {
       background: linear-gradient(135deg, rgba(15, 20, 40, 0.95) 0%, rgba(20, 28, 50, 0.95) 100%);
       backdrop-filter: blur(10px);
@@ -127,7 +125,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* Bannière Concours avec image Cloudinary */
     .concours-banner {
       background: linear-gradient(135deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 100%),
                   url('https://res.cloudinary.com/diezs6eqa/image/upload/v1775412560/Illustration_sans_titre_uj29od.jpg');
@@ -202,7 +199,6 @@
       transform: rotate(180deg);
     }
 
-    /* Section Filtre */
     .filter-section {
       display: flex;
       gap: 8px;
@@ -240,7 +236,6 @@
       box-shadow: 0 0 25px rgba(100, 150, 180, 0.5);
     }
 
-    /* Grille Produits - 2 COLONNES PARTOUT */
     .products-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -249,7 +244,6 @@
       width: 100%;
     }
 
-    /* CONTOURS NÉON ULTRA PRONONCÉS */
     .product-card {
       background: rgba(20, 28, 50, 0.8);
       border: 3px solid #6496b4;
@@ -276,7 +270,6 @@
         inset 0 0 20px rgba(100, 150, 180, 0.3);
     }
 
-    /* AURA ULTRA PRONONCÉE */
     .product-card::before {
       content: '';
       position: absolute;
@@ -401,7 +394,6 @@
       background: linear-gradient(135deg, rgba(100, 150, 180, 0.5) 0%, rgba(100, 150, 180, 0.3) 100%);
     }
 
-    /* CART STYLES */
     .cart-button-float {
       position: fixed;
       bottom: 80px;
@@ -608,7 +600,194 @@
       background: rgba(100, 150, 180, 0.4);
     }
 
-    /* Modal */
+    /* Modal Ajout au Panier */
+    .modal-add-cart {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 1100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-add-cart.active {
+      display: flex;
+    }
+
+    .modal-add-cart-content {
+      background: linear-gradient(135deg, rgba(20, 28, 50, 0.95) 0%, rgba(15, 20, 40, 0.95) 100%);
+      border: 3px solid rgba(100, 150, 180, 0.5);
+      border-radius: 15px;
+      width: 100%;
+      max-width: 380px;
+      padding: 25px;
+      position: relative;
+      box-shadow: 
+        0 0 30px rgba(100, 150, 180, 0.4),
+        0 0 60px rgba(100, 150, 180, 0.2),
+        inset 0 0 20px rgba(100, 150, 180, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-add-cart-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #a0b0c0;
+      background: none;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    .modal-add-cart-close:hover {
+      color: #ff6b6b;
+    }
+
+    .modal-add-cart-product {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-add-cart-product h2 {
+      color: #8ab4d4;
+      font-size: 16px;
+      margin-bottom: 10px;
+      text-shadow: 0 0 8px rgba(100, 150, 180, 0.2);
+    }
+
+    .modal-add-cart-image {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 2px solid rgba(100, 150, 180, 0.3);
+      margin-bottom: 15px;
+      box-shadow: 0 0 20px rgba(100, 150, 180, 0.2);
+    }
+
+    .modal-add-cart-section {
+      margin-bottom: 20px;
+    }
+
+    .modal-add-cart-section label {
+      display: block;
+      color: #6496b4;
+      font-weight: bold;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .quantity-buttons {
+      display: flex;
+      gap: 8px;
+      flex-direction: column;
+    }
+
+    .quantity-btn {
+      padding: 12px;
+      background: rgba(100, 150, 180, 0.2);
+      border: 2px solid rgba(100, 150, 180, 0.4);
+      color: #8ab4d4;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .quantity-btn:hover {
+      background: rgba(100, 150, 180, 0.4);
+      border-color: #6496b4;
+    }
+
+    .quantity-btn.selected {
+      background: linear-gradient(135deg, rgba(100, 150, 180, 0.6) 0%, rgba(100, 150, 180, 0.4) 100%);
+      border-color: #6496b4;
+      color: #6496b4;
+      box-shadow: 0 0 20px rgba(100, 150, 180, 0.5);
+    }
+
+    .quantity-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .quantity-selector button {
+      width: 36px;
+      height: 36px;
+      border: 2px solid #6496b4;
+      background: rgba(100, 150, 180, 0.2);
+      color: #6496b4;
+      cursor: pointer;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .quantity-selector button:hover {
+      background: rgba(100, 150, 180, 0.4);
+    }
+
+    .quantity-selector span {
+      color: #8ab4d4;
+      font-weight: bold;
+      font-size: 14px;
+      min-width: 30px;
+      text-align: center;
+    }
+
+    .modal-add-cart-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-cancel {
+      flex: 1;
+      padding: 12px;
+      background: rgba(100, 100, 100, 0.2);
+      border: 1px solid rgba(100, 100, 100, 0.4);
+      color: #a0b0c0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      font-size: 11px;
+    }
+
+    .btn-cancel:hover {
+      background: rgba(100, 100, 100, 0.4);
+    }
+
+    .btn-add-to-cart-modal {
+      flex: 1;
+      padding: 12px;
+      background: linear-gradient(135deg, rgba(100, 150, 180, 0.4) 0%, rgba(100, 150, 180, 0.2) 100%);
+      border: 2px solid rgba(100, 150, 180, 0.6);
+      color: #6bc34a;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      font-size: 11px;
+    }
+
+    .btn-add-to-cart-modal:hover {
+      background: linear-gradient(135deg, rgba(100, 150, 180, 0.6) 0%, rgba(100, 150, 180, 0.4) 100%);
+      transform: translateY(-2px);
+    }
+
+    /* Modal Produit */
     .modal {
       display: none;
       position: fixed;
@@ -813,7 +992,6 @@
       color: #8ab4d4;
     }
 
-    /* Auth Container */
     #authContainer {
       display: flex;
       justify-content: center;
@@ -1045,7 +1223,6 @@
   <!-- Main Content -->
   <div id="mainContent" style="display: none;">
     <div class="header-wrapper">
-      <!-- Header avec Logo - NOUVELLE FORME -->
       <div class="header">
         <div class="logo">
           <div class="logo-text">דהר</div>
@@ -1057,7 +1234,6 @@
       </div>
     </div>
 
-    <!-- Bannière Concours avec image Cloudinary (sans titre) -->
     <div class="concours-banner" id="concoursBanner" onclick="toggleConcours()">
       <div class="concours-content">
         <div class="concours-preview" id="concoursPreview">
@@ -1067,16 +1243,44 @@
       </div>
     </div>
 
-    <!-- Section Filtre -->
     <div class="filter-section" id="filterSection"></div>
 
     <div class="container">
-      <!-- Grille Produits -->
       <div class="products-grid" id="productsGrid"></div>
 
-      <!-- Admin Link -->
       <div class="admin-link">
         <a href="/admin">Accès Admin</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ajout au Panier -->
+  <div id="modalAddCart" class="modal-add-cart">
+    <div class="modal-add-cart-content">
+      <button class="modal-add-cart-close" onclick="closeAddCartModal()">&times;</button>
+      
+      <div class="modal-add-cart-product">
+        <h2 id="addCartProductName"></h2>
+        <img class="modal-add-cart-image" id="addCartProductImage" src="" alt="">
+      </div>
+
+      <div class="modal-add-cart-section">
+        <label>Sélectionne une quantité</label>
+        <div class="quantity-buttons" id="quantityButtons"></div>
+      </div>
+
+      <div class="modal-add-cart-section">
+        <label>Combien de fois ?</label>
+        <div class="quantity-selector">
+          <button onclick="decreaseAddCartQty()">−</button>
+          <span id="addCartQtyDisplay">1</span>
+          <button onclick="increaseAddCartQty()">+</button>
+        </div>
+      </div>
+
+      <div class="modal-add-cart-buttons">
+        <button class="btn-cancel" onclick="closeAddCartModal()">Annuler</button>
+        <button class="btn-add-to-cart-modal" onclick="confirmAddToCart()">Ajouter au panier</button>
       </div>
     </div>
   </div>
@@ -1122,8 +1326,10 @@
     let shopData = {};
     let currentFilter = 'Tous';
     let cart = [];
+    let currentProduct = null;
+    let selectedQuantity = null;
+    let addCartQty = 1;
 
-    // Vérifier le token au démarrage
     async function verifyAccess() {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
@@ -1163,20 +1369,13 @@
         const response = await fetch('/data.json');
         shopData = await response.json();
 
-        // Afficher le contenu principal
         document.getElementById('authContainer').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
 
-        // Charger le concours
         loadConcours();
-
-        // Créer section filtre
         createFilterSection();
-
-        // Charger les produits
         loadProducts();
 
-        // Charger le panier sauvegardé
         const savedCart = localStorage.getItem('cart');
         if (savedCart) {
           cart = JSON.parse(savedCart);
@@ -1220,13 +1419,11 @@
     function setFilter(category) {
       currentFilter = category;
       
-      // Mettre à jour les boutons
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.textContent === category) btn.classList.add('active');
       });
 
-      // Recharger les produits
       loadProducts();
     }
 
@@ -1236,7 +1433,6 @@
 
       let filteredProducts = shopData.products || [];
 
-      // Filtrer par catégorie
       if (currentFilter !== 'Tous') {
         filteredProducts = filteredProducts.filter(p => p.category === currentFilter);
       }
@@ -1247,7 +1443,6 @@
 
         let badges = '';
         
-        // Vérifier si le produit est toujours "NOUVEAU"
         if (product.isNew) {
           const today = new Date().toISOString().split('T')[0];
           const newUntilDate = product.newUntil;
@@ -1257,22 +1452,18 @@
           }
         }
         
-        // Badge PROMO
         if (product.promoTariffs) {
           badges += '<span class="badge badge-promo">🏷️ PROMO</span>';
         }
 
-        // Badge STOCK LIMITÉ
         if (product.stock === 'Stock limité') {
           badges += '<span class="badge badge-stock">⚠️ STOCK LIMITÉ</span>';
         }
 
-        // Badge RUPTURE DE STOCK
         if (product.stock === 'Rupture de stock') {
           badges += '<span class="badge badge-rupture">❌ RUPTURE DE STOCK</span>';
         }
 
-        // Afficher SEULEMENT le prix normal
         const displayPrice = product.tariffs?.split('|')[0]?.split('=')[1] || 'N/A';
 
         const priceHTML = `<div class="product-price">À partir de <span>${displayPrice}€</span></div>`;
@@ -1283,7 +1474,7 @@
             <div class="product-name">${product.name}</div>
             <div class="product-badges">${badges}</div>
             ${priceHTML}
-            <button class="btn-add-cart" onclick="addToCart(event, ${JSON.stringify(product).replace(/"/g, '&quot;')})">Ajouter au panier 🛒</button>
+            <button class="btn-add-cart" onclick="openAddCartModal(event, ${JSON.stringify(product).replace(/"/g, '&quot;')})">Ajouter au panier 🛒</button>
           </div>
         `;
 
@@ -1301,40 +1492,83 @@
       }
     }
 
-    // PANIER
-    function addToCart(event, product) {
+    function openAddCartModal(event, product) {
       event.stopPropagation();
       
-      const size = prompt(`Sélectionne une taille pour ${product.name}:\n\n${product.tariffs}`);
-      if (!size) return;
+      currentProduct = product;
+      selectedQuantity = null;
+      addCartQty = 1;
 
-      const price = product.tariffs
-        .split('|')
-        .find(t => t.includes(size))
-        ?.split('=')[1];
+      document.getElementById('addCartProductName').textContent = product.name;
+      document.getElementById('addCartProductImage').src = product.image;
+      document.getElementById('addCartQtyDisplay').textContent = '1';
 
-      if (!price) {
-        alert('Taille invalide');
+      const quantityButtonsDiv = document.getElementById('quantityButtons');
+      quantityButtonsDiv.innerHTML = '';
+
+      product.tariffs.split('|').forEach(tariff => {
+        const [size, price] = tariff.split('=');
+        const btn = document.createElement('button');
+        btn.className = 'quantity-btn';
+        btn.textContent = `${size.trim()} = ${price.trim()}€`;
+        btn.onclick = () => selectQuantity(btn, tariff);
+        quantityButtonsDiv.appendChild(btn);
+      });
+
+      document.getElementById('modalAddCart').classList.add('active');
+    }
+
+    function selectQuantity(btn, tariff) {
+      document.querySelectorAll('.quantity-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedQuantity = tariff;
+    }
+
+    function increaseAddCartQty() {
+      addCartQty++;
+      document.getElementById('addCartQtyDisplay').textContent = addCartQty;
+    }
+
+    function decreaseAddCartQty() {
+      if (addCartQty > 1) {
+        addCartQty--;
+        document.getElementById('addCartQtyDisplay').textContent = addCartQty;
+      }
+    }
+
+    function confirmAddToCart() {
+      if (!selectedQuantity) {
+        alert('Sélectionne une quantité !');
         return;
       }
 
+      const [size, price] = selectedQuantity.split('=');
+
       const cartItem = {
-        id: product.id,
-        name: product.name,
-        size: size,
-        price: parseInt(price),
-        quantity: 1
+        id: currentProduct.id,
+        name: currentProduct.name,
+        size: size.trim(),
+        price: parseInt(price.trim()),
+        quantity: addCartQty
       };
 
-      const existingItem = cart.find(item => item.id === product.id && item.size === size);
+      const existingItem = cart.find(item => item.id === currentProduct.id && item.size === cartItem.size);
       if (existingItem) {
-        existingItem.quantity++;
+        existingItem.quantity += addCartQty;
       } else {
         cart.push(cartItem);
       }
 
       updateCart();
-      showNotification(`${product.name} ajouté au panier ! ✅`);
+      closeAddCartModal();
+      showNotification(`${currentProduct.name} ajouté au panier ! ✅`);
+    }
+
+    function closeAddCartModal() {
+      document.getElementById('modalAddCart').classList.remove('active');
+      currentProduct = null;
+      selectedQuantity = null;
+      addCartQty = 1;
     }
 
     function updateCart() {
@@ -1370,7 +1604,6 @@
       cartCount.textContent = count;
       cartTotal.textContent = total + '€';
       
-      // Sauvegarder le panier
       localStorage.setItem('cart', JSON.stringify(cart));
     }
 
@@ -1472,7 +1705,6 @@
       document.getElementById('modalMainImage').src = product.image;
       document.getElementById('modalDescription').textContent = product.description || 'Pas de description';
 
-      // Galerie
       const gallery = document.getElementById('modalGallery');
       gallery.innerHTML = '';
       
@@ -1503,7 +1735,6 @@
         });
       }
 
-      // Tarifs normaux
       const tariffsDiv = document.getElementById('modalTariffs');
       tariffsDiv.innerHTML = '';
       
@@ -1524,7 +1755,6 @@
         });
       }
 
-      // Tarifs promo
       if (product.promoTariffs) {
         const promoLabel = document.createElement('div');
         promoLabel.className = 'tariff-promo-label';
@@ -1549,7 +1779,6 @@
         });
       }
 
-      // Vidéos
       const videosDiv = document.getElementById('modalVideos');
       videosDiv.innerHTML = '';
       if (product.videos && product.videos.length > 0) {
@@ -1579,7 +1808,12 @@
       }
     });
 
-    // Vérifier l'accès au chargement
+    document.getElementById('modalAddCart').addEventListener('click', (e) => {
+      if (e.target.id === 'modalAddCart') {
+        closeAddCartModal();
+      }
+    });
+
     verifyAccess();
   </script>
 </body>
