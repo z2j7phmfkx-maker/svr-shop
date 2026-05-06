@@ -259,9 +259,7 @@ if (BOT_TOKEN) {
     console.error('🚨 Erreur bot:', err);
   });
   
-  bot.launch()
-    .then(() => console.log('✅ Bot Telegram lancé avec succès'))
-    .catch(err => console.error('❌ Erreur au lancement du bot:', err));
+  console.log('✅ Bot Telegram initialisé (webhook mode)');
   
   process.once('SIGINT', () => {
     console.log('Arrêt du bot...');
@@ -273,6 +271,31 @@ if (BOT_TOKEN) {
   });
 } else {
   console.error('❌ TELEGRAM_BOT_TOKEN non défini ! Le bot ne peut pas démarrer.');
+}
+
+// Webhook Telegram
+if (BOT_TOKEN && bot) {
+  app.post(`/bot${BOT_TOKEN}`, (req, res) => {
+    try {
+      bot.handleUpdate(req.body, res);
+    } catch (err) {
+      console.error('❌ Erreur webhook:', err);
+      res.sendStatus(200);
+    }
+  });
+
+  // Configurer le webhook au démarrage
+  const webhookUrl = `${SITE_URL}/bot${BOT_TOKEN}`;
+  setTimeout(async () => {
+    try {
+      await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {
+        url: webhookUrl
+      });
+      console.log(`✅ Webhook configuré: ${webhookUrl}`);
+    } catch (err) {
+      console.error('❌ Erreur configuration webhook:', err.message);
+    }
+  }, 2000);
 }
 
 // Synchronisation au démarrage
