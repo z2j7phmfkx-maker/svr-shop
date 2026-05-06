@@ -1135,7 +1135,11 @@
       }
 
       try {
-        const response = await fetch(`/api/verify-token?token=${token}&userId=${userId}`);
+        const response = await fetch('/api/verify-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token, userId: userId })
+        });
         const result = await response.json();
 
         if (result.valid) {
@@ -1405,8 +1409,9 @@
         return;
       }
 
-      const token = new URLSearchParams(window.location.search).get('token');
-      const userId = new URLSearchParams(window.location.search).get('userId');
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const userId = urlParams.get('userId');
 
       if (!token || !userId) {
         alert('Tu dois être authentifié pour commander');
