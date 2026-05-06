@@ -100,11 +100,7 @@ app.post('/api/verify-token', async (req, res) => {
 
   if (data.userTokens[token]) {
     const userId = data.userTokens[token];
-    const isMember = await isChannelMember(userId);
-    
-    if (isMember) {
-      return res.json({ valid: true, userId });
-    }
+    return res.json({ valid: true, userId });
   }
 
   res.json({ valid: false });
@@ -228,15 +224,38 @@ if (BOT_TOKEN) {
     const username = ctx.chat.username || ctx.chat.first_name || 'Utilisateur';
     const data = loadData();
 
+    let isNewUser = false;
+
     // Ajouter l'utilisateur à la liste de notifications s'il n'y est pas
     if (!data.telegram_users.includes(userId)) {
       data.telegram_users.push(userId);
-      saveData(data);
-      console.log(`✅ Nouvel utilisateur enregistré : ${username} (${userId})`);
+      isNewUser = true;
     }
 
-    // Message de bienvenue
-    ctx.reply(`✅ Bienvenue @${username} !\n\nTu recevras maintenant :\n📢 Les horaires d'ouverture/fermeture\n✨ Les nouveaux produits\n⚠️ Les ruptures de stock\n🔥 Les offres limitées\n\n🔗 Accès à la boutique : https://svr-shop.onrender.com`);
+    // Vérifier si l'utilisateur a déjà un token
+    let token = Object.keys(data.userTokens).find(t => data.userTokens[t] === userId);
+    
+    if (!token) {
+      // Générer un token UNIQUE pour cet utilisateur (une seule fois)
+      token = generateToken();
+      data.userTokens[token] = userId;
+      isNewUser = true;
+    }
+
+    saveData(data);
+
+    if (isNewUser) {
+      console.log(`✅ Nouvel utilisateur enregistré : ${username} (${userId}) - Token: ${token}`);
+      
+      // Lien sécurisé avec token
+      const shopLink = `https://svr-shop.onrender.com?token=${token}`;
+
+      // Message de bienvenue avec lien sécurisé
+      ctx.reply(`✅ Bienvenue @${username} !\n\nTu recevras maintenant :\n📢 Les horaires d'ouverture/fermeture\n✨ Les nouveaux produits\n⚠️ Les ruptures de stock\n🔥 Les offres limitées\n\n🔗 Voici ton lien personnel pour accéder à la boutique :\n${shopLink}\n\n⚠️ Ne le partage pas, il est unique à toi !`);
+    } else {
+      // Utilisateur existant qui envoie un message - on ne fait rien
+      ctx.reply('Tu as déjà accès à la boutique ! 👍');
+    }
   });
 
   bot.launch().catch(err => console.error('❌ Erreur bot Telegram:', err));
