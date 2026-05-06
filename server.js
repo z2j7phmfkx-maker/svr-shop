@@ -258,17 +258,24 @@ if (BOT_TOKEN) {
     console.error('🚨 Erreur bot:', err);
   });
   
-  bot.launch({
-    polling: {
-      interval: 3000,
-      timeout: 30,
-      allowedUpdates: ['message', 'callback_query']
-    }
-  }).then(() => {
-    console.log('✅ Bot lancé (polling mode)');
-  }).catch(err => {
-    console.error('❌ Erreur bot launch:', err);
-  });
+  // Supprimer webhook et lancer polling
+  axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook`)
+    .then(() => {
+      bot.launch({
+        polling: {
+          interval: 3000,
+          timeout: 30,
+          allowedUpdates: ['message', 'callback_query']
+        }
+      }).then(() => {
+        console.log('✅ Bot lancé (polling)');
+      }).catch(err => {
+        console.error('❌ Erreur launch:', err);
+      });
+    })
+    .catch(err => {
+      console.error('❌ Erreur deleteWebhook:', err.message);
+    });
   
   process.once('SIGINT', () => {
     console.log('Arrêt du bot...');
@@ -280,31 +287,6 @@ if (BOT_TOKEN) {
   });
 } else {
   console.error('❌ TELEGRAM_BOT_TOKEN manquant');
-}
-
-// ==================== WEBHOOK TELEGRAM ====================
-
-if (BOT_TOKEN && bot) {
-  app.post(`/bot${BOT_TOKEN}`, (req, res) => {
-    try {
-      bot.handleUpdate(req.body);
-    } catch (err) {
-      console.error('❌ Erreur webhook:', err);
-    }
-    res.sendStatus(200);
-  });
-
-  const webhookUrl = `${SITE_URL}/bot${BOT_TOKEN}`;
-  setTimeout(async () => {
-    try {
-      await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`, {
-        url: webhookUrl
-      });
-      console.log(`✅ Webhook: ${webhookUrl}`);
-    } catch (err) {
-      console.error('❌ Erreur webhook config:', err.message);
-    }
-  }, 1000);
 }
 
 // ==================== SYNCHRONISATION ====================
