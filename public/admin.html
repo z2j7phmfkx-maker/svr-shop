@@ -301,6 +301,7 @@
       <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('products')">Produits</button>
         <button class="tab-btn" onclick="switchTab('concours')">Concours</button>
+        <button class="tab-btn" onclick="switchTab('settings')">⚙️ Paramètres</button>
       </div>
 
       <!-- Tab: Produits -->
@@ -401,6 +402,26 @@
           <button class="btn" onclick="saveConcours()">Sauvegarder concours</button>
         </div>
       </div>
+
+      <!-- Tab: Paramètres -->
+      <div id="settings" class="tab-content">
+        <div class="form-section">
+          <h3 style="margin-bottom: 20px; color: #6496b4;">Paramètres de la boutique</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Heure d'ouverture (HH:MM)</label>
+              <input type="time" id="openingTime" placeholder="10:00">
+            </div>
+            <div class="form-group">
+              <label>Heure de fermeture (HH:MM)</label>
+              <input type="time" id="closingTime" placeholder="22:00">
+            </div>
+          </div>
+
+          <button class="btn" onclick="saveSettings()">Sauvegarder les paramètres</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -428,6 +449,7 @@
         
         loadProducts();
         loadConcours();
+        loadSettings();
       } catch (error) {
         showMessage('Erreur chargement données', 'error');
       }
@@ -565,6 +587,22 @@
     function saveConcours() {
       shopData.concours = {
         description: document.getElementById('concoursDescription').value
+      };
+      saveData();
+    }
+
+    function loadSettings() {
+      const settings = shopData.shop_settings || {};
+      document.getElementById('openingTime').value = settings.opening_time || '10:00';
+      document.getElementById('closingTime').value = settings.closing_time || '22:00';
+    }
+
+    function saveSettings() {
+      shopData.shop_settings = {
+        opening_time: document.getElementById('openingTime').value,
+        closing_time: document.getElementById('closingTime').value,
+        closed_days: [],
+        timezone: 'Europe/Paris'
       };
       saveData();
     }
