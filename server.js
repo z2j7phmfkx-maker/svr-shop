@@ -28,7 +28,7 @@ function loadData() {
   } catch (err) {
     console.error('❌ Erreur lors du chargement de data.json:', err.message);
   }
-  return { telegram_users: [], userTokens: {}, shop_settings: {}, products: [] };
+  return { telegram_users: [], userTokens: {}, usernames: {}, shop_settings: {}, products: [] };
 }
 
 function saveData(data) {
@@ -128,6 +128,8 @@ app.post('/api/generate-token', async (req, res) => {
   if (!token) {
     token = generateToken();
     data.userTokens[token] = userId;
+    data.usernames = data.usernames || {};
+    data.usernames[userId] = userName;
     saveData(data);
     await commitToGithub(`Token généré pour @${userName} (${userId})`, data);
   }
@@ -171,22 +173,18 @@ app.post('/api/order', async (req, res) => {
   const data = loadData();
   
   let userName = 'Utilisateur inconnu';
-  for (const [token, id] of Object.entries(data.userTokens)) {
-    if (id.toString() === userId.toString()) {
-      userName = `@user_${userId}`;
-      break;
-    }
+  if (data.usernames && data.usernames[userId]) {
+    userName = `@${data.usernames[userId]}`;
   }
   
   let itemsText = items.map(item => 
-    `• ${item.name} - ${item.quantity}x ${item.selectedQuantity}g = ${item.price}€`
+    `• ${item.name} - ${item.size} x${item.quantity} = ${item.price * item.quantity}€`
   ).join('\n');
   
   const message = `
 📦 *Nouvelle commande*
 
 👤 Client: ${userName}
-🆔 ID: ${userId}
 
 *Articles:*
 ${itemsText}
@@ -233,6 +231,8 @@ if (BOT_TOKEN) {
     if (!isExisting) {
       const token = generateToken();
       data.userTokens[token] = userId;
+      data.usernames = data.usernames || {};
+      data.usernames[userId] = userName;
       
       // Ajouter aux utilisateurs Telegram
       if (!data.telegram_users.includes(userId)) {
@@ -243,9 +243,19 @@ if (BOT_TOKEN) {
       await commitToGithub(`Nouvel utilisateur: @${userName} (${userId})`, data);
       
       const link = `${SITE_URL}?token=${token}&userId=${userId}`;
-      const welcomeMessage = `✅ Bienvenue @${userName} !\n\nTu recevras maintenant :\n📢 Les horaires d'ouverture/fermeture\n✨ Les nouveaux produits\n⚠️ Les ruptures de stock\n🔥 Les offres limitées\n\n🛍️ Accès à la boutique : ${link}\n\n⚠️ Ne le partage pas, il est unique à toi ! 👍`;
+      const welcomeMessage = `✅ *Bienvenue @${userName} !*
+
+Tu recevras maintenant :
+📢 Les horaires d'ouverture/fermeture
+✨ Les nouveaux produits
+⚠️ Les ruptures de stock
+🔥 Les offres limitées
+
+🛍️ *Accès à la boutique :* ${link}
+
+⚠️ _Ne le partage pas, il est unique à toi !_ 👍`;
       
-      return ctx.reply(welcomeMessage, { disable_web_page_preview: true });
+      return ctx.reply(welcomeMessage, { parse_mode: 'Markdown', disable_web_page_preview: true });
     }
     
     // Utilisateur existant
