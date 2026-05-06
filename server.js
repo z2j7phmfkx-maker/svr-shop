@@ -243,21 +243,9 @@ if (BOT_TOKEN) {
       await commitToGithub(`Nouvel utilisateur: @${userName} (${userId})`, data);
       
       const link = `${SITE_URL}?token=${token}&userId=${userId}`;
-      const welcomeMessage = `
-✅ *Bienvenue @${userName} !*
-
-Tu recevras maintenant :
-📢 Les horaires d'ouverture/fermeture
-✨ Les nouveaux produits
-⚠️ Les ruptures de stock
-🔥 Les offres limitées
-
-🛍️ *Accès à la boutique :* ${link}
-
-⚠️ _Ne le partage pas, il est unique à toi !_ 👍
-      `;
+      const welcomeMessage = `✅ Bienvenue @${userName} !\n\nTu recevras maintenant :\n📢 Les horaires d'ouverture/fermeture\n✨ Les nouveaux produits\n⚠️ Les ruptures de stock\n🔥 Les offres limitées\n\n🛍️ Accès à la boutique : ${link}\n\n⚠️ Ne le partage pas, il est unique à toi ! 👍`;
       
-      return ctx.reply(welcomeMessage, { parse_mode: 'Markdown', disable_web_page_preview: true });
+      return ctx.reply(welcomeMessage, { disable_web_page_preview: true });
     }
     
     // Utilisateur existant
