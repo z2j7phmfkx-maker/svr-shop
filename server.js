@@ -295,15 +295,23 @@ if (BOT_TOKEN) {
         return;
       }
 
-      // Générer un token
-      const token = generateToken();
       const data = loadData();
-      data.userTokens[token] = userId;
-      saveData(data);
       
-      await commitToGithub(`Token généré pour @${userName} (${userId})`);
+      // Chercher si l'utilisateur a déjà un token
+      let token = Object.keys(data.userTokens).find(t => data.userTokens[t] === userId);
+      
+      if (!token) {
+        // Si pas de token, en générer un nouveau
+        token = generateToken();
+        data.userTokens[token] = userId;
+        saveData(data);
+        await commitToGithub(`Token généré pour @${userName} (${userId})`);
+        console.log(`✅ Nouveau token généré: ${token}`);
+      } else {
+        console.log(`ℹ️ Token existant réutilisé: ${token}`);
+      }
 
-      const link = `${SITE_URL}?token=${token}`;
+      const link = `${SITE_URL}?token=${token}&userId=${userId}`;
 
       // Envoyer le lien au utilisateur
       ctx.reply(
@@ -312,8 +320,6 @@ if (BOT_TOKEN) {
 
       // Notification au bouton
       ctx.answerCbQuery('✅ Lien envoyé!');
-
-      console.log(`✅ Token généré pour @${userName} (${userId}): ${token}`);
 
     } catch (error) {
       console.error(`❌ Erreur pour @${userName}:`, error.message);
