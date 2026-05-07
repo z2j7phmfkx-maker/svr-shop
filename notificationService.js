@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const CHANNEL_ID = process.env.CHANNEL_ID;
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 const DATA_FILE = path.join(__dirname, 'data.json');
 
@@ -28,37 +29,22 @@ function saveData(data) {
   }
 }
 
-// Envoyer un message à tous les utilisateurs
+// Envoyer un message au channel
 async function notifyAllUsers(message) {
-  const data = loadData();
-  let users = data.telegram_users || [];
-  let validUsers = [];
-
-  for (const userId of users) {
-    try {
-      await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
-        chat_id: userId,
-        text: message,
-        parse_mode: 'HTML'
-      });
-      console.log(`✅ Message envoyé à ${userId}`);
-      validUsers.push(userId);
-    } catch (error) {
-      if (error.response?.data?.description?.includes('user is') || 
-          error.response?.data?.description?.includes('was kicked')) {
-        console.log(`❌ Utilisateur ${userId} a quitté - suppression`);
-      } else {
-        console.error(`⚠️ Erreur envoi à ${userId}:`, error.message);
-        validUsers.push(userId);
-      }
-    }
+  if (!CHANNEL_ID) {
+    console.error('❌ CHANNEL_ID non défini');
+    return;
   }
 
-  // Sauvegarder la liste nettoyée
-  if (validUsers.length !== users.length) {
-    data.telegram_users = validUsers;
-    saveData(data);
-    console.log(`📊 Liste nettoyée: ${validUsers.length} utilisateurs (${users.length - validUsers.length} supprimés)`);
+  try {
+    await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
+      chat_id: CHANNEL_ID,
+      text: message,
+      parse_mode: 'HTML'
+    });
+    console.log(`✅ Notification envoyée au channel`);
+  } catch (error) {
+    console.error('❌ Erreur envoi channel:', error.message);
   }
 }
 
