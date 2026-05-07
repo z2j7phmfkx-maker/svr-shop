@@ -22,13 +22,13 @@ function loadData() {
 function saveData(data) {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-    console.log('✅ data.json sauvegardé via notificationService');
+    console.log('✅ data.json sauvegardé');
   } catch (error) {
-    console.error('❌ Erreur sauvegarde data.json:', error);
+    console.error('❌ Erreur sauvegarde:', error);
   }
 }
 
-// Envoyer un message à tous les utilisateurs et nettoyer la liste
+// Envoyer un message à tous les utilisateurs
 async function notifyAllUsers(message) {
   const data = loadData();
   let users = data.telegram_users || [];
@@ -58,23 +58,28 @@ async function notifyAllUsers(message) {
   if (validUsers.length !== users.length) {
     data.telegram_users = validUsers;
     saveData(data);
-    console.log(`📊 Liste nettoyée: ${validUsers.length} utilisateurs valides (${users.length - validUsers.length} supprimés)`);
+    console.log(`📊 Liste nettoyée: ${validUsers.length} utilisateurs (${users.length - validUsers.length} supprimés)`);
   }
 }
 
-// Vérifier les horaires d'ouverture/fermeture
+// Vérifier les horaires d'ouverture/fermeture avec fuseau horaire Paris
 async function checkShopHours() {
   const data = loadData();
   const settings = data.shop_settings || {};
   
   if (!settings.opening_time || !settings.closing_time) {
-    return; // Pas d'horaires configurés
+    return;
   }
 
+  // Obtenir l'heure de Paris (Europe/Paris)
   const now = new Date();
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const parisTime = new Date(now.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }));
+  
+  const hours = String(parisTime.getHours()).padStart(2, '0');
+  const minutes = String(parisTime.getMinutes()).padStart(2, '0');
   const currentTime = `${hours}:${minutes}`;
+
+  console.log(`⏰ Heure Paris: ${currentTime} | Ouverture: ${settings.opening_time} | Fermeture: ${settings.closing_time}`);
 
   // Message d'ouverture
   if (currentTime === settings.opening_time) {
@@ -122,7 +127,7 @@ function addUserToNotifications(userId) {
   if (!data.telegram_users.includes(userId)) {
     data.telegram_users.push(userId);
     saveData(data);
-    console.log(`✅ Utilisateur ${userId} ajouté aux notifications`);
+    console.log(`✅ Utilisateur ${userId} ajouté`);
   }
 }
 
