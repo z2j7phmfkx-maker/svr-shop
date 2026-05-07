@@ -242,8 +242,8 @@ if (BOT_TOKEN) {
         await commitToGithub(`Nouvel user: @${userName}`, data);
         
         const link = `${SITE_URL}?token=${token}&userId=${userId}`;
-        const msg = `✅ Bienvenue @${userName} !\n\n📢 Tu recevras :\n✨ Nouveaux produits\n⚠️ Ruptures de stock\n🔥 Offres limitées\n\n🛍️ Lien: ${link}\n\n⚠️ Ne le partage pas!`;
-        return ctx.reply(msg, { parse_mode: 'Markdown', disable_web_page_preview: true });
+        const msg = `✅ Bienvenue @${userName} !\n\n🛍️ Accès boutique : ${link}\n\n⚠️ Ne partage pas ce lien, il est unique !`;
+        return ctx.reply(msg, { disable_web_page_preview: true });
       } else {
         const link = `${SITE_URL}?token=${existingToken}&userId=${userId}`;
         return ctx.reply(`Tu as déjà accès !\n\n🔗 ${link}`, { disable_web_page_preview: true });
@@ -258,7 +258,6 @@ if (BOT_TOKEN) {
     console.error('🚨 Erreur bot:', err);
   });
   
-  // Supprimer webhook et lancer polling
   axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook`)
     .then(() => {
       bot.launch({
@@ -270,7 +269,7 @@ if (BOT_TOKEN) {
       }).then(() => {
         console.log('✅ Bot lancé (polling)');
       }).catch(err => {
-        console.error('❌ Erreur launch:', err);
+        console.error('❌ Erreur bot launch:', err);
       });
     })
     .catch(err => {
@@ -311,7 +310,7 @@ setInterval(() => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Serveur port ${PORT}`);
-  console.log(`📋 BOT_TOKEN: ${BOT_TOKEN ? '✅' : '❌'}`);
-  console.log(`📋 CHANNEL_ID: ${CHANNEL_ID ? '✅' : '❌'}`);
-  console.log(`📋 OWNER_ID: ${OWNER_TELEGRAM_ID ? '✅' : '❌'}`);
+  console.log(`✅ BOT_TOKEN: ${BOT_TOKEN ? 'OK' : 'MANQUANT'}`);
+  console.log(`✅ CHANNEL_ID: ${CHANNEL_ID ? 'OK' : 'MANQUANT'}`);
+  console.log(`✅ OWNER_ID: ${OWNER_TELEGRAM_ID ? 'OK' : 'MANQUANT'}`);
 });
