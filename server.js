@@ -35,7 +35,8 @@ function loadData() {
     usernames: {}, 
     shop_settings: {}, 
     products: [],
-    concours: {}
+    concours: {},
+    orderCounter: 1000
   };
 }
 
@@ -178,6 +179,14 @@ app.post('/api/order', async (req, res) => {
   const { userId, items, total } = req.body;
   const data = loadData();
   
+  // Initialiser le compteur s'il n'existe pas
+  if (!data.orderCounter) {
+    data.orderCounter = 1000;
+  }
+  
+  // Incrémenter le compteur
+  const orderNumber = ++data.orderCounter;
+  
   let userName = 'Utilisateur inconnu';
   if (data.usernames && data.usernames[userId]) {
     userName = `@${data.usernames[userId]}`;
@@ -187,7 +196,7 @@ app.post('/api/order', async (req, res) => {
     `• ${item.name} - ${item.size} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`
   ).join('\n');
   
-  const message = `📦 *Nouvelle commande*\n\n👤 Client: ${userName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
+  const message = `📦 *Nouvelle commande* #${orderNumber}\n\n👤 Client: ${userName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
   
   try {
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -195,6 +204,10 @@ app.post('/api/order', async (req, res) => {
       text: message,
       parse_mode: 'Markdown'
     });
+    
+    // Sauvegarder le compteur
+    saveData(data);
+    
     console.log('✅ Commande notifiée');
     res.json({ success: true });
   } catch (err) {
@@ -228,6 +241,7 @@ if (BOT_TOKEN) {
       );
       
       if (!existingToken) {
+        // Nouvel utilisateur : message avec bouton interactif
         const token = generateToken();
         data.userTokens[token] = userId;
         data.usernames = data.usernames || {};
@@ -241,16 +255,55 @@ if (BOT_TOKEN) {
         saveData(data);
         await commitToGithub(`Nouvel user: @${userName}`, data);
         
-        const link = `${SITE_URL}?token=${token}&userId=${userId}`;
-        const msg = `✅ Bienvenue @${userName} !\n\n🛍️ Accès boutique : ${link}\n\n⚠️ Ne partage pas ce lien, il est unique !`;
-        return ctx.reply(msg, { disable_web_page_preview: true });
+        const welcomeMsg = `✅ Bienvenue @${userName} !\n\nTu es autorisé à accéder au shop SVR ! 🎁`;
+        
+        return ctx.reply(welcomeMsg, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '🛍️ Ouvrir la boutique',
+                  callback_data: `open_shop_${userId}`
+                }
+              ]
+            ]
+          }
+        });
       } else {
+        // Utilisateur existant : message direct avec lien
         const link = `${SITE_URL}?token=${existingToken}&userId=${userId}`;
-        return ctx.reply(`Tu as déjà accès !\n\n🔗 ${link}`, { disable_web_page_preview: true });
+        const msg = `✅ Tu as déjà accès ! 🛍️\n\n🎁 Ton lien d'accès au shop :\n\n${link}\n\n🔒 Ne partage pas ce lien, il est unique !`;
+        return ctx.reply(msg, { disable_web_page_preview: true });
       }
     } catch (err) {
       console.error('❌ Erreur /start:', err);
       ctx.reply('❌ Erreur. Réessaie.');
+    }
+  });
+  
+  // Gérer le clic sur le bouton "Ouvrir la boutique"
+  bot.action(/open_shop_(\d+)/, async (ctx) => {
+    try {
+      const userId = parseInt(ctx.match[1]);
+      const data = loadData();
+      
+      const token = Object.keys(data.userTokens || {}).find(
+        t => data.userTokens[t].toString() === userId.toString()
+      );
+      
+      if (!token) {
+        return ctx.answerCbQuery('❌ Erreur: token non trouvé', { show_alert: true });
+      }
+      
+      const link = `${SITE_URL}?token=${token}&userId=${userId}`;
+      const shopMsg = `🎁 Ton lien d'accès au shop :\n\n${link}\n\n🔒 Ne partage pas ce lien, il est unique !`;
+      
+      ctx.reply(shopMsg, { disable_web_page_preview: true });
+      ctx.answerCbQuery('✅ Lien généré !');
+      
+    } catch (error) {
+      console.error('❌ Erreur callback:', error);
+      ctx.answerCbQuery('❌ Erreur', { show_alert: true });
     }
   });
   
