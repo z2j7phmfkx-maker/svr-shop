@@ -74,16 +74,23 @@ async function commitToGithub(message, data) {
 }
 
 async function isChannelMember(userId) {
-  if (!BOT_TOKEN || !CHANNEL_ID) return false;
+  if (!BOT_TOKEN || !CHANNEL_ID) {
+    console.error('❌ BOT_TOKEN ou CHANNEL_ID manquant');
+    return false;
+  }
   try {
+    console.log(`🔍 Vérification: userId=${userId}, channelId=${CHANNEL_ID}`);
     const response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`, {
       chat_id: CHANNEL_ID,
       user_id: userId
     });
     const status = response.data.result.status;
-    return ['member', 'administrator', 'creator', 'restricted'].includes(status);
+    console.log(`✅ Statut du user: ${status}`);
+    const isMember = ['member', 'administrator', 'creator', 'restricted'].includes(status);
+    console.log(`${isMember ? '✅' : '❌'} User ${userId} est ${isMember ? 'MEMBRE' : 'PAS MEMBRE'}`);
+    return isMember;
   } catch (err) {
-    console.error('❌ Erreur vérification canal:', err.message);
+    console.error('❌ Erreur vérification canal:', err.response?.data?.description || err.message);
     return false;
   }
 }
@@ -233,8 +240,11 @@ if (BOT_TOKEN) {
       
       const isMember = await isChannelMember(userId);
       if (!isMember) {
+        console.log(`❌ ${userName} n'est pas membre du canal`);
         return ctx.reply('❌ Tu dois être membre de @SVR_TO\n🔗 https://t.me/SVR_TO');
       }
+      
+      console.log(`✅ ${userName} est membre du canal`);
       
       const existingToken = Object.keys(data.userTokens || {}).find(
         t => data.userTokens[t].toString() === userId.toString()
@@ -255,6 +265,8 @@ if (BOT_TOKEN) {
         saveData(data);
         await commitToGithub(`Nouvel user: @${userName}`, data);
         
+        console.log(`🆕 Nouvel user créé: ${userName}`);
+        
         const welcomeMsg = `✅ Bienvenue @${userName} !\n\nTu es autorisé à accéder au shop SVR ! 🎁`;
         
         return ctx.reply(welcomeMsg, {
@@ -271,6 +283,8 @@ if (BOT_TOKEN) {
         });
       } else {
         // Utilisateur existant : message direct avec lien
+        console.log(`♻️ User existant: ${userName}`);
+        
         const link = `${SITE_URL}?token=${existingToken}&userId=${userId}`;
         const msg = `✅ Tu as déjà accès ! 🛍️\n\n🎁 Ton lien d'accès au shop :\n\n${link}\n\n🔒 Ne partage pas ce lien, il est unique !`;
         return ctx.reply(msg, { disable_web_page_preview: true });
