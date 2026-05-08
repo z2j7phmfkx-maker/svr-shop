@@ -16,7 +16,7 @@ function loadData() {
   } catch (error) {
     console.error('❌ Erreur lecture data.json:', error);
   }
-  return { telegram_users: [], products: [], shop_settings: {} };
+  return { telegram_users: [], products: [], shop_settings: {}, lastHoursMessageId: null };
 }
 
 // Sauvegarder les données
@@ -69,14 +69,65 @@ async function checkShopHours() {
 
   // Message d'ouverture
   if (currentTime === settings.opening_time) {
-    const message = `🚀 <b>La boutique est maintenant OUVERTE !</b>\n\nHoraires : ${settings.opening_time} - ${settings.closing_time}\n\nDécouvre nos produits exclusifs ! 🌿💚`;
-    await notifyAllUsers(message);
+    // Supprimer le message précédent s'il existe
+    if (data.lastHoursMessageId) {
+      try {
+        await axios.post(`${TELEGRAM_API_URL}/deleteMessage`, {
+          chat_id: CHANNEL_ID,
+          message_id: data.lastHoursMessageId
+        });
+        console.log('✅ Message précédent supprimé');
+      } catch (err) {
+        console.error('❌ Erreur suppression message:', err.message);
+      }
+    }
+
+    const message = `🚀 <b>La boutique est OUVERTE !</b>\n\nHoraires : ${settings.opening_time} - ${settings.closing_time}\n\n🛍️ Découvre nos produits en rentrant dans la boutique <b>@svrshopbot</b> ! 🌿`;
+    
+    try {
+      const response = await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
+        chat_id: CHANNEL_ID,
+        text: message,
+        parse_mode: 'HTML'
+      });
+      // Sauvegarder l'ID du message
+      data.lastHoursMessageId = response.data.result.message_id;
+      saveData(data);
+      console.log(`✅ Message d'ouverture envoyé (ID: ${data.lastHoursMessageId})`);
+    } catch (err) {
+      console.error('❌ Erreur envoi message ouverture:', err.message);
+    }
   }
 
   // Message de fermeture
   if (currentTime === settings.closing_time) {
+    // Supprimer le message précédent s'il existe
+    if (data.lastHoursMessageId) {
+      try {
+        await axios.post(`${TELEGRAM_API_URL}/deleteMessage`, {
+          chat_id: CHANNEL_ID,
+          message_id: data.lastHoursMessageId
+        });
+        console.log('✅ Message d\'ouverture supprimé');
+      } catch (err) {
+        console.error('❌ Erreur suppression message:', err.message);
+      }
+    }
+
     const message = `🌙 <b>La boutique ferme maintenant !</b>\n\nRevenez demain pour continuer vos achats 😴`;
-    await notifyAllUsers(message);
+    
+    try {
+      await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
+        chat_id: CHANNEL_ID,
+        text: message,
+        parse_mode: 'HTML'
+      });
+      data.lastHoursMessageId = null;
+      saveData(data);
+      console.log('✅ Message de fermeture envoyé');
+    } catch (err) {
+      console.error('❌ Erreur envoi message fermeture:', err.message);
+    }
   }
 }
 
