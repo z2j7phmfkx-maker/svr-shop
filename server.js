@@ -187,13 +187,18 @@ app.post('/api/order', async (req, res) => {
   const { userId, items, total } = req.body;
   const data = loadData();
   
-  // Initialiser le compteur s'il n'existe pas
+  // Initialiser le compteur et firstNames s'ils n'existent pas
   if (!data.orderCounter) {
     data.orderCounter = 1000;
+  }
+  if (!data.firstNames) {
+    data.firstNames = {};
   }
   
   // Incrémenter le compteur
   const orderNumber = ++data.orderCounter;
+  
+  console.log(`📦 Nouvelle commande #${orderNumber} - userId: ${userId}`);
   
   // Chercher le nom dans cet ordre : username > first_name
   let userName = 'Utilisateur inconnu';
@@ -205,9 +210,7 @@ app.post('/api/order', async (req, res) => {
     userName = data.firstNames[userId];
     console.log(`✅ FirstName trouvé: ${userName}`);
   } else {
-    console.error(`❌ ERREUR: Aucun nom trouvé pour userId=${userId}`);
-    console.error(`   - usernames: ${JSON.stringify(data.usernames)}`);
-    console.error(`   - firstNames: ${JSON.stringify(data.firstNames)}`);
+    console.warn(`⚠️ Aucun nom trouvé pour userId=${userId}`);
   }
   
   let itemsText = items.map(item => 
