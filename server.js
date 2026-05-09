@@ -299,8 +299,16 @@ if (BOT_TOKEN) {
           }
         });
       } else {
-        // Utilisateur existant : message direct avec lien
-        console.log(`♻️ User existant: ${userName}`);
+        // Utilisateur existant : mettre à jour firstName + message direct avec lien
+        data.firstNames = data.firstNames || {};
+        
+        if (!data.firstNames[userId] || data.firstNames[userId] === 'Unknown') {
+          data.firstNames[userId] = firstName;
+          saveData(data);
+          console.log(`♻️ User existant: ${userName} - firstName mis à jour: ${firstName}`);
+        } else {
+          console.log(`♻️ User existant: ${userName}`);
+        }
         
         const link = `${SITE_URL}?token=${existingToken}&userId=${userId}`;
         const msg = `✅ Tu as déjà accès ! 🛍️\n\n🎁 Ton lien d'accès au shop :\n\n${link}\n\n🔒 Ne partage pas ce lien, il est unique !`;
