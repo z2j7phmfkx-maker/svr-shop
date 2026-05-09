@@ -32,7 +32,8 @@ function loadData() {
   return { 
     telegram_users: [], 
     userTokens: {}, 
-    usernames: {}, 
+    usernames: {},
+    firstNames: {},
     shop_settings: {}, 
     products: [],
     concours: {},
@@ -194,9 +195,19 @@ app.post('/api/order', async (req, res) => {
   // Incrémenter le compteur
   const orderNumber = ++data.orderCounter;
   
+  // Chercher le nom dans cet ordre : username > first_name
   let userName = 'Utilisateur inconnu';
+  
   if (data.usernames && data.usernames[userId]) {
     userName = `@${data.usernames[userId]}`;
+    console.log(`✅ Username trouvé: ${userName}`);
+  } else if (data.firstNames && data.firstNames[userId]) {
+    userName = data.firstNames[userId];
+    console.log(`✅ FirstName trouvé: ${userName}`);
+  } else {
+    console.error(`❌ ERREUR: Aucun nom trouvé pour userId=${userId}`);
+    console.error(`   - usernames: ${JSON.stringify(data.usernames)}`);
+    console.error(`   - firstNames: ${JSON.stringify(data.firstNames)}`);
   }
   
   let itemsText = items.map(item => 
@@ -234,6 +245,7 @@ if (BOT_TOKEN) {
     try {
       const userId = ctx.from.id;
       const userName = ctx.from.username || ctx.from.first_name || `User${userId}`;
+      const firstName = ctx.from.first_name || 'Unknown';
       const data = loadData();
       
       console.log(`📱 /start: ${userName} (${userId})`);
@@ -256,6 +268,8 @@ if (BOT_TOKEN) {
         data.userTokens[token] = userId;
         data.usernames = data.usernames || {};
         data.usernames[userId] = userName;
+        data.firstNames = data.firstNames || {};
+        data.firstNames[userId] = firstName;
         data.telegram_users = data.telegram_users || [];
         
         if (!data.telegram_users.includes(userId)) {
@@ -265,7 +279,7 @@ if (BOT_TOKEN) {
         saveData(data);
         await commitToGithub(`Nouvel user: @${userName}`, data);
         
-        console.log(`🆕 Nouvel user créé: ${userName}`);
+        console.log(`🆕 Nouvel user créé: ${userName} (firstName: ${firstName})`);
         
         const welcomeMsg = `✅ Bienvenue @${userName} !\n\nTu es autorisé à accéder au shop SVR ! 🎁`;
         
