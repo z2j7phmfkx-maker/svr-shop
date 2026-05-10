@@ -100,6 +100,11 @@ function generateToken() {
   return 'svr_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+// Échapper les caractères spéciaux Markdown
+function escapeMarkdown(text) {
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+}
+
 // ==================== ROUTES EXPRESS ====================
 
 app.get('/', (req, res) => {
@@ -217,7 +222,8 @@ app.post('/api/order', async (req, res) => {
     `• ${item.name} - ${item.size} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`
   ).join('\n');
   
-  const message = `📦 *Nouvelle commande* #${orderNumber}\n\n👤 Client: ${userName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
+  const safeName = escapeMarkdown(userName);
+  const message = `📦 *Nouvelle commande* #${orderNumber}\n\n👤 Client: ${safeName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
   
   try {
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
