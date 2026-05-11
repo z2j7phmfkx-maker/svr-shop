@@ -101,11 +101,6 @@ function generateToken() {
   return 'svr_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-// Échapper les caractères spéciaux MarkdownV2
-function escapeMarkdownV2(text) {
-  return text.replace(/[_*[\]()~`>#\+\-=|{}.!@]/g, '\\$&');
-}
-
 // ==================== ROUTES EXPRESS ====================
 
 app.get('/', (req, res) => {
@@ -219,16 +214,13 @@ app.post('/api/order', async (req, res) => {
     console.warn(`⚠️ Aucun nom trouvé pour userId=${userId}`);
   }
   
-  // Construire le texte des items avec échappement correct
+  // Construire le texte des items sans échappement (HTML)
   let itemsText = items.map(item => {
-    const itemName = escapeMarkdownV2(item.name);
-    const itemSize = escapeMarkdownV2(item.size);
     const itemPrice = (item.price * item.quantity).toFixed(2);
-    return `• ${itemName} \\- ${itemSize} x${item.quantity} \\= ${itemPrice}€`;
+    return `• <b>${item.name}</b> - ${item.size} x${item.quantity} = ${itemPrice}€`;
   }).join('\n');
   
-  const safeName = escapeMarkdownV2(userName);
-  const message = `📦 *Nouvelle commande* \\#${orderNumber}\n\n👤 Client: ${safeName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
+  const message = `<b>📦 Nouvelle commande #${orderNumber}</b>\n\n<b>👤 Client:</b> ${userName}\n\n<b>Articles:</b>\n${itemsText}\n\n<b>Total:</b> ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
   
   try {
     console.log(`📤 Envoi à OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}`);
@@ -236,7 +228,7 @@ app.post('/api/order', async (req, res) => {
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       chat_id: OWNER_TELEGRAM_ID,
       text: message,
-      parse_mode: 'MarkdownV2'
+      parse_mode: 'HTML'
     });
     console.log('✅ Commande notifiée au propriétaire');
     
@@ -246,7 +238,7 @@ app.post('/api/order', async (req, res) => {
       await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         chat_id: MY_TELEGRAM_ID,
         text: message,
-        parse_mode: 'MarkdownV2'
+        parse_mode: 'HTML'
       });
       console.log('✅ Commande notifiée aussi à toi');
     } else {
