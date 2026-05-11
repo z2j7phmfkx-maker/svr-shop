@@ -1485,14 +1485,8 @@
       document.getElementById('addCartProductName').textContent = product.name;
       document.getElementById('addCartProductImage').src = product.image;
       
-      // Déterminer les tarifs à afficher (promo ou normal)
-      let tariffsToUse = product.tariffs;
-      if (product.promoTariffs) {
-        tariffsToUse = product.promoTariffs;
-      }
-      
-      // Parser les tarifs
-      const tariffEntries = tariffsToUse.split('|').map(t => {
+      // Parser les tarifs normaux
+      const normalTariffs = product.tariffs.split('|').map(t => {
         const [size, price] = t.split('=');
         return {
           size: size.trim(),
@@ -1501,17 +1495,38 @@
         };
       });
 
-      currentProduct.tariffOptions = tariffEntries;
+      // Parser les tarifs promo s'ils existent
+      let promoTariffs = {};
+      if (product.promoTariffs) {
+        product.promoTariffs.split('|').forEach(t => {
+          const [size, price] = t.split('=');
+          promoTariffs[size.trim()] = parseFloat(price.trim());
+        });
+      }
+
+      currentProduct.tariffOptions = normalTariffs;
       
       // Afficher les boutons de tarifs
       const quantityBtns = document.getElementById('quantityButtons');
       quantityBtns.innerHTML = '';
       
-      tariffEntries.forEach(tariff => {
+      normalTariffs.forEach(tariff => {
         const btn = document.createElement('button');
         btn.className = 'quantity-btn';
-        btn.textContent = `${tariff.size} - ${tariff.price}€`;
-        btn.onclick = () => selectTariff(btn, tariff);
+        
+        // Vérifier s'il y a une promo pour cette quantité
+        const promoPrice = promoTariffs[tariff.size];
+        
+        if (promoPrice) {
+          // Afficher avec prix barré + promo
+          btn.innerHTML = `${tariff.size} - <span style="text-decoration: line-through; color: #999;">${tariff.price}€</span> <span style="color: #ff6b6b; font-weight: bold;">${promoPrice}€</span>`;
+          btn.onclick = () => selectTariff(btn, { ...tariff, price: promoPrice });
+        } else {
+          // Afficher juste le prix normal
+          btn.textContent = `${tariff.size} - ${tariff.price}€`;
+          btn.onclick = () => selectTariff(btn, tariff);
+        }
+        
         quantityBtns.appendChild(btn);
       });
       
