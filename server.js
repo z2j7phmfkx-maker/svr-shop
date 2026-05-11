@@ -219,9 +219,13 @@ app.post('/api/order', async (req, res) => {
     console.warn(`⚠️ Aucun nom trouvé pour userId=${userId}`);
   }
   
-  let itemsText = items.map(item => 
-    `• ${item.name} \\- ${item.size} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`
-  ).join('\n');
+  // Construire le texte des items avec échappement correct
+  let itemsText = items.map(item => {
+    const itemName = escapeMarkdownV2(item.name);
+    const itemSize = escapeMarkdownV2(item.size);
+    const itemPrice = (item.price * item.quantity).toFixed(2);
+    return `• ${itemName} \\- ${itemSize} x${item.quantity} \\= ${itemPrice}€`;
+  }).join('\n');
   
   const safeName = escapeMarkdownV2(userName);
   const message = `📦 *Nouvelle commande* \\#${orderNumber}\n\n👤 Client: ${safeName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
