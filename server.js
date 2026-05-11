@@ -100,8 +100,8 @@ function generateToken() {
   return 'svr_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-// Échapper les caractères spéciaux Markdown
-function escapeMarkdown(text) {
+// Échapper les caractères spéciaux MarkdownV2
+function escapeMarkdownV2(text) {
   return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
 }
 
@@ -222,14 +222,14 @@ app.post('/api/order', async (req, res) => {
     `• ${item.name} - ${item.size} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`
   ).join('\n');
   
-  const safeName = escapeMarkdown(userName);
+  const safeName = escapeMarkdownV2(userName);
   const message = `📦 *Nouvelle commande* #${orderNumber}\n\n👤 Client: ${safeName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
   
   try {
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       chat_id: OWNER_TELEGRAM_ID,
       text: message,
-      parse_mode: 'Markdown'
+      parse_mode: 'MarkdownV2'
     });
     
     // Sauvegarder le compteur
