@@ -640,6 +640,8 @@
         0 0 60px rgba(100, 150, 180, 0.2),
         inset 0 0 20px rgba(100, 150, 180, 0.1);
       backdrop-filter: blur(10px);
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .modal-add-cart-close {
@@ -722,41 +724,10 @@
       box-shadow: 0 0 20px rgba(100, 150, 180, 0.5);
     }
 
-    .quantity-selector {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
-    }
-
-    .quantity-selector button {
-      width: 36px;
-      height: 36px;
-      border: 2px solid #6496b4;
-      background: rgba(100, 150, 180, 0.2);
-      color: #6496b4;
-      cursor: pointer;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 14px;
-      transition: all 0.3s ease;
-    }
-
-    .quantity-selector button:hover {
-      background: rgba(100, 150, 180, 0.4);
-    }
-
-    .quantity-selector span {
-      color: #8ab4d4;
-      font-weight: bold;
-      font-size: 14px;
-      min-width: 30px;
-      text-align: center;
-    }
-
     .modal-add-cart-buttons {
       display: flex;
       gap: 10px;
+      margin-top: 20px;
     }
 
     .btn-cancel {
@@ -1267,11 +1238,8 @@
       </div>
 
       <div class="modal-add-cart-section">
-        <label>Combien veux-tu payer ? (€)</label>
-        <div style="display: flex; gap: 10px; align-items: center;">
-          <input type="number" id="priceInput" min="1" step="0.01" placeholder="Montant" style="flex: 1; padding: 10px; background: rgba(100, 150, 180, 0.2); border: 1px solid rgba(100, 150, 180, 0.4); border-radius: 6px; color: #8ab4d4; font-weight: bold;">
-          <span id="gramsDisplay" style="color: #6496b4; font-weight: bold; min-width: 60px;">0g</span>
-        </div>
+        <label>Choisir une quantité:</label>
+        <div class="quantity-buttons" id="quantityButtons"></div>
       </div>
 
       <div class="modal-add-cart-buttons">
@@ -1336,6 +1304,7 @@
     let currentProduct = null;
     let selectedTimeSlot = null;
     let pendingOrder = null;
+    let selectedTariff = null;
 
     async function verifyAccess() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -1511,74 +1480,73 @@
       event.stopPropagation();
       
       currentProduct = product;
+      selectedTariff = null;
 
       document.getElementById('addCartProductName').textContent = product.name;
       document.getElementById('addCartProductImage').src = product.image;
       
-      // Vérifier s'il y a des tarifs promo
-      let tariffsToUse = product.tariffs; // Tarifs normaux par défaut
-      
+      // Déterminer les tarifs à afficher (promo ou normal)
+      let tariffsToUse = product.tariffs;
       if (product.promoTariffs) {
-        tariffsToUse = product.promoTariffs; // Utiliser les tarifs promo s'ils existent
+        tariffsToUse = product.promoTariffs;
       }
       
-      // Parser le premier tarif pour obtenir le prix par gramme
-      const firstTariff = tariffsToUse.split('|')[0];
-      const [size, price] = firstTariff.split('=');
-      const grams = parseFloat(size.trim());
-      const pricePerGram = parseFloat(price.trim()) / grams;
+      // Parser les tarifs
+      const tariffEntries = tariffsToUse.split('|').map(t => {
+        const [size, price] = t.split('=');
+        return {
+          size: size.trim(),
+          price: parseFloat(price.trim()),
+          grams: parseFloat(size.trim())
+        };
+      });
+
+      currentProduct.tariffOptions = tariffEntries;
       
-      currentProduct.pricePerGram = pricePerGram;
-      currentProduct.grams = grams;
+      // Afficher les boutons de tarifs
+      const quantityBtns = document.getElementById('quantityButtons');
+      quantityBtns.innerHTML = '';
       
-      // Input pour le prix
-      const priceInput = document.getElementById('priceInput');
-      priceInput.value = '';
-      priceInput.onchange = updateGramsDisplay;
-      priceInput.oninput = updateGramsDisplay;
+      tariffEntries.forEach(tariff => {
+        const btn = document.createElement('button');
+        btn.className = 'quantity-btn';
+        btn.textContent = `${tariff.size} - ${tariff.price}€`;
+        btn.onclick = () => selectTariff(btn, tariff);
+        quantityBtns.appendChild(btn);
+      });
       
       document.getElementById('modalAddCart').classList.add('active');
     }
 
-    function updateGramsDisplay() {
-      const priceInput = document.getElementById('priceInput').value;
-      const gramsDisplay = document.getElementById('gramsDisplay');
+    function selectTariff(btn, tariff) {
+      document.querySelectorAll('#quantityButtons .quantity-btn').forEach(b => {
+        b.classList.remove('selected');
+      });
+      btn.classList.add('selected');
       
-      if (!priceInput || !currentProduct) {
-        gramsDisplay.textContent = '0g';
-        return;
-      }
-      
-      const price = parseFloat(priceInput);
-      if (isNaN(price) || price <= 0) {
-        gramsDisplay.textContent = '0g';
-        return;
-      }
-      
-      const totalGrams = (price / currentProduct.pricePerGram).toFixed(2);
-      gramsDisplay.textContent = totalGrams + 'g';
+      selectedTariff = tariff;
     }
 
     function confirmAddToCart() {
-      const priceInput = document.getElementById('priceInput');
-      const price = parseFloat(priceInput.value);
-      
-      if (!priceInput.value || isNaN(price) || price <= 0) {
-        alert('Entre un montant valide !');
+      if (!selectedTariff) {
+        alert('Sélectionne une quantité !');
         return;
       }
-      
-      const totalGrams = (price / currentProduct.pricePerGram).toFixed(2);
 
       const cartItem = {
         id: currentProduct.id,
         name: currentProduct.name,
-        price: price,
-        grams: totalGrams,
+        price: selectedTariff.price,
+        grams: selectedTariff.grams,
         quantity: 1
       };
 
-      const existingItem = cart.find(item => item.id === currentProduct.id && item.price === price);
+      const existingItem = cart.find(item => 
+        item.id === currentProduct.id && 
+        item.grams === selectedTariff.grams && 
+        item.price === selectedTariff.price
+      );
+      
       if (existingItem) {
         existingItem.quantity += 1;
       } else {
@@ -1593,6 +1561,7 @@
     function closeAddCartModal() {
       document.getElementById('modalAddCart').classList.remove('active');
       currentProduct = null;
+      selectedTariff = null;
     }
 
     function updateCart() {
@@ -1664,13 +1633,18 @@
       const container = document.getElementById('timeSlotsContainer');
       container.innerHTML = '';
       
-      // Créer les créneaux horaires entre 14h et 00h
+      // Créer les créneaux horaires d'une heure par une heure entre 14h et 00h
       const timeSlots = [
-        '14:00 - 16:00',
-        '16:00 - 18:00',
-        '18:00 - 20:00',
-        '20:00 - 22:00',
-        '22:00 - 00:00'
+        '14:00 - 15:00',
+        '15:00 - 16:00',
+        '16:00 - 17:00',
+        '17:00 - 18:00',
+        '18:00 - 19:00',
+        '19:00 - 20:00',
+        '20:00 - 21:00',
+        '21:00 - 22:00',
+        '22:00 - 23:00',
+        '23:00 - 00:00'
       ];
       
       timeSlots.forEach(slot => {
