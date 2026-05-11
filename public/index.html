@@ -1723,6 +1723,11 @@
         return;
       }
 
+      // ✅ AJOUTER LA DELIVERY OPTION À PENDING ORDER
+      pendingOrder.deliveryOption = selectedDeliveryOption;
+      
+      console.log('📦 Commande en attente:', pendingOrder);
+
       closeDeliveryModal();
       openTimeSlotModal();
     }
@@ -1782,9 +1787,17 @@
         return;
       }
 
-      // Ajouter le créneau et le lieu à la commande
+      // ✅ Ajouter le créneau à la commande
       pendingOrder.timeSlot = selectedTimeSlot;
-      pendingOrder.deliveryOption = selectedDeliveryOption;
+
+      // ✅ Vérifier que deliveryOption est bien présent
+      console.log('🎯 Commande finale avant envoi:', {
+        userId: pendingOrder.userId,
+        items: pendingOrder.items.length,
+        total: pendingOrder.total,
+        deliveryOption: pendingOrder.deliveryOption,
+        timeSlot: pendingOrder.timeSlot
+      });
 
       // Afficher le loading
       document.getElementById('loadingOverlay').classList.add('active');
@@ -1813,6 +1826,7 @@
         }
       } catch (error) {
         document.getElementById('loadingOverlay').classList.remove('active');
+        console.error('Erreur:', error);
         alert('Erreur: ' + error.message);
       }
     }
