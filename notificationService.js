@@ -82,7 +82,7 @@ async function checkShopHours() {
       }
     }
 
-    const message = `🚀 <b>La boutique est OUVERTE !</b>\n\nHoraires : ${settings.opening_time} - ${settings.closing_time}\n\n🛍️ Découvre nos produits en rentrant dans la boutique <b>@svrshopbot</b> ! 🌿`;
+    const message = `🎉 <b>LA BOUTIQUE EST OUVERTE!</b> 🛍️\n\nTu peux passer ta commande de <b>2 manières</b> :\n\n1️⃣ En validant ton panier sur le site @svrshopbot\n2️⃣ Directement avec nous sur @SVR_TO\n\n⏰ Horaires: ${settings.opening_time} - ${settings.closing_time}`;
     
     try {
       const response = await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
