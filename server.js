@@ -15,6 +15,7 @@ const PORT = process.env.PORT || 10000;
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHANNEL_ID = process.env.CHANNEL_ID;
 const OWNER_TELEGRAM_ID = process.env.OWNER_TELEGRAM_ID;
+const MY_TELEGRAM_ID = process.env.MY_TELEGRAM_ID;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = 'z2j7phmfkx-maker/svr-shop';
 const SITE_URL = process.env.SITE_URL || 'https://svr-shop.onrender.com';
@@ -226,11 +227,23 @@ app.post('/api/order', async (req, res) => {
   const message = `📦 *Nouvelle commande* #${orderNumber}\n\n👤 Client: ${safeName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
   
   try {
+    // Envoyer au propriétaire
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       chat_id: OWNER_TELEGRAM_ID,
       text: message,
       parse_mode: 'MarkdownV2'
     });
+    console.log('✅ Commande notifiée au propriétaire');
+    
+    // Envoyer à toi aussi si MY_TELEGRAM_ID est défini
+    if (MY_TELEGRAM_ID && MY_TELEGRAM_ID !== OWNER_TELEGRAM_ID) {
+      await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        chat_id: MY_TELEGRAM_ID,
+        text: message,
+        parse_mode: 'MarkdownV2'
+      });
+      console.log('✅ Commande notifiée aussi à toi');
+    }
     
     // Sauvegarder le compteur
     saveData(data);
@@ -411,4 +424,5 @@ app.listen(PORT, () => {
   console.log(`✅ BOT_TOKEN: ${BOT_TOKEN ? 'OK' : 'MANQUANT'}`);
   console.log(`✅ CHANNEL_ID: ${CHANNEL_ID ? 'OK' : 'MANQUANT'}`);
   console.log(`✅ OWNER_ID: ${OWNER_TELEGRAM_ID ? 'OK' : 'MANQUANT'}`);
+  console.log(`✅ MY_ID: ${MY_TELEGRAM_ID ? 'OK' : 'MANQUANT'}`);
 });
