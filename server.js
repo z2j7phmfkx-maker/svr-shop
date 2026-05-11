@@ -185,8 +185,22 @@ app.post('/api/save-data', async (req, res) => {
 });
 
 app.post('/api/order', async (req, res) => {
+  console.log('\n🚀 ===== NOUVELLE COMMANDE REÇUE =====');
+  console.log('📦 Body complet reçu:', JSON.stringify(req.body, null, 2));
+  
   const { userId, items, total, timeSlot, deliveryOption } = req.body;
   const data = loadData();
+  
+  // ✅ LOGS DEBUG DÉTAILLÉS
+  console.log('\n📋 PARAMÈTRES EXTRAITS:');
+  console.log('  ✓ userId:', userId);
+  console.log('  ✓ items:', items ? `${items.length} items` : 'undefined');
+  console.log('  ✓ total:', total);
+  console.log('  ✓ timeSlot:', timeSlot);
+  console.log('  ✓ deliveryOption:', deliveryOption);
+  console.log('  ✓ deliveryOption type:', typeof deliveryOption);
+  console.log('  ✓ deliveryOption === "sur_place":', deliveryOption === 'sur_place');
+  console.log('  ✓ deliveryOption === "livraison":', deliveryOption === 'livraison');
   
   // Initialiser le compteur et firstNames s'ils n'existent pas
   if (!data.orderCounter) {
@@ -199,7 +213,7 @@ app.post('/api/order', async (req, res) => {
   // Incrémenter le compteur
   const orderNumber = ++data.orderCounter;
   
-  console.log(`📦 Nouvelle commande #${orderNumber} - userId: ${userId}`);
+  console.log(`\n📦 Nouvelle commande #${orderNumber} - userId: ${userId}`);
   
   // Chercher le nom dans cet ordre : username > first_name
   let userName = 'Utilisateur inconnu';
@@ -221,13 +235,23 @@ app.post('/api/order', async (req, res) => {
   }).join('\n');
   
   // Déterminer le libellé du lieu de livraison
+  console.log('\n🔍 DEBUG LIVRAISON:');
+  console.log('  deliveryOption brut:', deliveryOption);
+  console.log('  Comparaison avec "sur_place":', deliveryOption === 'sur_place');
+  console.log('  Comparaison avec "livraison":', deliveryOption === 'livraison');
+  
   const deliveryLabel = deliveryOption === 'sur_place' ? '🏪 Sur place' : '🚚 Livraison';
+  
+  console.log('  ✅ deliveryLabel final:', deliveryLabel);
   
   // Construire le message AVEC le lieu ET le créneau de livraison
   const message = `<b>📦 Nouvelle commande #${orderNumber}</b>\n\n<b>👤 Client:</b> ${userName}\n\n<b>Articles:</b>\n${itemsText}\n\n<b>💰 Total:</b> ${total}€\n\n<b>⏰ Créneau:</b> ${timeSlot || 'Non spécifié'}\n<b>📍 Type:</b> ${deliveryLabel}`;
   
+  console.log('\n📝 Message à envoyer:');
+  console.log(message);
+  
   try {
-    console.log(`📤 Envoi à OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}`);
+    console.log(`\n📤 Envoi à OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}`);
     // Envoyer au propriétaire
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       chat_id: OWNER_TELEGRAM_ID,
@@ -256,9 +280,10 @@ app.post('/api/order', async (req, res) => {
     await commitToGithub(`Commande #${orderNumber}`, data);
     
     console.log('✅ Commande notifiée avec succès');
+    console.log('===== FIN COMMANDE =====\n');
     res.json({ success: true });
   } catch (err) {
-    console.error('❌ Erreur notification Telegram:');
+    console.error('\n❌ ERREUR NOTIFICATION TELEGRAM:');
     console.error(`   Status: ${err.response?.status}`);
     console.error(`   Data: ${JSON.stringify(err.response?.data)}`);
     console.error(`   Message: ${err.message}`);
@@ -268,6 +293,7 @@ app.post('/api/order', async (req, res) => {
     // Sauvegarder quand même la commande
     saveData(data);
     
+    console.log('===== FIN COMMANDE (ERREUR) =====\n');
     res.status(500).json({ error: 'Erreur notification Telegram', details: err.response?.data?.description || err.message });
   }
 });
