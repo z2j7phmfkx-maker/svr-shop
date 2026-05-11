@@ -185,7 +185,7 @@ app.post('/api/save-data', async (req, res) => {
 });
 
 app.post('/api/order', async (req, res) => {
-  const { userId, items, total } = req.body;
+  const { userId, items, total, timeSlot } = req.body;
   const data = loadData();
   
   // Initialiser le compteur et firstNames s'ils n'existent pas
@@ -214,13 +214,14 @@ app.post('/api/order', async (req, res) => {
     console.warn(`⚠️ Aucun nom trouvé pour userId=${userId}`);
   }
   
-  // Construire le texte des items sans échappement (HTML)
+  // Construire le texte des items
   let itemsText = items.map(item => {
     const itemPrice = (item.price * item.quantity).toFixed(2);
-    return `• <b>${item.name}</b> - ${item.size} x${item.quantity} = ${itemPrice}€`;
+    return `• <b>${item.name}</b> - ${item.grams}g x${item.quantity} = ${itemPrice}€`;
   }).join('\n');
   
-  const message = `<b>📦 Nouvelle commande #${orderNumber}</b>\n\n<b>👤 Client:</b> ${userName}\n\n<b>Articles:</b>\n${itemsText}\n\n<b>Total:</b> ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
+  // Construire le message SANS horaire, AVEC créneau de livraison
+  const message = `<b>📦 Nouvelle commande #${orderNumber}</b>\n\n<b>👤 Client:</b> ${userName}\n\n<b>Articles:</b>\n${itemsText}\n\n<b>Total:</b> ${total}€\n\n<b>🕐 Créneau livraison:</b> ${timeSlot || 'Non spécifié'}`;
   
   try {
     console.log(`📤 Envoi à OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}`);
