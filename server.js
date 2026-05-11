@@ -227,6 +227,7 @@ app.post('/api/order', async (req, res) => {
   const message = `📦 *Nouvelle commande* #${orderNumber}\n\n👤 Client: ${safeName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
   
   try {
+    console.log(`📤 Envoi à OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}`);
     // Envoyer au propriétaire
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       chat_id: OWNER_TELEGRAM_ID,
@@ -237,22 +238,34 @@ app.post('/api/order', async (req, res) => {
     
     // Envoyer à toi aussi si MY_TELEGRAM_ID est défini
     if (MY_TELEGRAM_ID && MY_TELEGRAM_ID !== OWNER_TELEGRAM_ID) {
+      console.log(`📤 Envoi à MY_TELEGRAM_ID: ${MY_TELEGRAM_ID}`);
       await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         chat_id: MY_TELEGRAM_ID,
         text: message,
         parse_mode: 'MarkdownV2'
       });
       console.log('✅ Commande notifiée aussi à toi');
+    } else {
+      console.log(`⚠️ MY_TELEGRAM_ID non défini ou = OWNER_TELEGRAM_ID`);
     }
     
     // Sauvegarder le compteur
     saveData(data);
     
-    console.log('✅ Commande notifiée');
+    console.log('✅ Commande notifiée avec succès');
     res.json({ success: true });
   } catch (err) {
-    console.error('❌ Erreur notification:', err.message);
-    res.status(500).json({ error: 'Erreur' });
+    console.error('❌ Erreur notification Telegram:');
+    console.error(`   Status: ${err.response?.status}`);
+    console.error(`   Data: ${JSON.stringify(err.response?.data)}`);
+    console.error(`   Message: ${err.message}`);
+    console.error(`   Chat ID envoyé: ${OWNER_TELEGRAM_ID}`);
+    console.error(`   Message envoyé: ${message.substring(0, 100)}...`);
+    
+    // Sauvegarder quand même la commande
+    saveData(data);
+    
+    res.status(500).json({ error: 'Erreur notification Telegram', details: err.response?.data?.description || err.message });
   }
 });
 
