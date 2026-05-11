@@ -185,7 +185,7 @@ app.post('/api/save-data', async (req, res) => {
 });
 
 app.post('/api/order', async (req, res) => {
-  const { userId, items, total, timeSlot } = req.body;
+  const { userId, items, total, timeSlot, deliveryOption } = req.body;
   const data = loadData();
   
   // Initialiser le compteur et firstNames s'ils n'existent pas
@@ -220,8 +220,11 @@ app.post('/api/order', async (req, res) => {
     return `• <b>${item.name}</b> - ${item.grams}g x${item.quantity} = ${itemPrice}€`;
   }).join('\n');
   
-  // Construire le message SANS horaire, AVEC créneau de livraison
-  const message = `<b>📦 Nouvelle commande #${orderNumber}</b>\n\n<b>👤 Client:</b> ${userName}\n\n<b>Articles:</b>\n${itemsText}\n\n<b>Total:</b> ${total}€\n\n<b>🕐 Créneau livraison:</b> ${timeSlot || 'Non spécifié'}`;
+  // Déterminer le libellé du lieu de livraison
+  const deliveryLabel = deliveryOption === 'sur_place' ? '🏪 Sur place' : '🚚 Livraison';
+  
+  // Construire le message AVEC le lieu ET le créneau de livraison
+  const message = `<b>📦 Nouvelle commande #${orderNumber}</b>\n\n<b>👤 Client:</b> ${userName}\n\n<b>Articles:</b>\n${itemsText}\n\n<b>💰 Total:</b> ${total}€\n\n<b>⏰ Créneau:</b> ${timeSlot || 'Non spécifié'}\n<b>📍 Type:</b> ${deliveryLabel}`;
   
   try {
     console.log(`📤 Envoi à OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}`);
@@ -248,6 +251,9 @@ app.post('/api/order', async (req, res) => {
     
     // Sauvegarder le compteur
     saveData(data);
+    
+    // Commit sur GitHub
+    await commitToGithub(`Commande #${orderNumber}`, data);
     
     console.log('✅ Commande notifiée avec succès');
     res.json({ success: true });
