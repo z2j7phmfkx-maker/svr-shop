@@ -103,7 +103,7 @@ function generateToken() {
 
 // Échapper les caractères spéciaux MarkdownV2
 function escapeMarkdownV2(text) {
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+  return text.replace(/[_*[\]()~`>#\+\-=|{}.!@]/g, '\\$&');
 }
 
 // ==================== ROUTES EXPRESS ====================
@@ -220,11 +220,11 @@ app.post('/api/order', async (req, res) => {
   }
   
   let itemsText = items.map(item => 
-    `• ${item.name} - ${item.size} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`
+    `• ${item.name} \\- ${item.size} x${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`
   ).join('\n');
   
   const safeName = escapeMarkdownV2(userName);
-  const message = `📦 *Nouvelle commande* #${orderNumber}\n\n👤 Client: ${safeName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
+  const message = `📦 *Nouvelle commande* \\#${orderNumber}\n\n👤 Client: ${safeName}\n\n*Articles:*\n${itemsText}\n\n*Total:* ${total}€\n⏰ ${new Date().toLocaleString('fr-FR')}`;
   
   try {
     console.log(`📤 Envoi à OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}`);
@@ -426,6 +426,7 @@ if (data.userTokens && typeof data.userTokens === 'object') {
   console.log(`✅ ${data.telegram_users.length} utilisateurs synchro`);
 }
 
+// Lancer checkShopHours toutes les minutes
 setInterval(() => {
   notificationService.checkShopHours();
 }, 60000);
