@@ -57,12 +57,17 @@ async function checkShopHours() {
     return;
   }
 
-  // Obtenir l'heure de Paris (Europe/Paris)
-  const now = new Date();
-  const parisTime = new Date(now.toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }));
-  
-  const hours = String(parisTime.getHours()).padStart(2, '0');
-  const minutes = String(parisTime.getMinutes()).padStart(2, '0');
+  // ✅ CORRECTED: Utiliser Intl pour obtenir l'heure de Paris correctement
+  const formatter = new Intl.DateTimeFormat('fr-FR', {
+    timeZone: 'Europe/Paris',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+
+  const parts = formatter.formatToParts(new Date());
+  const hours = parts.find(p => p.type === 'hour')?.value || '00';
+  const minutes = parts.find(p => p.type === 'minute')?.value || '00';
   const currentTime = `${hours}:${minutes}`;
 
   console.log(`⏰ Heure Paris: ${currentTime} | Ouverture: ${settings.opening_time} | Fermeture: ${settings.closing_time}`);
