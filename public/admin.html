@@ -187,6 +187,16 @@
       background: linear-gradient(135deg, rgba(220, 100, 100, 0.6) 0%, rgba(220, 100, 100, 0.4) 100%);
     }
 
+    .btn-success {
+      background: linear-gradient(135deg, rgba(50, 150, 100, 0.4) 0%, rgba(50, 150, 100, 0.2) 100%);
+      border-color: rgba(50, 150, 100, 0.5);
+      color: #6bc34a;
+    }
+
+    .btn-success:hover {
+      background: linear-gradient(135deg, rgba(50, 150, 100, 0.6) 0%, rgba(50, 150, 100, 0.4) 100%);
+    }
+
     .products-list {
       display: grid;
       gap: 15px;
@@ -266,6 +276,45 @@
       border: 1px solid rgba(100, 150, 180, 0.2);
     }
 
+    .sync-section {
+      background: rgba(15, 20, 40, 0.8);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      border: 2px solid rgba(50, 150, 100, 0.3);
+    }
+
+    .sync-section h3 {
+      color: #6bc34a;
+      margin-bottom: 15px;
+    }
+
+    .sync-result {
+      background: rgba(20, 28, 50, 0.8);
+      border-left: 3px solid #6496b4;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 15px;
+      color: #a0b0c0;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .sync-result .sync-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      border-bottom: 1px solid rgba(100, 150, 180, 0.1);
+    }
+
+    .sync-item.synced {
+      color: #6bc34a;
+    }
+
+    .sync-item.error {
+      color: #ff6b6b;
+    }
+
     @media (max-width: 768px) {
       .form-row {
         grid-template-columns: 1fr;
@@ -301,6 +350,7 @@
       <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('products')">Produits</button>
         <button class="tab-btn" onclick="switchTab('concours')">Concours</button>
+        <button class="tab-btn" onclick="switchTab('users')">👥 Utilisateurs</button>
         <button class="tab-btn" onclick="switchTab('settings')">⚙️ Paramètres</button>
       </div>
 
@@ -400,6 +450,23 @@
           </div>
 
           <button class="btn" onclick="saveConcours()">Sauvegarder concours</button>
+        </div>
+      </div>
+
+      <!-- Tab: Utilisateurs -->
+      <div id="users" class="tab-content">
+        <div class="sync-section">
+          <h3>🔄 Synchroniser les utilisateurs</h3>
+          <p style="color: #a0b0c0; margin-bottom: 15px; font-size: 13px;">
+            Cette fonction récupère les vrais noms (firstName et username) de tous les anciens utilisateurs via l'API Telegram. 
+            Les utilisateurs sans nom verront "Utilisateur inconnu" remplacé par leur vrai prénom.
+          </p>
+          
+          <button class="btn btn-success" onclick="syncUsers()">
+            🔄 Synchroniser les utilisateurs
+          </button>
+
+          <div id="syncResult" class="sync-result" style="display: none;"></div>
         </div>
       </div>
 
@@ -605,6 +672,59 @@
         timezone: 'Europe/Paris'
       };
       saveData();
+    }
+
+    async function syncUsers() {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = '🔄 Synchronisation en cours...';
+
+      try {
+        const response = await fetch('/api/sync-users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          displaySyncResults(result);
+          showMessage(`✅ ${result.synced} utilisateurs synchronisés!`, 'success');
+        } else {
+          showMessage(`❌ ${result.message}`, 'error');
+        }
+      } catch (error) {
+        showMessage(`❌ Erreur: ${error.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Synchroniser les utilisateurs';
+      }
+    }
+
+    function displaySyncResults(result) {
+      const resultDiv = document.getElementById('syncResult');
+      let html = `
+        <div class="sync-item">
+          <strong>📊 Résumé:</strong><br>
+          ✅ Synchronisés: ${result.synced}<br>
+          ⚠️ Erreurs: ${result.errors}<br>
+          📈 Total: ${result.total}
+        </div>
+      `;
+
+      if (result.results && result.results.length > 0) {
+        html += '<div style="margin-top: 15px;"><strong>Détails:</strong></div>';
+        result.results.forEach(item => {
+          if (item.status === 'synced') {
+            html += `<div class="sync-item synced">✅ ${item.userId}: ${item.firstName}${item.username ? ' (@' + item.username + ')' : ''}</div>`;
+          } else if (item.status === 'error') {
+            html += `<div class="sync-item error">❌ ${item.userId}: ${item.error}</div>`;
+          }
+        });
+      }
+
+      resultDiv.innerHTML = html;
+      resultDiv.style.display = 'block';
     }
 
     async function saveData() {
