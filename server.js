@@ -298,6 +298,94 @@ app.post('/api/order', async (req, res) => {
   }
 });
 
+app.post('/api/sync-users', async (req, res) => {
+  try {
+    const data = loadData();
+    const telegramUsers = data.telegram_users || [];
+    
+    if (telegramUsers.length === 0) {
+      return res.json({ 
+        success: false, 
+        message: 'Aucun utilisateur à synchroniser' 
+      });
+    }
+    
+    console.log(`\n🔄 Synchronisation de ${telegramUsers.length} utilisateurs...`);
+    
+    let syncedCount = 0;
+    let errorCount = 0;
+    const results = [];
+    
+    for (const userId of telegramUsers) {
+      try {
+        // Récupérer les infos du user via Telegram API
+        const response = await axios.post(
+          `https://api.telegram.org/bot${BOT_TOKEN}/getChat`,
+          { chat_id: userId }
+        );
+        
+        const userInfo = response.data.result;
+        const firstName = userInfo.first_name || 'Unknown';
+        const username = userInfo.username || null;
+        
+        // Mettre à jour les données
+        data.firstNames = data.firstNames || {};
+        data.usernames = data.usernames || {};
+        
+        let updated = false;
+        
+        // Si le user avait pas de firstName, l'ajouter
+        if (!data.firstNames[userId] || data.firstNames[userId] === 'Unknown') {
+          data.firstNames[userId] = firstName;
+          console.log(`✅ ${userId}: firstName = "${firstName}"`);
+          updated = true;
+        }
+        
+        // Si le user avait pas d'username, l'ajouter
+        if (username && !data.usernames[userId]) {
+          data.usernames[userId] = username;
+          console.log(`✅ ${userId}: username = "@${username}"`);
+          updated = true;
+        }
+        
+        if (updated) {
+          syncedCount++;
+          results.push({ userId, firstName, username, status: 'synced' });
+        } else {
+          results.push({ userId, firstName, username, status: 'already_set' });
+        }
+        
+      } catch (err) {
+        console.error(`❌ Erreur sync userId ${userId}:`, err.message);
+        errorCount++;
+        results.push({ userId, status: 'error', error: err.message });
+      }
+    }
+    
+    // Sauvegarder les données mises à jour
+    saveData(data);
+    await commitToGithub('Synchronisation utilisateurs', data);
+    
+    console.log(`\n✅ Sync terminée: ${syncedCount} users mis à jour, ${errorCount} erreurs\n`);
+    
+    res.json({ 
+      success: true,
+      synced: syncedCount,
+      errors: errorCount,
+      total: telegramUsers.length,
+      message: `${syncedCount} utilisateurs synchronisés avec succès`,
+      results: results
+    });
+    
+  } catch (err) {
+    console.error('❌ Erreur sync globale:', err);
+    res.status(500).json({ 
+      success: false, 
+      error: err.message 
+    });
+  }
+});
+
 // ==================== BOT TELEGRAM ====================
 
 let bot;
