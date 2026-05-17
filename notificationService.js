@@ -145,7 +145,7 @@ async function notifyOutOfStock(productName) {
 // Notifier les nouveaux produits
 async function notifyNewProduct(productName, price, category) {
   const emoji = category === 'WEED' ? '🌿' : category === 'HASH' ? '🔶' : '⚡';
-  const message = `✨ <b>NOUVEAU PRODUIT !</b>\n\n${emoji} <b>${productName}</b>\n💰 À partir de <b>${price}€</b>\n\nClique vite avant que ça parte ! 🔥`;
+  const message = `✨ <b>NOUVEAU PRODUIT !</b>\n\n${emoji} <b>${productName}</b>\n💰 À partir de <b>${price}€</b>`;
   await notifyAllUsers(message);
 }
 
