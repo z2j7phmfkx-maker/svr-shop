@@ -1321,7 +1321,7 @@
       <div class="custom-price-section">
         <label>💶 Ou rentre un montant personnalisé:</label>
         <div class="price-input-group">
-          <input type="number" id="customPriceInput" placeholder="Ex: 50" min="0" step="0.01" oninput="calculateGramsFromPrice()">
+          <input type="number" id="customPriceInput" placeholder="Ex: 30" min="0" step="0.01" oninput="calculateGramsFromPrice()">
           <span style="display: flex; align-items: center; color: #6496b4; font-weight: bold;">€</span>
         </div>
         <div class="price-result" id="priceResult"></div>
@@ -1431,21 +1431,23 @@
         return;
       }
 
-      // 🔍 TROUVER LE PALLIER DANS LEQUEL S'INSCRIT LE MONTANT ENTRÉ
+      // 🔍 TROUVER LE PALLIER DONT LE PRIX INFÉRIEUR ≤ AU MONTANT ENTRÉ
       let selectedTariff_temp = null;
 
+      // On parcourt les tarifs du plus bas prix au plus haut
       for (let i = 0; i < tariffs.length; i++) {
         const currentTariff = tariffs[i];
-        const nextTariff = tariffs[i + 1];
-
-        if (!nextTariff) {
-          // C'est le dernier pallier
-          if (price >= currentTariff.price) {
+        
+        // Si le prix entré >= prix du pallier actuel
+        if (price >= currentTariff.price) {
+          // Vérifier s'il y a un pallier suivant
+          const nextTariff = tariffs[i + 1];
+          
+          if (!nextTariff) {
+            // C'est le dernier pallier
             selectedTariff_temp = currentTariff;
-          }
-        } else {
-          // Vérifier si le prix se situe entre ce pallier et le suivant
-          if (price >= currentTariff.price && price < nextTariff.price) {
+          } else if (price < nextTariff.price) {
+            // Le prix est entre ce pallier et le suivant
             selectedTariff_temp = currentTariff;
             break;
           }
@@ -1453,7 +1455,8 @@
       }
 
       if (!selectedTariff_temp) {
-        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Montant invalide</span>';
+        // Le prix est inférieur au premier pallier
+        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Montant insuffisant</span>';
         return;
       }
 
