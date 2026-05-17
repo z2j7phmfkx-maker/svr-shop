@@ -181,14 +181,24 @@ app.post('/api/save-data', async (req, res) => {
   for (const newProd of products) {
     const oldProd = oldData.products.find(p => p.id === newProd.id);
     
+    // 🔧 EXTRAIRE LE PRIX MINIMUM DES TARIFS
+    let minPrice = 'N/A';
+    if (newProd.tariffs) {
+      const prices = newProd.tariffs.split('|').map(t => {
+        const price = t.split('=')[1]; // "20€" ou "80€"
+        return parseInt(price) || 0;
+      });
+      minPrice = Math.min(...prices);
+    }
+    
     if (!oldProd) {
-      await notificationService.notifyNewProduct(newProd.name, newProd.price, newProd.category);
+      await notificationService.notifyNewProduct(newProd.name, minPrice, newProd.category);
     } else if (newProd.stock === 0 && oldProd.stock > 0) {
       await notificationService.notifyOutOfStock(newProd.name);
     } else if (newProd.stock > 0 && oldProd.stock === 0) {
-      await notificationService.notifyBackInStock(newProd.name, newProd.price);
+      await notificationService.notifyBackInStock(newProd.name, minPrice);
     } else if (newProd.stock <= 3 && newProd.stock > 0 && oldProd.stock > 3) {
-      await notificationService.notifyLimitedStock(newProd.name, newProd.price);
+      await notificationService.notifyLimitedStock(newProd.name, minPrice);
     }
   }
   
