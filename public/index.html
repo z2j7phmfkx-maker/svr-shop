@@ -1412,77 +1412,16 @@
     let selectedTariff = null;
     let currentPriceMode = null;
 
-    // ✅ CALCUL DES GRAMMES À PARTIR DU PRIX (CORRIGÉ)
-    function calculateGramsFromPrice() {
-      const priceInput = document.getElementById('customPriceInput');
-      const resultDiv = document.getElementById('priceResult');
-      const price = parseFloat(priceInput.value);
-
-      if (!price || price <= 0) {
-        resultDiv.innerHTML = '';
-        selectedTariff = null;
-        currentPriceMode = null;
-        return;
-      }
-
-      const tariffs = currentProduct.tariffOptions;
-      if (!tariffs || tariffs.length === 0) {
-        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Erreur: tarifs introuvables</span>';
-        return;
-      }
-
-      // 🔍 TROUVER LE BON PALLIER
-      let selectedTariff_temp = null;
-
-      // Parcourir du plus petit au plus grand prix
-      for (let i = 0; i < tariffs.length; i++) {
-        const currentTariff = tariffs[i];
-        const nextTariff = tariffs[i + 1];
-        
-        // Si le prix est dans la plage de ce pallier
-        if (price >= currentTariff.price) {
-          if (!nextTariff || price < nextTariff.price) {
-            // C'est le bon pallier
-            selectedTariff_temp = currentTariff;
-            break;
-          }
-        }
-      }
-
-      if (!selectedTariff_temp) {
-        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Montant insuffisant (min: ' + tariffs[0].price + '€)</span>';
-        return;
-      }
-
-      // Calculer les grammes
-      const pricePerGram = selectedTariff_temp.price / selectedTariff_temp.grams;
-      const calculatedGrams = price / pricePerGram;
-
-      // Créer le tariff sélectionné
-      selectedTariff = {
-        ...selectedTariff_temp,
-        grams: calculatedGrams,
-        price: price
-      };
-
-      currentPriceMode = 'custom';
-
-      // Afficher le résultat
-      const gramText = calculatedGrams.toFixed(2);
-      const tariffText = `${selectedTariff_temp.size} = ${selectedTariff_temp.price}€`;
-      
-      resultDiv.innerHTML = `
-        <strong>${price}€ = ${gramText}g</strong><br>
-        <span style="font-size: 10px; color: #888;">Tarif appliqué: ${tariffText}</span>
-      `;
-    }
-
+    // ✅ VÉRIFICATION D'ACCÈS (CORRIGÉE)
     async function verifyAccess() {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
       const userId = urlParams.get('userId');
 
+      console.log('[CLIENT] Token:', token, 'UserId:', userId);
+
       if (!token || !userId) {
+        console.log('[CLIENT] Token ou userId manquant');
         showDenied();
         return;
       }
@@ -1499,16 +1438,21 @@
         });
         
         clearTimeout(timeoutId);
+        console.log('[CLIENT] HTTP Status:', response.status);
+        
         const result = await response.json();
+        console.log('[CLIENT] Réponse serveur:', result);
 
         if (result.valid) {
+          console.log('[CLIENT] Accès autorisé !');
           loadShop();
         } else {
-          loadShop();
+          console.log('[CLIENT] Accès refusé');
+          showDenied();
         }
       } catch (error) {
-        console.error('Erreur vérification:', error);
-        loadShop();
+        console.error('[CLIENT] Erreur fetch:', error);
+        showDenied();
       }
     }
 
@@ -1712,6 +1656,63 @@
       
       document.getElementById('customPriceInput').value = '';
       document.getElementById('priceResult').innerHTML = '';
+    }
+
+    function calculateGramsFromPrice() {
+      const priceInput = document.getElementById('customPriceInput');
+      const resultDiv = document.getElementById('priceResult');
+      const price = parseFloat(priceInput.value);
+
+      if (!price || price <= 0) {
+        resultDiv.innerHTML = '';
+        selectedTariff = null;
+        currentPriceMode = null;
+        return;
+      }
+
+      const tariffs = currentProduct.tariffOptions;
+      if (!tariffs || tariffs.length === 0) {
+        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Erreur: tarifs introuvables</span>';
+        return;
+      }
+
+      let selectedTariff_temp = null;
+
+      for (let i = 0; i < tariffs.length; i++) {
+        const currentTariff = tariffs[i];
+        const nextTariff = tariffs[i + 1];
+        
+        if (price >= currentTariff.price) {
+          if (!nextTariff || price < nextTariff.price) {
+            selectedTariff_temp = currentTariff;
+            break;
+          }
+        }
+      }
+
+      if (!selectedTariff_temp) {
+        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Montant insuffisant (min: ' + tariffs[0].price + '€)</span>';
+        return;
+      }
+
+      const pricePerGram = selectedTariff_temp.price / selectedTariff_temp.grams;
+      const calculatedGrams = price / pricePerGram;
+
+      selectedTariff = {
+        ...selectedTariff_temp,
+        grams: calculatedGrams,
+        price: price
+      };
+
+      currentPriceMode = 'custom';
+
+      const gramText = calculatedGrams.toFixed(2);
+      const tariffText = `${selectedTariff_temp.size} = ${selectedTariff_temp.price}€`;
+      
+      resultDiv.innerHTML = `
+        <strong>${price}€ = ${gramText}g</strong><br>
+        <span style="font-size: 10px; color: #888;">Tarif appliqué: ${tariffText}</span>
+      `;
     }
 
     function confirmAddToCart() {
@@ -2128,6 +2129,7 @@
       }
     });
 
+    // Lancer la vérification d'accès au chargement
     verifyAccess();
   </script>
 </body>
