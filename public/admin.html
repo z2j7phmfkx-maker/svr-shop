@@ -153,6 +153,11 @@
       box-shadow: 0 0 10px rgba(100, 150, 180, 0.2);
     }
 
+    .form-group input[type="file"] {
+      padding: 8px;
+      cursor: pointer;
+    }
+
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -274,6 +279,20 @@
       border-radius: 8px;
       margin-top: 10px;
       border: 1px solid rgba(100, 150, 180, 0.2);
+    }
+
+    .upload-progress {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(100, 150, 180, 0.1);
+      border-radius: 6px;
+      color: #6496b4;
+      font-size: 12px;
+    }
+
+    .upload-progress.active {
+      display: block;
     }
 
     .sync-section {
@@ -400,8 +419,10 @@
           </div>
 
           <div class="form-group">
-            <label>Image principale (URL Cloudinary)</label>
-            <input type="text" id="productImage" placeholder="https://res.cloudinary.com/...">
+            <label>Image principale</label>
+            <input type="file" id="productImageFile" accept="image/*" onchange="uploadImage('productImageFile', 'productImage', 'imagePreview')">
+            <div class="upload-progress" id="imageUploadProgress"></div>
+            <input type="text" id="productImage" placeholder="URL sera remplie automatiquement" readonly style="margin-top: 10px;">
             <img id="imagePreview" class="image-preview" style="display: none;">
           </div>
 
@@ -545,6 +566,44 @@
       });
     }
 
+    async function uploadImage(inputId, urlFieldId, previewId) {
+      const fileInput = document.getElementById(inputId);
+      const urlField = document.getElementById(urlFieldId);
+      const preview = document.getElementById(previewId);
+      const progressDiv = document.getElementById(inputId + 'Progress') || document.querySelector(`.upload-progress`);
+
+      if (!fileInput.files[0]) return;
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        progressDiv.classList.add('active');
+        progressDiv.textContent = '📤 Upload en cours...';
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          urlField.value = result.url;
+          preview.src = result.url;
+          preview.style.display = 'block';
+          progressDiv.textContent = '✅ Image uploadée!';
+          setTimeout(() => progressDiv.classList.remove('active'), 3000);
+        } else {
+          showMessage('Erreur upload: ' + result.error, 'error');
+        }
+      } catch (error) {
+        showMessage('Erreur: ' + error.message, 'error');
+        progressDiv.classList.remove('active');
+      }
+    }
+
     function editProduct(id) {
       const product = shopData.products.find(p => p.id === id);
       if (!product) return;
@@ -637,6 +696,7 @@
       document.getElementById('productTariffs').value = '';
       document.getElementById('productPromoTariffs').value = '';
       document.getElementById('productImage').value = '';
+      document.getElementById('productImageFile').value = '';
       document.getElementById('productGallery').value = '';
       document.getElementById('productVideos').value = '';
       document.getElementById('productIsNew').value = 'false';
@@ -761,16 +821,6 @@
       div.style.display = 'block';
       setTimeout(() => div.style.display = 'none', 5000);
     }
-
-    // Preview image
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('productImage').addEventListener('change', function() {
-        if (this.value) {
-          document.getElementById('imagePreview').src = this.value;
-          document.getElementById('imagePreview').style.display = 'block';
-        }
-      });
-    });
   </script>
 </body>
 </html>
