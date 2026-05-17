@@ -139,27 +139,18 @@ app.post('/api/verify-token', (req, res) => {
   
   console.log('\n[VERIFY-TOKEN] ========================');
   console.log(`  Token reçu: "${token}"`);
-  console.log(`  UserId reçu: "${userId}" (type: ${typeof userId})`);
-  console.log(`  Data.userTokens keys: ${Object.keys(data.userTokens || {}).slice(0, 5).join(', ')}...`);
+  console.log(`  UserId reçu: ${userId} (${typeof userId})`);
+  console.log(`  Token existe: ${token in (data.userTokens || {})}`);
   
   const storedUserId = data.userTokens[token];
-  console.log(`  StoredUserId trouvé: ${storedUserId} (type: ${typeof storedUserId})`);
-  console.log(`  Token existe dans userTokens: ${token in (data.userTokens || {})}`);
+  console.log(`  StoredUserId: ${storedUserId} (${typeof storedUserId})`);
+  console.log(`  Match: ${storedUserId == userId}`);
   
-  if (!storedUserId) {
-    console.log(`  ❌ TOKEN PAS TROUVÉ DANS userTokens`);
-    console.log(`  Tous les tokens: ${Object.keys(data.userTokens || {}).join(', ')}`);
-    return res.json({ valid: false });
-  }
-  
-  const parsedUserId = parseInt(userId, 10);
-  console.log(`  ParsedUserId: ${parsedUserId}`);
-  console.log(`  Comparaison: ${storedUserId} === ${parsedUserId} = ${storedUserId === parsedUserId}`);
-  console.log('============================\n');
-  
-  if (storedUserId === parsedUserId) {
+  if (storedUserId && storedUserId == userId) {
+    console.log(`  ✅ VALID TRUE`);
     return res.json({ valid: true });
   }
+  console.log(`  ❌ VALID FALSE`);
   res.json({ valid: false });
 });
 
@@ -562,7 +553,7 @@ if (BOT_TOKEN) {
     }
   });
   
-  // Gérer le clic sur le bouton "Ouvrir la boutique"
+  // Gérer le clic sur le bouton "Ouvrir la boutique" avec WebApp
   bot.action(/open_shop_(\d+)/, async (ctx) => {
     try {
       const userId = parseInt(ctx.match[1]);
@@ -577,10 +568,22 @@ if (BOT_TOKEN) {
       }
       
       const link = `${SITE_URL}?token=${token}&userId=${userId}`;
-      const shopMsg = `🎁 Ton lien d'accès au shop :\n\n${link}\n\n🔒 Ne partage pas ce lien, il est unique !`;
       
-      ctx.reply(shopMsg, { disable_web_page_preview: true });
-      ctx.answerCbQuery('✅ Lien généré !');
+      // Utiliser web_app pour ouvrir en mode WebApp Telegram (plus fiable)
+      await ctx.reply('🛍️ Clique le bouton pour ouvrir la boutique :', {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: '🛍️ Ouvrir la boutique',
+                web_app: { url: link }
+              }
+            ]
+          ]
+        }
+      });
+      
+      ctx.answerCbQuery('✅ Boutique ouverte !');
       
     } catch (error) {
       console.error('❌ Erreur callback:', error);
