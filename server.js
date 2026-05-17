@@ -499,7 +499,7 @@ if (BOT_TOKEN) {
       );
       
       if (!existingToken) {
-        // Nouvel utilisateur : message avec bouton interactif
+        // Nouvel utilisateur : créer token + message avec bouton
         const token = generateToken();
         data.userTokens[token] = userId;
         data.usernames = data.usernames || {};
@@ -532,16 +532,27 @@ if (BOT_TOKEN) {
           }
         });
       } else {
-        // Utilisateur existant : mettre à jour firstName + message direct avec lien
+        // Utilisateur existant : mettre à jour firstName ET username
         data.firstNames = data.firstNames || {};
+        data.usernames = data.usernames || {};
+        
+        let updated = false;
         
         if (!data.firstNames[userId] || data.firstNames[userId] === 'Unknown') {
           data.firstNames[userId] = firstName;
-          saveData(data);
-          console.log(`♻️ User existant: ${userName} - firstName mis à jour: ${firstName}`);
-        } else {
-          console.log(`♻️ User existant: ${userName}`);
+          updated = true;
         }
+        
+        if (userName && !data.usernames[userId]) {
+          data.usernames[userId] = userName;
+          updated = true;
+        }
+        
+        if (updated) {
+          saveData(data);
+        }
+        
+        console.log(`♻️ User existant: ${userName}`);
         
         const link = `${SITE_URL}?token=${existingToken}&userId=${userId}`;
         const msg = `✅ Tu as déjà accès ! 🛍️\n\n🎁 Ton lien d'accès au shop :\n\n${link}\n\n🔒 Ne partage pas ce lien, il est unique !`;
@@ -553,7 +564,7 @@ if (BOT_TOKEN) {
     }
   });
   
-  // Gérer le clic sur le bouton "Ouvrir la boutique" avec WebApp
+  // Gérer le clic sur le bouton "Ouvrir la boutique" (force navigateur externe)
   bot.action(/open_shop_(\d+)/, async (ctx) => {
     try {
       const userId = parseInt(ctx.match[1]);
@@ -569,14 +580,14 @@ if (BOT_TOKEN) {
       
       const link = `${SITE_URL}?token=${token}&userId=${userId}`;
       
-      // Utiliser web_app pour ouvrir en mode WebApp Telegram (plus fiable)
+      // Utiliser url: pour forcer ouverture en navigateur externe (pas WebApp)
       await ctx.reply('🛍️ Clique le bouton pour ouvrir la boutique :', {
         reply_markup: {
           inline_keyboard: [
             [
               {
                 text: '🛍️ Ouvrir la boutique',
-                web_app: { url: link }
+                url: link
               }
             ]
           ]
