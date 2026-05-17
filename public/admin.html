@@ -177,9 +177,14 @@
       margin-bottom: 10px;
     }
 
-    .btn:hover {
+    .btn:hover:not(:disabled) {
       background: linear-gradient(135deg, rgba(100, 150, 180, 0.6) 0%, rgba(100, 150, 180, 0.4) 100%);
       transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .btn-danger {
@@ -188,7 +193,7 @@
       color: #ff6b6b;
     }
 
-    .btn-danger:hover {
+    .btn-danger:hover:not(:disabled) {
       background: linear-gradient(135deg, rgba(220, 100, 100, 0.6) 0%, rgba(220, 100, 100, 0.4) 100%);
     }
 
@@ -198,8 +203,14 @@
       color: #6bc34a;
     }
 
-    .btn-success:hover {
+    .btn-success:hover:not(:disabled) {
       background: linear-gradient(135deg, rgba(50, 150, 100, 0.6) 0%, rgba(50, 150, 100, 0.4) 100%);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     .products-list {
@@ -365,12 +376,30 @@
       color: #ff6b6b;
     }
 
+    .editing-badge {
+      display: inline-block;
+      background: rgba(255, 200, 87, 0.3);
+      color: #ffc857;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-left: 10px;
+    }
+
     @media (max-width: 768px) {
       .form-row {
         grid-template-columns: 1fr;
       }
 
       .auth-section input {
+        width: 100%;
+      }
+
+      .btn-group {
+        flex-direction: column;
+      }
+
+      .btn-group button {
         width: 100%;
       }
     }
@@ -484,7 +513,10 @@
             </div>
           </div>
 
-          <button class="btn" onclick="addProduct()">Ajouter produit</button>
+          <div class="btn-group">
+            <button class="btn" onclick="addProduct()">Ajouter produit</button>
+            <button class="btn btn-danger" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">Annuler modification</button>
+          </div>
         </div>
 
         <!-- Liste des produits -->
@@ -553,6 +585,7 @@
     let isAuthenticated = false;
     let galleryUrls = [];
     let videoUrls = [];
+    let editingProductId = null;
 
     async function login() {
       const password = document.getElementById('password').value;
@@ -587,7 +620,10 @@
         const div = document.createElement('div');
         div.className = 'product-item';
         div.innerHTML = `
-          <div class="product-name">${product.name}</div>
+          <div class="product-name">
+            ${product.name}
+            ${editingProductId === product.id ? '<span class="editing-badge">EN ÉDITION</span>' : ''}
+          </div>
           <div class="product-info">
             <strong>Catégorie:</strong> ${product.category || 'N/A'} | 
             <strong>Stock:</strong> ${product.stock} | 
@@ -751,6 +787,8 @@
       const product = shopData.products.find(p => p.id === id);
       if (!product) return;
 
+      editingProductId = id;
+
       document.getElementById('productName').value = product.name;
       document.getElementById('productCategory').value = product.category || 'WEED';
       document.getElementById('productStock').value = product.stock;
@@ -800,13 +838,22 @@
         document.getElementById('imagePreview').style.display = 'block';
       }
 
-      // Changer le titre et le bouton
-      document.querySelector('.form-section h3').textContent = `Éditer: ${product.name}`;
-      document.querySelector('.form-section button').textContent = 'Mettre à jour';
-      document.querySelector('.form-section button').onclick = () => updateProduct(id);
+      // Changer le titre et les boutons
+      const formSection = document.querySelector('.form-section');
+      formSection.querySelector('h3').innerHTML = `Éditer: ${product.name} <span class="editing-badge">EN ÉDITION</span>`;
+      document.querySelector('.btn-group').innerHTML = `
+        <button class="btn" onclick="updateProduct(${id})">💾 Sauvegarder (pas de notification)</button>
+        <button class="btn btn-danger" onclick="cancelEdit()">Annuler modification</button>
+      `;
 
-      // Scroll vers le formulaire
-      document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+      loadProducts();
+      formSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+      editingProductId = null;
+      clearProductForm();
+      loadProducts();
     }
 
     function addProduct() {
@@ -832,7 +879,7 @@
       }
 
       shopData.products.push(product);
-      saveData();
+      saveData(null);
       clearProductForm();
     }
 
@@ -852,15 +899,17 @@
       product.isNew = document.getElementById('productIsNew').value === 'true';
       product.newUntil = document.getElementById('productNewUntil').value;
 
-      saveData();
+      // ✅ ENVOYER editingProductId POUR ÉVITER LA NOTIFICATION
+      saveData(id);
       clearProductForm();
+      editingProductId = null;
       loadProducts();
     }
 
     function deleteProduct(id) {
       if (confirm('Supprimer ce produit?')) {
         shopData.products = shopData.products.filter(p => p.id !== id);
-        saveData();
+        saveData(null);
         loadProducts();
       }
     }
@@ -882,9 +931,11 @@
       document.getElementById('productVideoList').style.display = 'none';
       galleryUrls = [];
       videoUrls = [];
-      document.querySelector('.form-section h3').textContent = 'Ajouter un nouveau produit';
-      document.querySelector('.form-section button').textContent = 'Ajouter produit';
-      document.querySelector('.form-section button').onclick = () => addProduct();
+      document.querySelector('.form-section h3').innerHTML = 'Ajouter un nouveau produit';
+      document.querySelector('.btn-group').innerHTML = `
+        <button class="btn" onclick="addProduct()">Ajouter produit</button>
+        <button class="btn btn-danger" id="cancelEditBtn" onclick="cancelEdit()" style="display: none;">Annuler modification</button>
+      `;
     }
 
     function loadConcours() {
@@ -895,7 +946,7 @@
       shopData.concours = {
         description: document.getElementById('concoursDescription').value
       };
-      saveData();
+      saveData(null);
     }
 
     function loadSettings() {
@@ -911,7 +962,7 @@
         closed_days: [],
         timezone: 'Europe/Paris'
       };
-      saveData();
+      saveData(null);
     }
 
     async function syncUsers() {
@@ -967,17 +1018,22 @@
       resultDiv.style.display = 'block';
     }
 
-    async function saveData() {
+    async function saveData(editingId) {
       try {
         const response = await fetch('/api/save-data', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(shopData)
+          body: JSON.stringify({
+            products: shopData.products,
+            shop_settings: shopData.shop_settings,
+            editingProductId: editingId
+          })
         });
 
         const result = await response.json();
         if (result.success) {
-          showMessage('Données sauvegardées avec succès!', 'success');
+          const msg = editingId ? '✅ Produit modifié (pas de notification)' : '✅ Données sauvegardées!';
+          showMessage(msg, 'success');
           loadProducts();
         } else {
           showMessage('Erreur sauvegarde: ' + result.message, 'error');
