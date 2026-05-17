@@ -3,11 +3,23 @@ const path = require('path');
 const { Telegraf } = require('telegraf');
 const axios = require('axios');
 const fs = require('fs');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
 const notificationService = require('./notificationService');
 
 const app = express();
 app.use(express.json());
 app.use(express.static('public'));
+
+// Configuration Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configuration multer (pour recevoir les fichiers)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Configuration
 const DATA_FILE = path.join(__dirname, 'data.json');
@@ -386,6 +398,45 @@ app.post('/api/sync-users', async (req, res) => {
   }
 });
 
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Aucun fichier fourni' });
+    }
+
+    console.log(`📤 Upload fichier: ${req.file.originalname}`);
+
+    // Upload sur Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'svr-shop',
+          resource_type: 'auto'
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
+
+    console.log(`✅ Image uploadée: ${result.secure_url}`);
+
+    res.json({
+      success: true,
+      url: result.secure_url
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur upload:', error);
+    res.status(500).json({ 
+      error: 'Erreur upload Cloudinary',
+      details: error.message 
+    });
+  }
+});
+
 // ==================== BOT TELEGRAM ====================
 
 let bot;
@@ -556,4 +607,5 @@ app.listen(PORT, () => {
   console.log(`✅ CHANNEL_ID: ${CHANNEL_ID ? 'OK' : 'MANQUANT'}`);
   console.log(`✅ OWNER_ID: ${OWNER_TELEGRAM_ID ? 'OK' : 'MANQUANT'}`);
   console.log(`✅ MY_ID: ${MY_TELEGRAM_ID ? 'OK' : 'MANQUANT'}`);
+  console.log(`✅ CLOUDINARY: ${process.env.CLOUDINARY_CLOUD_NAME ? 'OK' : 'MANQUANT'}`);
 });
