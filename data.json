@@ -286,6 +286,21 @@
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774993345/zaoxoymhpwkpzfohjnwx.mov"
       ],
       "createdAt": "2026-03-31T21:42:31.068Z"
+    },
+    {
+      "id": 1778977500738,
+      "name": "GLOKKIES",
+      "category": "WEED",
+      "stock": "En stock",
+      "description": "La Tropical est une variété hybride au taux de THC généralement compris entre 18 % et 24 %, offrant des effets équilibrés entre euphorie et détente. Elle est appréciée pour son côté stimulant au début, suivi d’une relaxation plus douce.\n\nSon goût est très fruité et exotique, avec des notes d’ananas, de mangue et d’agrumes, accompagnées d’une légère touche sucrée et tropicale.",
+      "tariffs": "10g=70",
+      "promoTariffs": "",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1778977404/svr-shop/ixtztsl7v5v5ycfa8sy6.jpg",
+      "gallery": [],
+      "videos": [],
+      "isNew": true,
+      "newUntil": "",
+      "createdAt": "2026-05-17T00:25:00.738Z"
     }
   ],
   "userTokens": {
