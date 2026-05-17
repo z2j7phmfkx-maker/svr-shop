@@ -127,6 +127,12 @@ app.get('/data.json', (req, res) => {
   res.json(loadData());
 });
 
+// ✅ ROUTE POUR RÉCUPÉRER LES PRODUITS
+app.get('/api/products', (req, res) => {
+  const data = loadData();
+  res.json(data.products || []);
+});
+
 app.post('/api/verify-token', (req, res) => {
   const { token, userId } = req.body;
   const data = loadData();
