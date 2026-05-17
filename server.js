@@ -172,7 +172,7 @@ app.post('/api/generate-token', async (req, res) => {
 });
 
 app.post('/api/save-data', async (req, res) => {
-  const { products, shop_settings } = req.body;
+  const { products, shop_settings, editingProductId } = req.body;
   const oldData = loadData();
   const newData = { ...oldData, products, shop_settings };
   
@@ -185,10 +185,16 @@ app.post('/api/save-data', async (req, res) => {
     let minPrice = 'N/A';
     if (newProd.tariffs) {
       const prices = newProd.tariffs.split('|').map(t => {
-        const price = t.split('=')[1]; // "20€" ou "80€"
+        const price = t.split('=')[1];
         return parseInt(price) || 0;
       });
       minPrice = Math.min(...prices);
+    }
+    
+    // ✅ SI C'EST UNE MODIFICATION, NE PAS ENVOYER DE NOTIFICATION
+    if (editingProductId && newProd.id === editingProductId) {
+      console.log(`📝 Produit modifié (pas de notification): ${newProd.name}`);
+      continue;
     }
     
     if (!oldProd) {
@@ -253,7 +259,7 @@ app.post('/api/order', async (req, res) => {
   // Construire le texte des items
   let itemsText = items.map(item => {
     const itemPrice = (item.price * item.quantity).toFixed(2);
-    return `• <b>${item.name}</b> - ${item.grams}g x${item.quantity} = ${itemPrice}€`;
+    return `• <b>${item.name}</b> - ${item.grams.toFixed(2)}g x${item.quantity} = ${itemPrice}€`;
   }).join('\n');
   
   // Déterminer le libellé du lieu de livraison
@@ -267,7 +273,7 @@ app.post('/api/order', async (req, res) => {
   console.log('  ✅ deliveryLabel final:', deliveryLabel);
   
   // Construire le message AVEC le lieu ET le créneau de livraison
-  const message = `<b>📦 Nouvelle commande #${orderNumber}</b>\n\n<b>👤 Client:</b> ${userName}\n\n<b>Articles:</b>\n${itemsText}\n\n<b>💰 Total:</b> ${total}€\n\n<b>⏰ Créneau:</b> ${timeSlot || 'Non spécifié'}\n<b>📍 Type:</b> ${deliveryLabel}`;
+  const message = `<b>📦 Nouvelle commande #${orderNumber}</b>\n\n<b>👤 Client:</b> ${userName}\n\n<b>Articles:</b>\n${itemsText}\n\n<b>💰 Total:</b> ${total.toFixed(2)}€\n\n<b>⏰ Créneau:</b> ${timeSlot || 'Non spécifié'}\n<b>📍 Type:</b> ${deliveryLabel}`;
   
   console.log('\n📝 Message à envoyer:');
   console.log(message);
