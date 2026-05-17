@@ -312,9 +312,11 @@
       "promoTariffs": "",
       "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1778977594/svr-shop/xfakps41jyqfb6fhjrs8.jpg",
       "gallery": [],
-      "videos": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1778978368/svr-shop/rhiycqef1mulntarooz2.mov"
+      ],
       "isNew": true,
-      "newUntil": "",
+      "newUntil": "2026-05-25",
       "createdAt": "2026-05-17T00:26:47.999Z"
     }
   ],
