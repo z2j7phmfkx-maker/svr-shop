@@ -137,7 +137,27 @@ app.post('/api/verify-token', (req, res) => {
   const { token, userId } = req.body;
   const data = loadData();
   
-  if (data.userTokens[token] && data.userTokens[token].toString() === userId.toString()) {
+  console.log('\n[VERIFY-TOKEN] ========================');
+  console.log(`  Token reçu: "${token}"`);
+  console.log(`  UserId reçu: "${userId}" (type: ${typeof userId})`);
+  console.log(`  Data.userTokens keys: ${Object.keys(data.userTokens || {}).slice(0, 5).join(', ')}...`);
+  
+  const storedUserId = data.userTokens[token];
+  console.log(`  StoredUserId trouvé: ${storedUserId} (type: ${typeof storedUserId})`);
+  console.log(`  Token existe dans userTokens: ${token in (data.userTokens || {})}`);
+  
+  if (!storedUserId) {
+    console.log(`  ❌ TOKEN PAS TROUVÉ DANS userTokens`);
+    console.log(`  Tous les tokens: ${Object.keys(data.userTokens || {}).join(', ')}`);
+    return res.json({ valid: false });
+  }
+  
+  const parsedUserId = parseInt(userId, 10);
+  console.log(`  ParsedUserId: ${parsedUserId}`);
+  console.log(`  Comparaison: ${storedUserId} === ${parsedUserId} = ${storedUserId === parsedUserId}`);
+  console.log('============================\n');
+  
+  if (storedUserId === parsedUserId) {
     return res.json({ valid: true });
   }
   res.json({ valid: false });
