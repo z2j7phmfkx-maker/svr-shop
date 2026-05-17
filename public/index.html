@@ -1412,7 +1412,7 @@
     let selectedTariff = null;
     let currentPriceMode = null;
 
-    // 🔧 CALCUL DES GRAMMES À PARTIR DU PRIX
+    // ✅ CALCUL DES GRAMMES À PARTIR DU PRIX (CORRIGÉ)
     function calculateGramsFromPrice() {
       const priceInput = document.getElementById('customPriceInput');
       const resultDiv = document.getElementById('priceResult');
@@ -1431,23 +1431,18 @@
         return;
       }
 
-      // 🔍 TROUVER LE PALLIER DONT LE PRIX INFÉRIEUR ≤ AU MONTANT ENTRÉ
+      // 🔍 TROUVER LE BON PALLIER
       let selectedTariff_temp = null;
 
-      // On parcourt les tarifs du plus bas prix au plus haut
+      // Parcourir du plus petit au plus grand prix
       for (let i = 0; i < tariffs.length; i++) {
         const currentTariff = tariffs[i];
+        const nextTariff = tariffs[i + 1];
         
-        // Si le prix entré >= prix du pallier actuel
+        // Si le prix est dans la plage de ce pallier
         if (price >= currentTariff.price) {
-          // Vérifier s'il y a un pallier suivant
-          const nextTariff = tariffs[i + 1];
-          
-          if (!nextTariff) {
-            // C'est le dernier pallier
-            selectedTariff_temp = currentTariff;
-          } else if (price < nextTariff.price) {
-            // Le prix est entre ce pallier et le suivant
+          if (!nextTariff || price < nextTariff.price) {
+            // C'est le bon pallier
             selectedTariff_temp = currentTariff;
             break;
           }
@@ -1455,16 +1450,15 @@
       }
 
       if (!selectedTariff_temp) {
-        // Le prix est inférieur au premier pallier
-        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Montant insuffisant</span>';
+        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Montant insuffisant (min: ' + tariffs[0].price + '€)</span>';
         return;
       }
 
-      // Calculer les grammes avec le prix au gramme du pallier trouvé
+      // Calculer les grammes
       const pricePerGram = selectedTariff_temp.price / selectedTariff_temp.grams;
       const calculatedGrams = price / pricePerGram;
 
-      // Créer le tariff sélectionné pour l'ajout au panier
+      // Créer le tariff sélectionné
       selectedTariff = {
         ...selectedTariff_temp,
         grams: calculatedGrams,
