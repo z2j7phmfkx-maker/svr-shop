@@ -301,6 +301,21 @@
       "isNew": true,
       "newUntil": "",
       "createdAt": "2026-05-17T00:25:00.738Z"
+    },
+    {
+      "id": 1778977607999,
+      "name": "TROPIGAZ",
+      "category": "WEED",
+      "stock": "En stock",
+      "description": "La Tropigaz est une variété hybride puissante, avec un taux de THC généralement compris entre 22 % et 30 %. Elle offre des effets intenses mêlant euphorie cérébrale, montée énergétique et relaxation progressive.\n\nSon goût associe des notes tropicales et fruitées à un profil plus “gassy”, avec des touches d’agrumes, de mangue et une légère saveur diesel épicée en fin de bouche.",
+      "tariffs": "2,5g=20|10g=70|20g=130",
+      "promoTariffs": "",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1778977594/svr-shop/xfakps41jyqfb6fhjrs8.jpg",
+      "gallery": [],
+      "videos": [],
+      "isNew": true,
+      "newUntil": "",
+      "createdAt": "2026-05-17T00:26:47.999Z"
     }
   ],
   "userTokens": {
