@@ -1412,7 +1412,7 @@
     let selectedTariff = null;
     let currentPriceMode = null;
 
-    // ✅ VÉRIFICATION D'ACCÈS (CORRIGÉE)
+    // ✅ VÉRIFICATION D'ACCÈS (CORRIGÉE AVEC parseInt)
     async function verifyAccess() {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
@@ -1433,8 +1433,7 @@
         const response = await fetch('/api/verify-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token, userId: userId }),
-          signal: controller.signal
+          body: JSON.stringify({ token: token, userId: parseInt(userId) })
         });
         
         clearTimeout(timeoutId);
@@ -1443,15 +1442,15 @@
         const result = await response.json();
         console.log('[CLIENT] Réponse serveur:', result);
 
-        if (result.valid) {
-          console.log('[CLIENT] Accès autorisé !');
+        if (result.valid === true) {
+          console.log('[CLIENT] ✅ Accès autorisé !');
           loadShop();
         } else {
-          console.log('[CLIENT] Accès refusé');
+          console.log('[CLIENT] ❌ Accès refusé - valid:', result.valid);
           showDenied();
         }
       } catch (error) {
-        console.error('[CLIENT] Erreur fetch:', error);
+        console.error('[CLIENT] ❌ Erreur fetch:', error);
         showDenied();
       }
     }
