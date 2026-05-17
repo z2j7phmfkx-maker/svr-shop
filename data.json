@@ -242,7 +242,7 @@
       "name": "KETAMA🇲🇦",
       "category": "HASH",
       "description": "Le Ketama (haschich marocain) est réputé pour sa puissance modérée, avec un taux de THC généralement compris entre 10 % et 20 %, selon la qualité. Les effets sont plutôt relaxants, avec une sensation de détente corporelle et un léger apaisement mental. Au niveau du goût, il se caractérise par des notes terreuses et épicées, souvent accompagnées d'une touche boisée et parfois légèrement sucrée.",
-      "tariffs": "2,5g=20|10g=70|20g=130",
+      "tariffs": "2.5g=20|10g=70|20g=130",
       "isNew": true,
       "newUntil": "2026-04-10",
       "stock": "En stock",
@@ -251,7 +251,8 @@
       "videos": [
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774993345/zaoxoymhpwkpzfohjnwx.mov"
       ],
-      "createdAt": "2026-03-31T21:42:31.068Z"
+      "createdAt": "2026-03-31T21:42:31.068Z",
+      "promoTariffs": ""
     },
     {
       "id": 1778978470420,
