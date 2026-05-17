@@ -1412,45 +1412,66 @@
     let selectedTariff = null;
     let currentPriceMode = null;
 
-    // ✅ VÉRIFICATION D'ACCÈS (CORRIGÉE AVEC parseInt)
+    // ✅ VÉRIFICATION D'ACCÈS (STRING - PAS DE parseInt)
     async function verifyAccess() {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
       const userId = urlParams.get('userId');
 
-      console.log('[CLIENT] Token:', token, 'UserId:', userId);
+      console.log('[CLIENT] ======== VERIFICATION ACCÈS ========');
+      console.log('[CLIENT] Token reçu:', token);
+      console.log('[CLIENT] UserId reçu:', userId, '(type:', typeof userId, ')');
 
       if (!token || !userId) {
-        console.log('[CLIENT] Token ou userId manquant');
+        console.log('[CLIENT] ❌ Token ou userId manquant');
         showDenied();
         return;
       }
 
       try {
+        console.log('[CLIENT] 📡 Envoi du fetch à /api/verify-token');
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const body = {
+          token: token,
+          userId: userId  // ← STRING, pas parseInt
+        };
+        
+        console.log('[CLIENT] Body envoyé:', JSON.stringify(body));
         
         const response = await fetch('/api/verify-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token, userId: parseInt(userId) })
+          body: JSON.stringify(body)
         });
         
         clearTimeout(timeoutId);
         console.log('[CLIENT] HTTP Status:', response.status);
         
+        if (!response.ok) {
+          console.log('[CLIENT] ❌ Erreur HTTP:', response.status);
+          showDenied();
+          return;
+        }
+        
         const result = await response.json();
-        console.log('[CLIENT] Réponse serveur:', result);
+        console.log('[CLIENT] Réponse du serveur:', result);
+        console.log('[CLIENT] result.valid =', result.valid, '(type:', typeof result.valid, ')');
 
         if (result.valid === true) {
-          console.log('[CLIENT] ✅ Accès autorisé !');
+          console.log('[CLIENT] ✅✅✅ ACCÈS AUTORISÉ !');
+          console.log('[CLIENT] ========================================');
           loadShop();
         } else {
-          console.log('[CLIENT] ❌ Accès refusé - valid:', result.valid);
+          console.log('[CLIENT] ❌ ACCÈS REFUSÉ - valid n\'est pas true');
+          console.log('[CLIENT] ========================================');
           showDenied();
         }
       } catch (error) {
-        console.error('[CLIENT] ❌ Erreur fetch:', error);
+        console.error('[CLIENT] ❌ ERREUR FETCH:', error.message);
+        console.error('[CLIENT] Type erreur:', error.name);
+        console.log('[CLIENT] ========================================');
         showDenied();
       }
     }
@@ -1462,8 +1483,10 @@
 
     async function loadShop() {
       try {
+        console.log('[CLIENT] 📦 Chargement des données du shop...');
         const response = await fetch('/data.json');
         shopData = await response.json();
+        console.log('[CLIENT] ✅ Données chargées avec succès');
 
         document.getElementById('authContainer').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
@@ -1478,7 +1501,7 @@
           updateCart();
         }
       } catch (error) {
-        console.error('Erreur chargement:', error);
+        console.error('[CLIENT] ❌ Erreur chargement:', error);
         showDenied();
       }
     }
@@ -2128,7 +2151,7 @@
       }
     });
 
-    // Lancer la vérification d'accès au chargement
+    // 🚀 LANCER LA VÉRIFICATION D'ACCÈS AU CHARGEMENT
     verifyAccess();
   </script>
 </body>
