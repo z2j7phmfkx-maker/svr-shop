@@ -724,6 +724,63 @@
       box-shadow: 0 0 20px rgba(100, 150, 180, 0.5);
     }
 
+    .custom-price-section {
+      background: rgba(100, 150, 180, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+      border: 2px solid rgba(100, 150, 180, 0.3);
+      margin-top: 15px;
+    }
+
+    .custom-price-section label {
+      display: block;
+      color: #6496b4;
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .price-input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .price-input-group input {
+      flex: 1;
+      padding: 10px;
+      background: rgba(100, 150, 180, 0.1);
+      border: 2px solid rgba(100, 150, 180, 0.3);
+      color: #8ab4d4;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .price-input-group input:focus {
+      outline: none;
+      border-color: #6496b4;
+      background: rgba(100, 150, 180, 0.2);
+      box-shadow: 0 0 10px rgba(100, 150, 180, 0.3);
+    }
+
+    .price-result {
+      background: rgba(50, 150, 100, 0.1);
+      padding: 8px;
+      border-radius: 6px;
+      border-left: 3px solid rgba(50, 150, 100, 0.6);
+      font-size: 11px;
+      color: #a0b0c0;
+      line-height: 1.4;
+    }
+
+    .price-result strong {
+      color: #6bc34a;
+      display: block;
+      margin-top: 4px;
+    }
+
     .modal-add-cart-buttons {
       display: flex;
       gap: 10px;
@@ -1257,8 +1314,17 @@
       </div>
 
       <div class="modal-add-cart-section">
-        <label>Choisir une quantité:</label>
+        <label>📌 Tarifs prédéfinis:</label>
         <div class="quantity-buttons" id="quantityButtons"></div>
+      </div>
+
+      <div class="custom-price-section">
+        <label>💶 Ou rentre un montant personnalisé:</label>
+        <div class="price-input-group">
+          <input type="number" id="customPriceInput" placeholder="Ex: 50" min="0" step="0.01" oninput="calculateGramsFromPrice()">
+          <span style="display: flex; align-items: center; color: #6496b4; font-weight: bold;">€</span>
+        </div>
+        <div class="price-result" id="priceResult"></div>
       </div>
 
       <div class="modal-add-cart-buttons">
@@ -1344,6 +1410,75 @@
     let selectedTimeSlot = null;
     let pendingOrder = null;
     let selectedTariff = null;
+    let currentPriceMode = null;
+
+    // 🔧 CALCUL DES GRAMMES À PARTIR DU PRIX
+    function calculateGramsFromPrice() {
+      const priceInput = document.getElementById('customPriceInput');
+      const resultDiv = document.getElementById('priceResult');
+      const price = parseFloat(priceInput.value);
+
+      if (!price || price <= 0) {
+        resultDiv.innerHTML = '';
+        selectedTariff = null;
+        currentPriceMode = null;
+        return;
+      }
+
+      const tariffs = currentProduct.tariffOptions;
+      if (!tariffs || tariffs.length === 0) {
+        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Erreur: tarifs introuvables</span>';
+        return;
+      }
+
+      // 🔍 TROUVER LE PALLIER DANS LEQUEL S'INSCRIT LE MONTANT ENTRÉ
+      let selectedTariff_temp = null;
+
+      for (let i = 0; i < tariffs.length; i++) {
+        const currentTariff = tariffs[i];
+        const nextTariff = tariffs[i + 1];
+
+        if (!nextTariff) {
+          // C'est le dernier pallier
+          if (price >= currentTariff.price) {
+            selectedTariff_temp = currentTariff;
+          }
+        } else {
+          // Vérifier si le prix se situe entre ce pallier et le suivant
+          if (price >= currentTariff.price && price < nextTariff.price) {
+            selectedTariff_temp = currentTariff;
+            break;
+          }
+        }
+      }
+
+      if (!selectedTariff_temp) {
+        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Montant invalide</span>';
+        return;
+      }
+
+      // Calculer les grammes avec le prix au gramme du pallier trouvé
+      const pricePerGram = selectedTariff_temp.price / selectedTariff_temp.grams;
+      const calculatedGrams = price / pricePerGram;
+
+      // Créer le tariff sélectionné pour l'ajout au panier
+      selectedTariff = {
+        ...selectedTariff_temp,
+        grams: calculatedGrams,
+        price: price
+      };
+
+      currentPriceMode = 'custom';
+
+      // Afficher le résultat
+      const gramText = calculatedGrams.toFixed(2);
+      const tariffText = `${selectedTariff_temp.size} = ${selectedTariff_temp.price}€`;
+      
+      resultDiv.innerHTML = `
+        <strong>${price}€ = ${gramText}g</strong><br>
+        <span style="font-size: 10px; color: #888;">Tarif appliqué: ${tariffText}</span>
+      `;
+    }
 
     async function verifyAccess() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -1520,11 +1655,13 @@
       
       currentProduct = product;
       selectedTariff = null;
+      currentPriceMode = null;
 
       document.getElementById('addCartProductName').textContent = product.name;
       document.getElementById('addCartProductImage').src = product.image;
+      document.getElementById('customPriceInput').value = '';
+      document.getElementById('priceResult').innerHTML = '';
       
-      // Parser les tarifs normaux
       const normalTariffs = product.tariffs.split('|').map(t => {
         const [size, price] = t.split('=');
         return {
@@ -1534,7 +1671,6 @@
         };
       });
 
-      // Parser les tarifs promo s'ils existent
       let promoTariffs = {};
       if (product.promoTariffs) {
         product.promoTariffs.split('|').forEach(t => {
@@ -1545,7 +1681,6 @@
 
       currentProduct.tariffOptions = normalTariffs;
       
-      // Afficher les boutons de tarifs
       const quantityBtns = document.getElementById('quantityButtons');
       quantityBtns.innerHTML = '';
       
@@ -1553,15 +1688,12 @@
         const btn = document.createElement('button');
         btn.className = 'quantity-btn';
         
-        // Vérifier s'il y a une promo pour cette quantité
         const promoPrice = promoTariffs[tariff.size];
         
         if (promoPrice) {
-          // Afficher avec prix barré + promo
           btn.innerHTML = `${tariff.size} - <span style="text-decoration: line-through; color: #999;">${tariff.price}€</span> <span style="color: #ff6b6b; font-weight: bold;">${promoPrice}€</span>`;
           btn.onclick = () => selectTariff(btn, { ...tariff, price: promoPrice });
         } else {
-          // Afficher juste le prix normal
           btn.textContent = `${tariff.size} - ${tariff.price}€`;
           btn.onclick = () => selectTariff(btn, tariff);
         }
@@ -1579,11 +1711,15 @@
       btn.classList.add('selected');
       
       selectedTariff = tariff;
+      currentPriceMode = 'tariff';
+      
+      document.getElementById('customPriceInput').value = '';
+      document.getElementById('priceResult').innerHTML = '';
     }
 
     function confirmAddToCart() {
       if (!selectedTariff) {
-        alert('Sélectionne une quantité !');
+        alert('Sélectionne une quantité ou un montant !');
         return;
       }
 
@@ -1616,6 +1752,7 @@
       document.getElementById('modalAddCart').classList.remove('active');
       currentProduct = null;
       selectedTariff = null;
+      currentPriceMode = null;
     }
 
     function updateCart() {
@@ -1636,12 +1773,12 @@
         itemDiv.className = 'cart-item';
         itemDiv.innerHTML = `
           <div class="cart-item-name">${item.name}</div>
-          <div class="cart-item-details">${item.grams}g - ${item.price}€</div>
+          <div class="cart-item-details">${item.grams.toFixed(2)}g - ${item.price}€</div>
           <div class="cart-item-quantity">
             <button onclick="decreaseQuantity(${index})">−</button>
             <span>${item.quantity}x</span>
             <button onclick="increaseQuantity(${index})">+</button>
-            <span style="flex: 1; text-align: right; color: #6496b4; font-weight: bold;">${itemTotal}€</span>
+            <span style="flex: 1; text-align: right; color: #6496b4; font-weight: bold;">${itemTotal.toFixed(2)}€</span>
           </div>
           <button class="cart-item-remove" onclick="removeFromCart(${index})">Supprimer ✕</button>
         `;
@@ -1649,7 +1786,7 @@
       });
 
       cartCount.textContent = count;
-      cartTotal.textContent = total + '€';
+      cartTotal.textContent = total.toFixed(2) + '€';
       
       localStorage.setItem('cart', JSON.stringify(cart));
     }
@@ -1723,7 +1860,6 @@
         return;
       }
 
-      // ✅ AJOUTER LA DELIVERY OPTION À PENDING ORDER
       pendingOrder.deliveryOption = selectedDeliveryOption;
       
       console.log('📦 Commande en attente:', pendingOrder);
@@ -1736,7 +1872,6 @@
       const container = document.getElementById('timeSlotsContainer');
       container.innerHTML = '';
       
-      // Créer les créneaux horaires d'une heure par une heure entre 14h et 00h
       const timeSlots = [
         '14:00 - 15:00',
         '15:00 - 16:00',
@@ -1787,10 +1922,8 @@
         return;
       }
 
-      // ✅ Ajouter le créneau à la commande
       pendingOrder.timeSlot = selectedTimeSlot;
 
-      // ✅ Vérifier que deliveryOption est bien présent
       console.log('🎯 Commande finale avant envoi:', {
         userId: pendingOrder.userId,
         items: pendingOrder.items.length,
@@ -1799,7 +1932,6 @@
         timeSlot: pendingOrder.timeSlot
       });
 
-      // Afficher le loading
       document.getElementById('loadingOverlay').classList.add('active');
 
       try {
@@ -1811,7 +1943,6 @@
 
         const result = await response.json();
 
-        // Cacher le loading
         document.getElementById('loadingOverlay').classList.remove('active');
 
         if (result.success) {
@@ -1846,7 +1977,6 @@
         return;
       }
 
-      // Sauvegarder la commande en attente
       pendingOrder = {
         userId: userId,
         token: token,
@@ -1854,7 +1984,6 @@
         total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
       };
 
-      // Ouvrir le modal de livraison
       openDeliveryModal();
     }
 
