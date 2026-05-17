@@ -295,6 +295,37 @@
       display: block;
     }
 
+    .media-list {
+      margin-top: 15px;
+      padding: 12px;
+      background: rgba(100, 150, 180, 0.1);
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .media-item {
+      background: rgba(20, 28, 50, 0.8);
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #a0b0c0;
+    }
+
+    .media-item button {
+      background: rgba(220, 100, 100, 0.3);
+      border: none;
+      color: #ff6b6b;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 10px;
+    }
+
     .sync-section {
       background: rgba(15, 20, 40, 0.8);
       padding: 20px;
@@ -419,21 +450,24 @@
           </div>
 
           <div class="form-group">
-            <label>Image principale</label>
+            <label>Image principale 📷</label>
             <input type="file" id="productImageFile" accept="image/*" onchange="uploadImage('productImageFile', 'productImage', 'imagePreview')">
-            <div class="upload-progress" id="imageUploadProgress"></div>
-            <input type="text" id="productImage" placeholder="URL sera remplie automatiquement" readonly style="margin-top: 10px;">
+            <div class="upload-progress" id="productImageFileProgress"></div>
             <img id="imagePreview" class="image-preview" style="display: none;">
           </div>
 
           <div class="form-group">
-            <label>Images galerie (URLs Cloudinary, une par ligne)</label>
-            <textarea id="productGallery" placeholder="https://res.cloudinary.com/...&#10;https://res.cloudinary.com/..."></textarea>
+            <label>Images galerie 📸</label>
+            <input type="file" id="productGalleryFile" accept="image/*" multiple onchange="uploadMultipleImages('productGalleryFile', 'productGalleryList')">
+            <div class="upload-progress" id="productGalleryFileProgress"></div>
+            <div class="media-list" id="productGalleryList" style="display: none;"></div>
           </div>
 
           <div class="form-group">
-            <label>Vidéos (URLs, une par ligne)</label>
-            <textarea id="productVideos" placeholder="https://res.cloudinary.com/.../video.mov&#10;https://res.cloudinary.com/.../video.mp4"></textarea>
+            <label>Vidéos 🎥</label>
+            <input type="file" id="productVideoFile" accept="video/*" multiple onchange="uploadMultipleVideos('productVideoFile', 'productVideoList')">
+            <div class="upload-progress" id="productVideoFileProgress"></div>
+            <div class="media-list" id="productVideoList" style="display: none;"></div>
           </div>
 
           <div class="form-row">
@@ -517,6 +551,8 @@
     const ADMIN_PASSWORD = 'Tova$Shop2024!Secure';
     let shopData = {};
     let isAuthenticated = false;
+    let galleryUrls = [];
+    let videoUrls = [];
 
     async function login() {
       const password = document.getElementById('password').value;
@@ -568,9 +604,8 @@
 
     async function uploadImage(inputId, urlFieldId, previewId) {
       const fileInput = document.getElementById(inputId);
-      const urlField = document.getElementById(urlFieldId);
       const preview = document.getElementById(previewId);
-      const progressDiv = document.getElementById(inputId + 'Progress') || document.querySelector(`.upload-progress`);
+      const progressDiv = document.getElementById(inputId + 'Progress');
 
       if (!fileInput.files[0]) return;
 
@@ -590,11 +625,11 @@
         const result = await response.json();
 
         if (result.success) {
-          urlField.value = result.url;
           preview.src = result.url;
           preview.style.display = 'block';
           progressDiv.textContent = '✅ Image uploadée!';
           setTimeout(() => progressDiv.classList.remove('active'), 3000);
+          return result.url;
         } else {
           showMessage('Erreur upload: ' + result.error, 'error');
         }
@@ -602,6 +637,114 @@
         showMessage('Erreur: ' + error.message, 'error');
         progressDiv.classList.remove('active');
       }
+    }
+
+    async function uploadMultipleImages(inputId, listId) {
+      const fileInput = document.getElementById(inputId);
+      const listDiv = document.getElementById(listId);
+      const progressDiv = document.getElementById(inputId + 'Progress');
+
+      if (!fileInput.files || fileInput.files.length === 0) return;
+
+      galleryUrls = [];
+      listDiv.innerHTML = '';
+      listDiv.style.display = 'block';
+      progressDiv.classList.add('active');
+
+      for (let i = 0; i < fileInput.files.length; i++) {
+        const file = fileInput.files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          progressDiv.textContent = `📤 Upload ${i + 1}/${fileInput.files.length}...`;
+
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            galleryUrls.push(result.url);
+            
+            const item = document.createElement('div');
+            item.className = 'media-item';
+            item.innerHTML = `
+              <span>📸 ${file.name}</span>
+              <button onclick="removeGalleryItem(${i})">Supprimer</button>
+            `;
+            listDiv.appendChild(item);
+          }
+        } catch (error) {
+          showMessage(`Erreur upload ${file.name}`, 'error');
+        }
+      }
+
+      progressDiv.textContent = '✅ Tous les fichiers uploadés!';
+      setTimeout(() => progressDiv.classList.remove('active'), 3000);
+    }
+
+    async function uploadMultipleVideos(inputId, listId) {
+      const fileInput = document.getElementById(inputId);
+      const listDiv = document.getElementById(listId);
+      const progressDiv = document.getElementById(inputId + 'Progress');
+
+      if (!fileInput.files || fileInput.files.length === 0) return;
+
+      videoUrls = [];
+      listDiv.innerHTML = '';
+      listDiv.style.display = 'block';
+      progressDiv.classList.add('active');
+
+      for (let i = 0; i < fileInput.files.length; i++) {
+        const file = fileInput.files[i];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+          progressDiv.textContent = `📤 Upload vidéo ${i + 1}/${fileInput.files.length}...`;
+
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            videoUrls.push(result.url);
+            
+            const item = document.createElement('div');
+            item.className = 'media-item';
+            item.innerHTML = `
+              <span>🎥 ${file.name}</span>
+              <button onclick="removeVideoItem(${i})">Supprimer</button>
+            `;
+            listDiv.appendChild(item);
+          }
+        } catch (error) {
+          showMessage(`Erreur upload ${file.name}`, 'error');
+        }
+      }
+
+      progressDiv.textContent = '✅ Toutes les vidéos uploadées!';
+      setTimeout(() => progressDiv.classList.remove('active'), 3000);
+    }
+
+    function removeGalleryItem(index) {
+      galleryUrls.splice(index, 1);
+      
+      const items = document.querySelectorAll('#productGalleryList .media-item');
+      if (items[index]) items[index].remove();
+    }
+
+    function removeVideoItem(index) {
+      videoUrls.splice(index, 1);
+      
+      const items = document.querySelectorAll('#productVideoList .media-item');
+      if (items[index]) items[index].remove();
     }
 
     function editProduct(id) {
@@ -614,11 +757,43 @@
       document.getElementById('productDescription').value = product.description || '';
       document.getElementById('productTariffs').value = product.tariffs || '';
       document.getElementById('productPromoTariffs').value = product.promoTariffs || '';
-      document.getElementById('productImage').value = product.image || '';
-      document.getElementById('productGallery').value = (product.gallery || []).join('\n');
-      document.getElementById('productVideos').value = (product.videos || []).join('\n');
       document.getElementById('productIsNew').value = product.isNew ? 'true' : 'false';
       document.getElementById('productNewUntil').value = product.newUntil || '';
+
+      galleryUrls = product.gallery || [];
+      videoUrls = product.videos || [];
+
+      // Afficher les images existantes
+      if (galleryUrls.length > 0) {
+        const galleryList = document.getElementById('productGalleryList');
+        galleryList.innerHTML = '';
+        galleryList.style.display = 'block';
+        galleryUrls.forEach((url, i) => {
+          const item = document.createElement('div');
+          item.className = 'media-item';
+          item.innerHTML = `
+            <span>📸 Image ${i + 1}</span>
+            <button onclick="removeGalleryItem(${i})">Supprimer</button>
+          `;
+          galleryList.appendChild(item);
+        });
+      }
+
+      // Afficher les vidéos existantes
+      if (videoUrls.length > 0) {
+        const videoList = document.getElementById('productVideoList');
+        videoList.innerHTML = '';
+        videoList.style.display = 'block';
+        videoUrls.forEach((url, i) => {
+          const item = document.createElement('div');
+          item.className = 'media-item';
+          item.innerHTML = `
+            <span>🎥 Vidéo ${i + 1}</span>
+            <button onclick="removeVideoItem(${i})">Supprimer</button>
+          `;
+          videoList.appendChild(item);
+        });
+      }
 
       if (product.image) {
         document.getElementById('imagePreview').src = product.image;
@@ -643,9 +818,9 @@
         description: document.getElementById('productDescription').value,
         tariffs: document.getElementById('productTariffs').value,
         promoTariffs: document.getElementById('productPromoTariffs').value,
-        image: document.getElementById('productImage').value,
-        gallery: document.getElementById('productGallery').value.split('\n').filter(x => x.trim()),
-        videos: document.getElementById('productVideos').value.split('\n').filter(x => x.trim()),
+        image: document.getElementById('imagePreview').src || '',
+        gallery: galleryUrls,
+        videos: videoUrls,
         isNew: document.getElementById('productIsNew').value === 'true',
         newUntil: document.getElementById('productNewUntil').value,
         createdAt: new Date().toISOString()
@@ -671,20 +846,22 @@
       product.description = document.getElementById('productDescription').value;
       product.tariffs = document.getElementById('productTariffs').value;
       product.promoTariffs = document.getElementById('productPromoTariffs').value;
-      product.image = document.getElementById('productImage').value;
-      product.gallery = document.getElementById('productGallery').value.split('\n').filter(x => x.trim());
-      product.videos = document.getElementById('productVideos').value.split('\n').filter(x => x.trim());
+      product.image = document.getElementById('imagePreview').src || '';
+      product.gallery = galleryUrls;
+      product.videos = videoUrls;
       product.isNew = document.getElementById('productIsNew').value === 'true';
       product.newUntil = document.getElementById('productNewUntil').value;
 
       saveData();
       clearProductForm();
+      loadProducts();
     }
 
     function deleteProduct(id) {
       if (confirm('Supprimer ce produit?')) {
         shopData.products = shopData.products.filter(p => p.id !== id);
         saveData();
+        loadProducts();
       }
     }
 
@@ -695,13 +872,16 @@
       document.getElementById('productDescription').value = '';
       document.getElementById('productTariffs').value = '';
       document.getElementById('productPromoTariffs').value = '';
-      document.getElementById('productImage').value = '';
       document.getElementById('productImageFile').value = '';
-      document.getElementById('productGallery').value = '';
-      document.getElementById('productVideos').value = '';
+      document.getElementById('productGalleryFile').value = '';
+      document.getElementById('productVideoFile').value = '';
       document.getElementById('productIsNew').value = 'false';
       document.getElementById('productNewUntil').value = '';
       document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('productGalleryList').style.display = 'none';
+      document.getElementById('productVideoList').style.display = 'none';
+      galleryUrls = [];
+      videoUrls = [];
       document.querySelector('.form-section h3').textContent = 'Ajouter un nouveau produit';
       document.querySelector('.form-section button').textContent = 'Ajouter produit';
       document.querySelector('.form-section button').onclick = () => addProduct();
@@ -720,8 +900,8 @@
 
     function loadSettings() {
       const settings = shopData.shop_settings || {};
-      document.getElementById('openingTime').value = settings.opening_time || '10:00';
-      document.getElementById('closingTime').value = settings.closing_time || '22:00';
+      document.getElementById('openingTime').value = settings.opening_time || '14:00';
+      document.getElementById('closingTime').value = settings.closing_time || '00:00';
     }
 
     function saveSettings() {
