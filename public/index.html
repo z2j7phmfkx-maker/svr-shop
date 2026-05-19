@@ -1698,7 +1698,7 @@
       document.getElementById('priceResult').innerHTML = '';
     }
 
-    // 🔧 CALCUL AVEC PRISE EN COMPTE DES PROMOS
+    // 🔧 FIX PRIX MINIMUM DYNAMIQUE - ACCEPTE À PARTIR DE 20€
     function calculateGramsFromPrice() {
       const priceInput = document.getElementById('customPriceInput');
       const resultDiv = document.getElementById('priceResult');
@@ -1711,12 +1711,12 @@
         return;
       }
 
-      // 🔧 UTILISER LES TARIFS PROMO S'ILS EXISTENT, SINON LES TARIFS NORMAUX
+      // 🔧 DÉTERMINER LES TARIFS À UTILISER (PROMO OU NORMAL)
       let tariffsToUse = currentProduct.tariffOptions;
       let isPromo = false;
 
+      // Vérifier s'il existe des tarifs promo
       if (currentProduct.promoTariffsParsed && Object.keys(currentProduct.promoTariffsParsed).length > 0) {
-        // Parser les tarifs promo depuis l'objet
         const promoTariffs = Object.entries(currentProduct.promoTariffsParsed).map(([size, promoPrice]) => {
           return {
             size: size,
@@ -1725,11 +1725,10 @@
           };
         });
         
-        // Vérifier que les tarifs promo sont valides
         if (promoTariffs.length > 0 && !isNaN(promoTariffs[0].price)) {
           tariffsToUse = promoTariffs;
           isPromo = true;
-          console.log('[PROMO] Utilisation des tarifs promo pour le calcul');
+          console.log('[CALCUL] 📍 Utilisation des tarifs PROMO');
         }
       }
 
@@ -1738,32 +1737,41 @@
         return;
       }
 
-      let selectedTariff_temp = null;
+      // 🔴 RÉCUPÉRER LE PRIX MINIMUM DYNAMIQUEMENT
+      const minPrice = Math.min(...tariffsToUse.map(t => t.price));
+      console.log('[CALCUL] 💰 Prix minimum des tarifs:', minPrice + '€');
 
-      // Trouver le tarif correspondant au prix entré
+      if (price < minPrice) {
+        resultDiv.innerHTML = `<span style="color: #ff6b6b;">Montant insuffisant (min: ${minPrice}€)</span>`;
+        return;
+      }
+
+      // 🔍 TROUVER LE TARIF CORRESPONDANT AU PRIX ENTRÉ
+      let matchedTariff = null;
+
       for (let i = 0; i < tariffsToUse.length; i++) {
         const currentTariff = tariffsToUse[i];
         const nextTariff = tariffsToUse[i + 1];
         
         if (price >= currentTariff.price) {
           if (!nextTariff || price < nextTariff.price) {
-            selectedTariff_temp = currentTariff;
+            matchedTariff = currentTariff;
             break;
           }
         }
       }
 
-      if (!selectedTariff_temp) {
-        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Montant insuffisant (min: ' + tariffsToUse[0].price + '€)</span>';
+      if (!matchedTariff) {
+        resultDiv.innerHTML = `<span style="color: #ff6b6b;">Montant insuffisant (min: ${minPrice}€)</span>`;
         return;
       }
 
-      // Calculer les grammes basés sur le prix au gramme du tarif trouvé
-      const pricePerGram = selectedTariff_temp.price / selectedTariff_temp.grams;
+      // 📐 CALCUL DES GRAMMES
+      const pricePerGram = matchedTariff.price / matchedTariff.grams;
       const calculatedGrams = price / pricePerGram;
 
       selectedTariff = {
-        ...selectedTariff_temp,
+        ...matchedTariff,
         grams: calculatedGrams,
         price: price
       };
@@ -1771,7 +1779,7 @@
       currentPriceMode = 'custom';
 
       const gramText = calculatedGrams.toFixed(2);
-      const tariffText = `${selectedTariff_temp.size} = ${selectedTariff_temp.price}€${isPromo ? ' (PROMO)' : ''}`;
+      const tariffText = `${matchedTariff.size} = ${matchedTariff.price}€${isPromo ? ' (PROMO)' : ''}`;
       
       resultDiv.innerHTML = `
         <strong>${price}€ = ${gramText}g</strong><br>
