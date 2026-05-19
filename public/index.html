@@ -712,9 +712,14 @@
       transition: all 0.3s ease;
     }
 
-    .quantity-btn:hover {
+    .quantity-btn:hover:not(:disabled) {
       background: rgba(100, 150, 180, 0.4);
       border-color: #6496b4;
+    }
+
+    .quantity-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .quantity-btn.selected {
@@ -1151,6 +1156,17 @@
       display: flex;
     }
 
+    .warning-message {
+      background: rgba(255, 200, 87, 0.2);
+      border: 1px solid rgba(255, 200, 87, 0.5);
+      color: #ffc857;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
     @media (max-width: 768px) {
       .products-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -1339,6 +1355,7 @@
       <button class="modal-close" onclick="closeDeliveryModal()">&times;</button>
       <h3 class="modal-title">Comment veux-tu recevoir ta commande ?</h3>
       
+      <div id="deliveryWarning"></div>
       <div id="deliveryOptionsContainer" style="margin-top: 20px;"></div>
       
       <div style="margin-top: 20px; display: flex; gap: 10px;">
@@ -1865,13 +1882,17 @@
 
     document.querySelector('.close-cart-btn').addEventListener('click', closeCart);
 
-    function openDeliveryModal() {
+    // 🔧 LIVRAISON MIN 50€
+    function openDeliveryModal(totalPrice) {
+      const warningDiv = document.getElementById('deliveryWarning');
       const container = document.getElementById('deliveryOptionsContainer');
+      
+      warningDiv.innerHTML = '';
       container.innerHTML = '';
       
       const options = [
         { label: '🏪 Sur place', value: 'sur_place' },
-        { label: '🚚 Livraison', value: 'livraison' }
+        { label: '🚚 Livraison (min. 50€)', value: 'livraison' }
       ];
       
       options.forEach(option => {
@@ -1879,9 +1900,25 @@
         btn.className = 'quantity-btn';
         btn.textContent = option.label;
         btn.style.marginBottom = '10px';
+        
+        // 🔴 Désactiver livraison si total < 50€
+        if (option.value === 'livraison' && totalPrice < 50) {
+          btn.disabled = true;
+          btn.title = 'Minimum 50€ pour la livraison';
+          btn.textContent = '🚚 Livraison (min. 50€) ❌';
+        }
+        
         btn.onclick = () => selectDeliveryOption(btn, option.value);
         container.appendChild(btn);
       });
+
+      // 📢 Afficher un message si < 50€
+      if (totalPrice < 50) {
+        const warningMsg = document.createElement('div');
+        warningMsg.className = 'warning-message';
+        warningMsg.textContent = `⚠️ Livraison disponible à partir de 50€ (Actuellement: ${totalPrice.toFixed(2)}€)`;
+        warningDiv.appendChild(warningMsg);
+      }
       
       document.getElementById('deliveryModal').classList.add('active');
     }
@@ -2022,14 +2059,16 @@
         return;
       }
 
+      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
       pendingOrder = {
         userId: userId,
         token: token,
         items: cart,
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+        total: totalPrice
       };
 
-      openDeliveryModal();
+      openDeliveryModal(totalPrice);
     }
 
     function showNotification(message) {
