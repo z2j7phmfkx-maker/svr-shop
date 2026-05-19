@@ -1643,6 +1643,7 @@
       }
 
       currentProduct.tariffOptions = normalTariffs;
+      currentProduct.promoTariffsParsed = promoTariffs;
       
       const quantityBtns = document.getElementById('quantityButtons');
       quantityBtns.innerHTML = '';
@@ -1680,6 +1681,7 @@
       document.getElementById('priceResult').innerHTML = '';
     }
 
+    // 🔧 CALCUL AVEC PRISE EN COMPTE DES PROMOS
     function calculateGramsFromPrice() {
       const priceInput = document.getElementById('customPriceInput');
       const resultDiv = document.getElementById('priceResult');
@@ -1692,17 +1694,39 @@
         return;
       }
 
-      const tariffs = currentProduct.tariffOptions;
-      if (!tariffs || tariffs.length === 0) {
+      // 🔧 UTILISER LES TARIFS PROMO S'ILS EXISTENT, SINON LES TARIFS NORMAUX
+      let tariffsToUse = currentProduct.tariffOptions;
+      let isPromo = false;
+
+      if (currentProduct.promoTariffsParsed && Object.keys(currentProduct.promoTariffsParsed).length > 0) {
+        // Parser les tarifs promo depuis l'objet
+        const promoTariffs = Object.entries(currentProduct.promoTariffsParsed).map(([size, promoPrice]) => {
+          return {
+            size: size,
+            price: promoPrice,
+            grams: parseFloat(size)
+          };
+        });
+        
+        // Vérifier que les tarifs promo sont valides
+        if (promoTariffs.length > 0 && !isNaN(promoTariffs[0].price)) {
+          tariffsToUse = promoTariffs;
+          isPromo = true;
+          console.log('[PROMO] Utilisation des tarifs promo pour le calcul');
+        }
+      }
+
+      if (!tariffsToUse || tariffsToUse.length === 0) {
         resultDiv.innerHTML = '<span style="color: #ff6b6b;">Erreur: tarifs introuvables</span>';
         return;
       }
 
       let selectedTariff_temp = null;
 
-      for (let i = 0; i < tariffs.length; i++) {
-        const currentTariff = tariffs[i];
-        const nextTariff = tariffs[i + 1];
+      // Trouver le tarif correspondant au prix entré
+      for (let i = 0; i < tariffsToUse.length; i++) {
+        const currentTariff = tariffsToUse[i];
+        const nextTariff = tariffsToUse[i + 1];
         
         if (price >= currentTariff.price) {
           if (!nextTariff || price < nextTariff.price) {
@@ -1713,10 +1737,11 @@
       }
 
       if (!selectedTariff_temp) {
-        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Montant insuffisant (min: ' + tariffs[0].price + '€)</span>';
+        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Montant insuffisant (min: ' + tariffsToUse[0].price + '€)</span>';
         return;
       }
 
+      // Calculer les grammes basés sur le prix au gramme du tarif trouvé
       const pricePerGram = selectedTariff_temp.price / selectedTariff_temp.grams;
       const calculatedGrams = price / pricePerGram;
 
@@ -1729,7 +1754,7 @@
       currentPriceMode = 'custom';
 
       const gramText = calculatedGrams.toFixed(2);
-      const tariffText = `${selectedTariff_temp.size} = ${selectedTariff_temp.price}€`;
+      const tariffText = `${selectedTariff_temp.size} = ${selectedTariff_temp.price}€${isPromo ? ' (PROMO)' : ''}`;
       
       resultDiv.innerHTML = `
         <strong>${price}€ = ${gramText}g</strong><br>
