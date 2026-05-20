@@ -974,25 +974,16 @@
       color: #6496b4;
     }
 
-    .tariff-promo-label {
-      display: block;
-      margin-top: 8px;
-      margin-bottom: 8px;
-      color: #ff6b6b;
-      font-weight: bold;
-      font-size: 12px;
-    }
-
-    .tariff-price-promo {
-      color: #ff6b6b;
-      font-weight: bold;
-    }
-
     .tariff-price-original {
       text-decoration: line-through;
       color: #6a7080;
       margin-right: 6px;
       font-size: 11px;
+    }
+
+    .tariff-price-promo {
+      color: #ff6b6b;
+      font-weight: bold;
     }
 
     .modal-videos {
@@ -2153,38 +2144,40 @@
         normalLabel.textContent = 'Tarifs:';
         tariffsDiv.appendChild(normalLabel);
         
-        product.tariffs.split('|').forEach(tariff => {
-          const [size, price] = tariff.split('=');
-          const row = document.createElement('div');
-          row.className = 'tariff-row';
-          row.innerHTML = `
-            <span>${size.trim()}</span>
-            <span class="tariff-price">${price.trim()}€</span>
-          `;
-          tariffsDiv.appendChild(row);
+        const normalTariffs = product.tariffs.split('|').map(t => {
+          const [size, price] = t.split('=');
+          return { size: size.trim(), price: price.trim() };
         });
-      }
 
-      if (product.promoTariffs) {
-        const promoLabel = document.createElement('div');
-        promoLabel.className = 'tariff-promo-label';
-        promoLabel.textContent = 'Tarifs Promo:';
-        tariffsDiv.appendChild(promoLabel);
+        const promoTariffs = {};
+        if (product.promoTariffs && product.promoTariffs.trim()) {
+          product.promoTariffs.split('|').forEach(t => {
+            const [size, price] = t.split('=');
+            promoTariffs[size.trim()] = price.trim();
+          });
+        }
 
-        product.promoTariffs.split('|').forEach(tariff => {
-          const [size, promoPrice] = tariff.split('=');
-          const normalTariff = product.tariffs.split('|').find(t => t.includes(size));
-          const normalPrice = normalTariff ? normalTariff.split('=')[1].trim() : null;
-
+        normalTariffs.forEach(tariff => {
           const row = document.createElement('div');
           row.className = 'tariff-row';
-          row.innerHTML = `
-            <span>${size.trim()}</span>
-            <span>
-              ${normalPrice ? `<span class="tariff-price-original">${normalPrice}€</span>` : ''}
-              <span class="tariff-price-promo">${promoPrice.trim()}€</span>
-            </span>
-          `;
+          
+          const promoPrice = promoTariffs[tariff.size];
+          
+          if (promoPrice) {
+            row.innerHTML = `
+              <span>${tariff.size}</span>
+              <span>
+                <span class="tariff-price-original">${tariff.price}€</span>
+                <span class="tariff-price-promo">${promoPrice}€</span>
+              </span>
+            `;
+          } else {
+            row.innerHTML = `
+              <span>${tariff.size}</span>
+              <span class="tariff-price">${tariff.price}€</span>
+            `;
+          }
+          
           tariffsDiv.appendChild(row);
         });
       }
