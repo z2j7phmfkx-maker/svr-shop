@@ -276,6 +276,23 @@
       "isNew": true,
       "newUntil": "2026-05-25",
       "createdAt": "2026-05-17T10:36:07.980Z"
+    },
+    {
+      "id": 1779380085097,
+      "name": "TABAC🚬",
+      "category": "EXTRA",
+      "stock": "En stock",
+      "description": "Paquets de tabac par 20 venant principalement d’Espagne ou Afrique (Maroc, Sénégal, Côte d’ivoire…) selon les arrivages, on peut retrouver les classiques type Camel, Philipp Morris, Marlboro Red ou Light à voir aussi selon les arrivages ",
+      "tariffs": "1=8|10=70",
+      "promoTariffs": "",
+      "tariffsLabel": "",
+      "allowCustomPrice": false,
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1779379995/svr-shop/iiwyhmajwzd60w0wf8lg.jpg",
+      "gallery": [],
+      "videos": [],
+      "isNew": false,
+      "newUntil": "2026-05-29",
+      "createdAt": "2026-05-21T16:14:45.098Z"
     }
   ],
   "userTokens": {
