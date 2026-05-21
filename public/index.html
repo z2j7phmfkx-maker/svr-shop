@@ -737,6 +737,10 @@
       margin-top: 15px;
     }
 
+    .custom-price-section.hidden {
+      display: none;
+    }
+
     .custom-price-section label {
       display: block;
       color: #6496b4;
@@ -1326,7 +1330,7 @@
         <div class="quantity-buttons" id="quantityButtons"></div>
       </div>
 
-      <div class="custom-price-section">
+      <div class="custom-price-section" id="customPriceDiv">
         <label>💶 Ou rentre un montant personnalisé:</label>
         <div class="price-input-group">
           <input type="number" id="customPriceInput" placeholder="Ex: 30" min="0" step="0.01" oninput="calculateGramsFromPrice()">
@@ -1657,22 +1661,34 @@
       const quantityBtns = document.getElementById('quantityButtons');
       quantityBtns.innerHTML = '';
       
+      // ✅ RÉCUPÉRER LE LABEL (EXEMPLE: "g", "", ou "unité")
+      const tariffsLabel = product.tariffsLabel || '';
+      
       normalTariffs.forEach(tariff => {
         const btn = document.createElement('button');
         btn.className = 'quantity-btn';
         
+        const displaySize = tariffsLabel ? tariff.size + tariffsLabel : tariff.size;
         const promoPrice = promoTariffs[tariff.size];
         
         if (promoPrice) {
-          btn.innerHTML = `${tariff.size} - <span style="text-decoration: line-through; color: #999;">${tariff.price}€</span> <span style="color: #ff6b6b; font-weight: bold;">${promoPrice}€</span>`;
+          btn.innerHTML = `${displaySize} - <span style="text-decoration: line-through; color: #999;">${tariff.price}€</span> <span style="color: #ff6b6b; font-weight: bold;">${promoPrice}€</span>`;
           btn.onclick = () => selectTariff(btn, { ...tariff, price: promoPrice });
         } else {
-          btn.textContent = `${tariff.size} - ${tariff.price}€`;
+          btn.textContent = `${displaySize} - ${tariff.price}€`;
           btn.onclick = () => selectTariff(btn, tariff);
         }
         
         quantityBtns.appendChild(btn);
       });
+      
+      // ✅ MASQUER LE CHAMP CUSTOM PRICE SI allowCustomPrice EST FALSE
+      const customPriceDiv = document.getElementById('customPriceDiv');
+      if (product.allowCustomPrice === false) {
+        customPriceDiv.classList.add('hidden');
+      } else {
+        customPriceDiv.classList.remove('hidden');
+      }
       
       document.getElementById('modalAddCart').classList.add('active');
     }
@@ -2144,6 +2160,9 @@
         normalLabel.textContent = 'Tarifs:';
         tariffsDiv.appendChild(normalLabel);
         
+        // ✅ RÉCUPÉRER LE LABEL POUR L'AFFICHAGE
+        const tariffsLabel = product.tariffsLabel || '';
+        
         const normalTariffs = product.tariffs.split('|').map(t => {
           const [size, price] = t.split('=');
           return { size: size.trim(), price: price.trim() };
@@ -2161,11 +2180,12 @@
           const row = document.createElement('div');
           row.className = 'tariff-row';
           
+          const displaySize = tariffsLabel ? tariff.size + tariffsLabel : tariff.size;
           const promoPrice = promoTariffs[tariff.size];
           
           if (promoPrice) {
             row.innerHTML = `
-              <span>${tariff.size}</span>
+              <span>${displaySize}</span>
               <span>
                 <span class="tariff-price-original">${tariff.price}€</span>
                 <span class="tariff-price-promo">${promoPrice}€</span>
@@ -2173,7 +2193,7 @@
             `;
           } else {
             row.innerHTML = `
-              <span>${tariff.size}</span>
+              <span>${displaySize}</span>
               <span class="tariff-price">${tariff.price}€</span>
             `;
           }
