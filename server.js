@@ -31,6 +31,7 @@ const MY_TELEGRAM_ID = process.env.MY_TELEGRAM_ID;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = 'z2j7phmfkx-maker/svr-shop';
 const SITE_URL = process.env.SITE_URL || 'https://svr-shop.onrender.com';
+const CHANNEL_USERNAME = process.env.CHANNEL_USERNAME || 'SVR_TO'; // Ajouter dans .env
 
 // ==================== UTILITAIRES ====================
 
@@ -486,10 +487,23 @@ if (BOT_TOKEN) {
       
       console.log(`📱 /start: ${userName} (${userId})`);
       
+      // ✅ VÉRIFIER SI LE USER EST DANS LE CANAL
       const isMember = await isChannelMember(userId);
       if (!isMember) {
         console.log(`❌ ${userName} n'est pas membre du canal`);
-        return ctx.reply('❌ Tu dois être membre de @SVR_TO\n🔗 https://t.me/SVR_TO');
+        return ctx.reply(
+          '❌ Tu dois rejoindre le canal pour accéder à la boutique.\n\n🔗 Clique ci-dessous :',
+          {
+            reply_markup: {
+              inline_keyboard: [[
+                {
+                  text: '📱 Rejoindre le canal',
+                  url: `https://t.me/${CHANNEL_USERNAME}`
+                }
+              ]]
+            }
+          }
+        );
       }
       
       console.log(`✅ ${userName} est membre du canal`);
@@ -499,7 +513,7 @@ if (BOT_TOKEN) {
       );
       
       if (!existingToken) {
-        // Nouvel utilisateur : créer token + WebApp Button
+        // 🆕 NOUVEL UTILISATEUR
         const token = generateToken();
         data.userTokens[token] = userId;
         data.usernames = data.usernames || {};
@@ -518,24 +532,22 @@ if (BOT_TOKEN) {
         console.log(`🆕 Nouvel user créé: ${userName} (firstName: ${firstName})`);
         
         const link = `${SITE_URL}?token=${token}&userId=${userId}`;
-        const welcomeMsg = `✅ Bienvenue @${userName} !\n\nTu es autorisé à accéder au shop SVR ! 🎁`;
+        const welcomeMsg = `✅ Bienvenue @${userName} ! 🎉\n\nTu es autorisé à accéder à la boutique SVR 🛍️`;
         
         return ctx.reply(welcomeMsg, {
           reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: '🛍️ Ouvrir la boutique',
-                  web_app: {
-                    url: link  // ✅ WebApp au lieu de callback_data
-                  }
+            inline_keyboard: [[
+              {
+                text: '🛍️ Ouvrir la boutique',
+                web_app: {
+                  url: link
                 }
-              ]
-            ]
+              }
+            ]]
           }
         });
       } else {
-        // Utilisateur existant : mettre à jour firstName ET username
+        // ♻️ UTILISATEUR EXISTANT
         data.firstNames = data.firstNames || {};
         data.usernames = data.usernames || {};
         
@@ -558,25 +570,78 @@ if (BOT_TOKEN) {
         console.log(`♻️ User existant: ${userName}`);
         
         const link = `${SITE_URL}?token=${existingToken}&userId=${userId}`;
-        const welcomeMsg = `✅ Tu as déjà accès ! 🛍️\n\nClique le bouton pour ouvrir la boutique.`;
+        const welcomeMsg = `✅ Tu as déjà accès ! 🎁\n\nClique pour ouvrir la boutique 🛍️`;
         
         return ctx.reply(welcomeMsg, {
           reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: '🛍️ Ouvrir la boutique',
-                  web_app: {
-                    url: link  // ✅ WebApp au lieu de callback_data
-                  }
+            inline_keyboard: [[
+              {
+                text: '🛍️ Ouvrir la boutique',
+                web_app: {
+                  url: link
                 }
-              ]
-            ]
+              }
+            ]]
           }
         });
       }
     } catch (err) {
       console.error('❌ Erreur /start:', err);
+      ctx.reply('❌ Erreur. Réessaie.');
+    }
+  });
+  
+  // ✅ COMMANDE /shop
+  bot.command('shop', async (ctx) => {
+    try {
+      const userId = ctx.from.id;
+      const data = loadData();
+      
+      console.log(`📱 /shop: userId=${userId}`);
+      
+      // Vérifier si le user est dans le canal
+      const isMember = await isChannelMember(userId);
+      if (!isMember) {
+        return ctx.reply(
+          '❌ Tu dois rejoindre le canal pour accéder à la boutique.\n\n🔗 Clique ci-dessous :',
+          {
+            reply_markup: {
+              inline_keyboard: [[
+                {
+                  text: '📱 Rejoindre le canal',
+                  url: `https://t.me/${CHANNEL_USERNAME}`
+                }
+              ]]
+            }
+          }
+        );
+      }
+      
+      // Chercher le token existant
+      const existingToken = Object.keys(data.userTokens || {}).find(
+        t => data.userTokens[t].toString() === userId.toString()
+      );
+      
+      if (!existingToken) {
+        return ctx.reply('❌ Tu dois d\'abord taper /start');
+      }
+      
+      const link = `${SITE_URL}?token=${existingToken}&userId=${userId}`;
+      
+      return ctx.reply('Ouvre la boutique 🛍️', {
+        reply_markup: {
+          inline_keyboard: [[
+            {
+              text: '🛍️ Boutique',
+              web_app: {
+                url: link
+              }
+            }
+          ]]
+        }
+      });
+    } catch (err) {
+      console.error('❌ Erreur /shop:', err);
       ctx.reply('❌ Erreur. Réessaie.');
     }
   });
@@ -640,6 +705,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Serveur port ${PORT}`);
   console.log(`✅ BOT_TOKEN: ${BOT_TOKEN ? 'OK' : 'MANQUANT'}`);
   console.log(`✅ CHANNEL_ID: ${CHANNEL_ID ? 'OK' : 'MANQUANT'}`);
+  console.log(`✅ CHANNEL_USERNAME: ${CHANNEL_USERNAME ? CHANNEL_USERNAME : 'MANQUANT (utilise SVR_TO)'}`);
   console.log(`✅ OWNER_ID: ${OWNER_TELEGRAM_ID ? 'OK' : 'MANQUANT'}`);
   console.log(`✅ MY_ID: ${MY_TELEGRAM_ID ? 'OK' : 'MANQUANT'}`);
   console.log(`✅ CLOUDINARY: ${process.env.CLOUDINARY_CLOUD_NAME ? 'OK' : 'MANQUANT'}`);
