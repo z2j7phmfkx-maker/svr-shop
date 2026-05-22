@@ -499,7 +499,7 @@ if (BOT_TOKEN) {
       );
       
       if (!existingToken) {
-        // Nouvel utilisateur : créer token + message avec bouton
+        // Nouvel utilisateur : créer token + WebApp Button
         const token = generateToken();
         data.userTokens[token] = userId;
         data.usernames = data.usernames || {};
@@ -517,6 +517,7 @@ if (BOT_TOKEN) {
         
         console.log(`🆕 Nouvel user créé: ${userName} (firstName: ${firstName})`);
         
+        const link = `${SITE_URL}?token=${token}&userId=${userId}`;
         const welcomeMsg = `✅ Bienvenue @${userName} !\n\nTu es autorisé à accéder au shop SVR ! 🎁`;
         
         return ctx.reply(welcomeMsg, {
@@ -525,7 +526,9 @@ if (BOT_TOKEN) {
               [
                 {
                   text: '🛍️ Ouvrir la boutique',
-                  callback_data: `open_shop_${userId}`
+                  web_app: {
+                    url: link  // ✅ WebApp au lieu de callback_data
+                  }
                 }
               ]
             ]
@@ -555,50 +558,26 @@ if (BOT_TOKEN) {
         console.log(`♻️ User existant: ${userName}`);
         
         const link = `${SITE_URL}?token=${existingToken}&userId=${userId}`;
-        const msg = `✅ Tu as déjà accès ! 🛍️\n\n🎁 Ton lien d'accès au shop :\n\n${link}\n\n🔒 Ne partage pas ce lien, il est unique !`;
-        return ctx.reply(msg, { disable_web_page_preview: true });
+        const welcomeMsg = `✅ Tu as déjà accès ! 🛍️\n\nClique le bouton pour ouvrir la boutique.`;
+        
+        return ctx.reply(welcomeMsg, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: '🛍️ Ouvrir la boutique',
+                  web_app: {
+                    url: link  // ✅ WebApp au lieu de callback_data
+                  }
+                }
+              ]
+            ]
+          }
+        });
       }
     } catch (err) {
       console.error('❌ Erreur /start:', err);
       ctx.reply('❌ Erreur. Réessaie.');
-    }
-  });
-  
-  // Gérer le clic sur le bouton "Ouvrir la boutique" (force navigateur externe)
-  bot.action(/open_shop_(\d+)/, async (ctx) => {
-    try {
-      const userId = parseInt(ctx.match[1]);
-      const data = loadData();
-      
-      const token = Object.keys(data.userTokens || {}).find(
-        t => data.userTokens[t].toString() === userId.toString()
-      );
-      
-      if (!token) {
-        return ctx.answerCbQuery('❌ Erreur: token non trouvé', { show_alert: true });
-      }
-      
-      const link = `${SITE_URL}?token=${token}&userId=${userId}`;
-      
-      // Utiliser url: pour forcer ouverture en navigateur externe (pas WebApp)
-      await ctx.reply('🛍️ Clique le bouton pour ouvrir la boutique :', {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: '🛍️ Ouvrir la boutique',
-                url: link
-              }
-            ]
-          ]
-        }
-      });
-      
-      ctx.answerCbQuery('✅ Boutique ouverte !');
-      
-    } catch (error) {
-      console.error('❌ Erreur callback:', error);
-      ctx.answerCbQuery('❌ Erreur', { show_alert: true });
     }
   });
   
