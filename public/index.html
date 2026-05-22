@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SVR Shop</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * {
       margin: 0;
@@ -1333,7 +1334,7 @@
       <div class="custom-price-section" id="customPriceDiv">
         <label>💶 Ou rentre un montant personnalisé:</label>
         <div class="price-input-group">
-          <input type="number" id="customPriceInput" placeholder="Ex: 30" min="0" step="0.01" oninput="calculateGramsFromPrice()">
+          <input type="number" id="customPriceInput" placeholder="Ex: 30" min="20" max="100" step="0.01" oninput="calculateGramsFromPrice()">
           <span style="display: flex; align-items: center; color: #6496b4; font-weight: bold;">€</span>
         </div>
         <div class="price-result" id="priceResult"></div>
@@ -1415,58 +1416,19 @@
   </div>
 
   <script>
-    // 🔒 VÉRIFIER QUE C'EST OUVERT DANS TELEGRAM WEBAPP - À FAIRE EN PREMIER
-    function isTelegramWebApp() {
-      if (window.Telegram && window.Telegram.WebApp) {
-        console.log('✅ Telegram WebApp détecté');
-        return true;
-      }
-      
-      const userAgent = navigator.userAgent;
-      if (userAgent.includes('Telegram')) {
-        console.log('✅ Telegram user agent détecté');
-        return true;
-      }
-      
-      console.log('❌ Pas Telegram WebApp');
-      return false;
-    }
-
-    // 🔒 BLOQUER SI PAS TELEGRAM
-    if (!isTelegramWebApp()) {
-      console.log('❌ Accès refusé - Pas Telegram');
-      document.body.innerHTML = `
-        <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #000; color: #fff; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;">
-          <div style="max-width: 300px; padding: 20px;">
-            <h2 style="color: #ff6b6b; margin-bottom: 20px; font-size: 24px;">❌ Accès Refusé</h2>
-            <p style="font-size: 14px; line-height: 1.6; margin-bottom: 20px; color: #b0b0b0;">
-              Ce lien doit être ouvert <b>uniquement depuis Telegram</b>.
-            </p>
-            <p style="font-size: 12px; color: #888; margin-bottom: 30px;">
-              Copie le lien et ouvre-le dans l'app Telegram pour accéder au shop.
-            </p>
-            <a href="https://t.me/SVR_TO" style="display: inline-block; background: #0088cc; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
-              📱 Ouvrir Telegram
-            </a>
-          </div>
-        </div>
-      `;
-      throw new Error('❌ Pas Telegram WebApp');
-    }
-
-    // ✅ INITIALISER TELEGRAM WEBAPP
+    // ✅ INITIALISER TELEGRAM WEBAPP IMMÉDIATEMENT
     if (window.Telegram && window.Telegram.WebApp) {
       const tg = window.Telegram.WebApp;
-      tg.ready();  // ✅ Signal que l'app est prête
-      tg.expand(); // ✅ Agrandir au maximum
-      
+      tg.ready();
+      tg.expand();
       console.log('✅ Telegram WebApp initialisé');
+    } else {
+      console.warn('⚠️ Pas de Telegram WebApp détecté');
     }
 
     // ========================================
-    // RESTE DU CODE (inchangé)
+    // VARIABLES GLOBALES
     // ========================================
-
     let shopData = {};
     let currentFilter = 'Tous';
     let cart = [];
@@ -1477,15 +1439,14 @@
     let selectedTariff = null;
     let currentPriceMode = null;
 
-    // ✅ VÉRIFICATION D'ACCÈS (STRING - PAS DE parseInt)
+    // ✅ VÉRIFICATION D'ACCÈS
     async function verifyAccess() {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
       const userId = urlParams.get('userId');
 
-      console.log('[CLIENT] ======== VERIFICATION ACCÈS ========');
-      console.log('[CLIENT] Token reçu:', token);
-      console.log('[CLIENT] UserId reçu:', userId, '(type:', typeof userId, ')');
+      console.log('[CLIENT] Token:', token);
+      console.log('[CLIENT] UserId:', userId, '(type:', typeof userId, ')');
 
       if (!token || !userId) {
         console.log('[CLIENT] ❌ Token ou userId manquant');
@@ -1494,49 +1455,24 @@
       }
 
       try {
-        console.log('[CLIENT] 📡 Envoi du fetch à /api/verify-token');
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const body = {
-          token: token,
-          userId: userId  // ← STRING, pas parseInt
-        };
-        
-        console.log('[CLIENT] Body envoyé:', JSON.stringify(body));
-        
         const response = await fetch('/api/verify-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
+          body: JSON.stringify({ token, userId })
         });
-        
-        clearTimeout(timeoutId);
-        console.log('[CLIENT] HTTP Status:', response.status);
-        
-        if (!response.ok) {
-          console.log('[CLIENT] ❌ Erreur HTTP:', response.status);
-          showDenied();
-          return;
-        }
-        
+
         const result = await response.json();
-        console.log('[CLIENT] Réponse du serveur:', result);
-        console.log('[CLIENT] result.valid =', result.valid, '(type:', typeof result.valid, ')');
+        console.log('[CLIENT] Réponse:', result);
 
         if (result.valid === true) {
-          console.log('[CLIENT] ✅✅✅ ACCÈS AUTORISÉ !');
-          console.log('[CLIENT] ========================================');
+          console.log('[CLIENT] ✅ ACCÈS AUTORISÉ');
           loadShop();
         } else {
-          console.log('[CLIENT] ❌ ACCÈS REFUSÉ - valid n\'est pas true');
-          console.log('[CLIENT] ========================================');
+          console.log('[CLIENT] ❌ ACCÈS REFUSÉ');
           showDenied();
         }
       } catch (error) {
-        console.error('[CLIENT] ❌ ERREUR FETCH:', error.message);
-        console.error('[CLIENT] Type erreur:', error.name);
-        console.log('[CLIENT] ========================================');
+        console.error('[CLIENT] ❌ ERREUR:', error);
         showDenied();
       }
     }
@@ -1548,10 +1484,8 @@
 
     async function loadShop() {
       try {
-        console.log('[CLIENT] 📦 Chargement des données du shop...');
         const response = await fetch('/data.json');
         shopData = await response.json();
-        console.log('[CLIENT] ✅ Données chargées avec succès');
 
         document.getElementById('authContainer').style.display = 'none';
         document.getElementById('mainContent').style.display = 'block';
@@ -1566,7 +1500,7 @@
           updateCart();
         }
       } catch (error) {
-        console.error('[CLIENT] ❌ Erreur chargement:', error);
+        console.error('Erreur chargement:', error);
         showDenied();
       }
     }
@@ -1790,8 +1724,6 @@
       }
 
       allTariffs.sort((a, b) => a.grams - b.grams);
-      
-      console.log('[TARIFS FUSIONNÉS]', allTariffs);
 
       if (!allTariffs || allTariffs.length === 0) {
         resultDiv.innerHTML = '<span style="color: #ff6b6b;">Erreur: tarifs introuvables</span>';
@@ -1800,8 +1732,6 @@
 
       const minPrice = allTariffs[0].price;
       const maxPrice = allTariffs[allTariffs.length - 1].price;
-      
-      console.log('[PRIX] Min: ' + minPrice + '€, Max: ' + maxPrice + '€');
 
       if (price < minPrice) {
         resultDiv.innerHTML = `<span style="color: #ff6b6b;">Montant insuffisant (min: ${minPrice}€)</span>`;
@@ -1822,8 +1752,6 @@
           break;
         }
       }
-
-      console.log('[TARIF INFÉRIEUR]', lowerTariff);
 
       const pricePerGram = lowerTariff.price / lowerTariff.grams;
       const calculatedGrams = price / pricePerGram;
@@ -2009,9 +1937,6 @@
       }
 
       pendingOrder.deliveryOption = selectedDeliveryOption;
-      
-      console.log('📦 Commande en attente:', pendingOrder);
-
       closeDeliveryModal();
       openTimeSlotModal();
     }
@@ -2072,14 +1997,6 @@
 
       pendingOrder.timeSlot = selectedTimeSlot;
 
-      console.log('🎯 Commande finale avant envoi:', {
-        userId: pendingOrder.userId,
-        items: pendingOrder.items.length,
-        total: pendingOrder.total,
-        deliveryOption: pendingOrder.deliveryOption,
-        timeSlot: pendingOrder.timeSlot
-      });
-
       document.getElementById('loadingOverlay').classList.add('active');
 
       try {
@@ -2090,7 +2007,6 @@
         });
 
         const result = await response.json();
-
         document.getElementById('loadingOverlay').classList.remove('active');
 
         if (result.success) {
@@ -2131,7 +2047,9 @@
         userId: userId,
         token: token,
         items: cart,
-        total: totalPrice
+        total: totalPrice,
+        deliveryOption: null,
+        timeSlot: null
       };
 
       openDeliveryModal(totalPrice);
@@ -2286,7 +2204,7 @@
       }
     });
 
-    // 🚀 LANCER LA VÉRIFICATION D'ACCÈS AU CHARGEMENT
+    // 🚀 LANCER LA VÉRIFICATION D'ACCÈS
     verifyAccess();
   </script>
 </body>
