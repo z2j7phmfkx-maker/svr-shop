@@ -1415,6 +1415,58 @@
   </div>
 
   <script>
+    // 🔒 VÉRIFIER QUE C'EST OUVERT DANS TELEGRAM WEBAPP - À FAIRE EN PREMIER
+    function isTelegramWebApp() {
+      if (window.Telegram && window.Telegram.WebApp) {
+        console.log('✅ Telegram WebApp détecté');
+        return true;
+      }
+      
+      const userAgent = navigator.userAgent;
+      if (userAgent.includes('Telegram')) {
+        console.log('✅ Telegram user agent détecté');
+        return true;
+      }
+      
+      console.log('❌ Pas Telegram WebApp');
+      return false;
+    }
+
+    // 🔒 BLOQUER SI PAS TELEGRAM
+    if (!isTelegramWebApp()) {
+      console.log('❌ Accès refusé - Pas Telegram');
+      document.body.innerHTML = `
+        <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #000; color: #fff; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;">
+          <div style="max-width: 300px; padding: 20px;">
+            <h2 style="color: #ff6b6b; margin-bottom: 20px; font-size: 24px;">❌ Accès Refusé</h2>
+            <p style="font-size: 14px; line-height: 1.6; margin-bottom: 20px; color: #b0b0b0;">
+              Ce lien doit être ouvert <b>uniquement depuis Telegram</b>.
+            </p>
+            <p style="font-size: 12px; color: #888; margin-bottom: 30px;">
+              Copie le lien et ouvre-le dans l'app Telegram pour accéder au shop.
+            </p>
+            <a href="https://t.me/SVR_TO" style="display: inline-block; background: #0088cc; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;">
+              📱 Ouvrir Telegram
+            </a>
+          </div>
+        </div>
+      `;
+      throw new Error('❌ Pas Telegram WebApp');
+    }
+
+    // ✅ INITIALISER TELEGRAM WEBAPP
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();  // ✅ Signal que l'app est prête
+      tg.expand(); // ✅ Agrandir au maximum
+      
+      console.log('✅ Telegram WebApp initialisé');
+    }
+
+    // ========================================
+    // RESTE DU CODE (inchangé)
+    // ========================================
+
     let shopData = {};
     let currentFilter = 'Tous';
     let cart = [];
@@ -1661,7 +1713,6 @@
       const quantityBtns = document.getElementById('quantityButtons');
       quantityBtns.innerHTML = '';
       
-      // ✅ RÉCUPÉRER LE LABEL (EXEMPLE: "g", "", ou "unité")
       const tariffsLabel = product.tariffsLabel || '';
       
       normalTariffs.forEach(tariff => {
@@ -1682,7 +1733,6 @@
         quantityBtns.appendChild(btn);
       });
       
-      // ✅ MASQUER LE CHAMP CUSTOM PRICE SI allowCustomPrice EST FALSE
       const customPriceDiv = document.getElementById('customPriceDiv');
       if (product.allowCustomPrice === false) {
         customPriceDiv.classList.add('hidden');
@@ -1706,7 +1756,6 @@
       document.getElementById('priceResult').innerHTML = '';
     }
 
-    // 🔧 CALCUL AVEC FUSION DE TARIFS (NORMAL + PROMO) - PRIX/GRAMME DU TARIF INFÉRIEUR
     function calculateGramsFromPrice() {
       const priceInput = document.getElementById('customPriceInput');
       const resultDiv = document.getElementById('priceResult');
@@ -1719,21 +1768,17 @@
         return;
       }
 
-      // 🔧 FUSIONNER LES TARIFS (NORMAL + PROMO)
-      let allTariffs = [...currentProduct.tariffOptions]; // Tarifs normaux
+      let allTariffs = [...currentProduct.tariffOptions];
       
-      // Remplacer par les tarifs promo s'ils existent
       if (currentProduct.promoTariffsParsed && Object.keys(currentProduct.promoTariffsParsed).length > 0) {
         Object.entries(currentProduct.promoTariffsParsed).forEach(([size, promoPrice]) => {
           const grams = parseFloat(size);
           const existingIndex = allTariffs.findIndex(t => t.grams === grams);
           
           if (existingIndex !== -1) {
-            // Remplacer le tarif normal par le tarif promo
             allTariffs[existingIndex].price = parseFloat(promoPrice);
             allTariffs[existingIndex].isPromo = true;
           } else {
-            // Ajouter le tarif promo s'il n'existe pas en normal
             allTariffs.push({
               size: size,
               price: parseFloat(promoPrice),
@@ -1744,7 +1789,6 @@
         });
       }
 
-      // Trier les tarifs par grammes
       allTariffs.sort((a, b) => a.grams - b.grams);
       
       console.log('[TARIFS FUSIONNÉS]', allTariffs);
@@ -1754,7 +1798,6 @@
         return;
       }
 
-      // 🔴 PRIX MIN ET MAX
       const minPrice = allTariffs[0].price;
       const maxPrice = allTariffs[allTariffs.length - 1].price;
       
@@ -1770,7 +1813,6 @@
         return;
       }
 
-      // 🔍 TROUVER LE TARIF INFÉRIEUR (pour le prix/gramme)
       let lowerTariff = allTariffs[0];
       
       for (let i = 0; i < allTariffs.length; i++) {
@@ -1783,7 +1825,6 @@
 
       console.log('[TARIF INFÉRIEUR]', lowerTariff);
 
-      // 📐 CALCUL DES GRAMMES AVEC PRIX/GRAMME DU TARIF INFÉRIEUR
       const pricePerGram = lowerTariff.price / lowerTariff.grams;
       const calculatedGrams = price / pricePerGram;
 
@@ -1910,7 +1951,6 @@
 
     document.querySelector('.close-cart-btn').addEventListener('click', closeCart);
 
-    // 🔧 LIVRAISON MIN 50€
     function openDeliveryModal(totalPrice) {
       const warningDiv = document.getElementById('deliveryWarning');
       const container = document.getElementById('deliveryOptionsContainer');
@@ -1929,7 +1969,6 @@
         btn.textContent = option.label;
         btn.style.marginBottom = '10px';
         
-        // 🔴 Désactiver livraison si total < 50€
         if (option.value === 'livraison' && totalPrice < 50) {
           btn.disabled = true;
           btn.title = 'Minimum 50€ pour la livraison';
@@ -1940,7 +1979,6 @@
         container.appendChild(btn);
       });
 
-      // 📢 Afficher un message si < 50€
       if (totalPrice < 50) {
         const warningMsg = document.createElement('div');
         warningMsg.className = 'warning-message';
@@ -2160,7 +2198,6 @@
         normalLabel.textContent = 'Tarifs:';
         tariffsDiv.appendChild(normalLabel);
         
-        // ✅ RÉCUPÉRER LE LABEL POUR L'AFFICHAGE
         const tariffsLabel = product.tariffsLabel || '';
         
         const normalTariffs = product.tariffs.split('|').map(t => {
