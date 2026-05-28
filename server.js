@@ -18,7 +18,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configuration multer (pour recevoir les fichiers)
+// Configuration multer
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Configuration
@@ -31,7 +31,7 @@ const MY_TELEGRAM_ID = process.env.MY_TELEGRAM_ID;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = 'z2j7phmfkx-maker/svr-shop';
 const SITE_URL = process.env.SITE_URL || 'https://svr-shop.onrender.com';
-const CHANNEL_USERNAME = process.env.CHANNEL_USERNAME || 'SVR_TO'; // Ajouter dans .env
+const CHANNEL_USERNAME = process.env.CHANNEL_USERNAME || 'SVR_TO';
 
 // ==================== UTILITAIRES ====================
 
@@ -45,7 +45,6 @@ function loadData() {
   }
   return { 
     telegram_users: [], 
-    userTokens: {}, 
     usernames: {},
     firstNames: {},
     shop_settings: {}, 
@@ -94,24 +93,20 @@ async function isChannelMember(userId) {
     return false;
   }
   try {
-    console.log(`🔍 Vérification: userId=${userId}, channelId=${CHANNEL_ID}`);
+    console.log(`   🔍 getChatMember(${CHANNEL_ID}, ${userId})`);
     const response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`, {
       chat_id: CHANNEL_ID,
       user_id: userId
     });
     const status = response.data.result.status;
-    console.log(`✅ Statut du user: ${status}`);
+    console.log(`   ✅ Statut: ${status}`);
     const isMember = ['member', 'administrator', 'creator', 'restricted'].includes(status);
-    console.log(`${isMember ? '✅' : '❌'} User ${userId} est ${isMember ? 'MEMBRE' : 'PAS MEMBRE'}`);
+    console.log(`   ${isMember ? '✅' : '❌'} User ${userId} est ${isMember ? 'MEMBRE' : 'PAS MEMBRE'}`);
     return isMember;
   } catch (err) {
-    console.error('❌ Erreur vérification canal:', err.response?.data?.description || err.message);
+    console.error('   ❌ Erreur:', err.response?.data?.description || err.message);
     return false;
   }
-}
-
-function generateToken() {
-  return 'svr_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
 // ==================== ROUTES EXPRESS ====================
@@ -128,65 +123,34 @@ app.get('/data.json', (req, res) => {
   res.json(loadData());
 });
 
-// ✅ ROUTE POUR RÉCUPÉRER LES PRODUITS
 app.get('/api/products', (req, res) => {
   const data = loadData();
   res.json(data.products || []);
 });
 
-app.post('/api/verify-token', (req, res) => {
-  const { token, userId } = req.body;
-  const data = loadData();
+// ✅ NOUVELLE ROUTE SIMPLE : vérifier juste l'adhésion au canal
+app.post('/api/verify-simple', async (req, res) => {
+  const { userId } = req.body;
   
-  console.log('\n[VERIFY-TOKEN] ========================');
-  console.log(`  Token reçu: "${token}"`);
-  console.log(`  UserId reçu: ${userId} (${typeof userId})`);
-  console.log(`  Token existe: ${token in (data.userTokens || {})}`);
-  
-  const storedUserId = data.userTokens[token];
-  console.log(`  StoredUserId: ${storedUserId} (${typeof storedUserId})`);
-  console.log(`  Match: ${storedUserId == userId}`);
-  
-  if (storedUserId && storedUserId == userId) {
-    console.log(`  ✅ VALID TRUE`);
-    return res.json({ valid: true });
-  }
-  console.log(`  ❌ VALID FALSE`);
-  res.json({ valid: false });
-});
-
-app.post('/api/generate-token', async (req, res) => {
-  const { userId, userName } = req.body;
+  console.log('\n[VERIFY-SIMPLE] ========================');
+  console.log(`  userId: ${userId}`);
   
   if (!userId) {
-    return res.status(400).json({ error: 'userId manquant' });
+    console.log('  ❌ userId manquant');
+    return res.json({ valid: false });
   }
-  
+
+  // Vérifier juste si la personne est dans le canal
+  console.log('  🔍 Vérification adhésion canal...');
   const isMember = await isChannelMember(userId);
-  if (!isMember) {
-    return res.status(403).json({ error: 'Accès refusé' });
+  
+  if (isMember) {
+    console.log('  ✅ VALID TRUE');
+    return res.json({ valid: true });
   }
   
-  const data = loadData();
-  let token = data.userTokens[userId];
-  
-  if (!token) {
-    token = generateToken();
-    data.userTokens[token] = userId;
-    data.usernames = data.usernames || {};
-    data.usernames[userId] = userName;
-    data.telegram_users = data.telegram_users || [];
-    
-    if (!data.telegram_users.includes(userId)) {
-      data.telegram_users.push(userId);
-    }
-    
-    saveData(data);
-    await commitToGithub(`Nouvel user: @${userName} (${userId})`, data);
-  }
-  
-  const link = `${SITE_URL}?token=${token}&userId=${userId}`;
-  res.json({ token, link });
+  console.log('  ❌ VALID FALSE');
+  res.json({ valid: false });
 });
 
 app.post('/api/save-data', async (req, res) => {
@@ -199,7 +163,6 @@ app.post('/api/save-data', async (req, res) => {
   for (const newProd of products) {
     const oldProd = oldData.products.find(p => p.id === newProd.id);
     
-    // 🔧 EXTRAIRE LE PRIX MINIMUM DES TARIFS
     let minPrice = 'N/A';
     if (newProd.tariffs) {
       const prices = newProd.tariffs.split('|').map(t => {
@@ -209,7 +172,6 @@ app.post('/api/save-data', async (req, res) => {
       minPrice = Math.min(...prices);
     }
     
-    // ✅ SI C'EST UNE MODIFICATION, NE PAS ENVOYER DE NOTIFICATION
     if (editingProductId && newProd.id === editingProductId) {
       console.log(`📝 Produit modifié (pas de notification): ${newProd.name}`);
       continue;
@@ -237,18 +199,13 @@ app.post('/api/order', async (req, res) => {
   const { userId, items, total, timeSlot, deliveryOption } = req.body;
   const data = loadData();
   
-  // ✅ LOGS DEBUG DÉTAILLÉS
   console.log('\n📋 PARAMÈTRES EXTRAITS:');
   console.log('  ✓ userId:', userId);
   console.log('  ✓ items:', items ? `${items.length} items` : 'undefined');
   console.log('  ✓ total:', total);
   console.log('  ✓ timeSlot:', timeSlot);
   console.log('  ✓ deliveryOption:', deliveryOption);
-  console.log('  ✓ deliveryOption type:', typeof deliveryOption);
-  console.log('  ✓ deliveryOption === "sur_place":', deliveryOption === 'sur_place');
-  console.log('  ✓ deliveryOption === "livraison":', deliveryOption === 'livraison');
   
-  // Initialiser le compteur et firstNames s'ils n'existent pas
   if (!data.orderCounter) {
     data.orderCounter = 1000;
   }
@@ -256,12 +213,10 @@ app.post('/api/order', async (req, res) => {
     data.firstNames = {};
   }
   
-  // Incrémenter le compteur
   const orderNumber = ++data.orderCounter;
   
   console.log(`\n📦 Nouvelle commande #${orderNumber} - userId: ${userId}`);
   
-  // Chercher le nom dans cet ordre : username > first_name
   let userName = 'Utilisateur inconnu';
   
   if (data.usernames && data.usernames[userId]) {
@@ -274,23 +229,13 @@ app.post('/api/order', async (req, res) => {
     console.warn(`⚠️ Aucun nom trouvé pour userId=${userId}`);
   }
   
-  // Construire le texte des items
   let itemsText = items.map(item => {
     const itemPrice = (item.price * item.quantity).toFixed(2);
     return `• <b>${item.name}</b> - ${item.grams.toFixed(2)}g x${item.quantity} = ${itemPrice}€`;
   }).join('\n');
   
-  // Déterminer le libellé du lieu de livraison
-  console.log('\n🔍 DEBUG LIVRAISON:');
-  console.log('  deliveryOption brut:', deliveryOption);
-  console.log('  Comparaison avec "sur_place":', deliveryOption === 'sur_place');
-  console.log('  Comparaison avec "livraison":', deliveryOption === 'livraison');
-  
   const deliveryLabel = deliveryOption === 'sur_place' ? '🏪 Sur place' : '🚚 Livraison';
   
-  console.log('  ✅ deliveryLabel final:', deliveryLabel);
-  
-  // Construire le message AVEC le lieu ET le créneau de livraison
   const message = `<b>📦 Nouvelle commande #${orderNumber}</b>\n\n<b>👤 Client:</b> ${userName}\n\n<b>Articles:</b>\n${itemsText}\n\n<b>💰 Total:</b> ${total.toFixed(2)}€\n\n<b>⏰ Créneau:</b> ${timeSlot || 'Non spécifié'}\n<b>📍 Type:</b> ${deliveryLabel}`;
   
   console.log('\n📝 Message à envoyer:');
@@ -298,7 +243,6 @@ app.post('/api/order', async (req, res) => {
   
   try {
     console.log(`\n📤 Envoi à OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}`);
-    // Envoyer au propriétaire
     await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       chat_id: OWNER_TELEGRAM_ID,
       text: message,
@@ -306,7 +250,6 @@ app.post('/api/order', async (req, res) => {
     });
     console.log('✅ Commande notifiée au propriétaire');
     
-    // Envoyer à toi aussi si MY_TELEGRAM_ID est défini
     if (MY_TELEGRAM_ID && MY_TELEGRAM_ID !== OWNER_TELEGRAM_ID) {
       console.log(`📤 Envoi à MY_TELEGRAM_ID: ${MY_TELEGRAM_ID}`);
       await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -315,14 +258,9 @@ app.post('/api/order', async (req, res) => {
         parse_mode: 'HTML'
       });
       console.log('✅ Commande notifiée aussi à toi');
-    } else {
-      console.log(`⚠️ MY_TELEGRAM_ID non défini ou = OWNER_TELEGRAM_ID`);
     }
     
-    // Sauvegarder le compteur
     saveData(data);
-    
-    // Commit sur GitHub
     await commitToGithub(`Commande #${orderNumber}`, data);
     
     console.log('✅ Commande notifiée avec succès');
@@ -333,10 +271,7 @@ app.post('/api/order', async (req, res) => {
     console.error(`   Status: ${err.response?.status}`);
     console.error(`   Data: ${JSON.stringify(err.response?.data)}`);
     console.error(`   Message: ${err.message}`);
-    console.error(`   Chat ID envoyé: ${OWNER_TELEGRAM_ID}`);
-    console.error(`   Message envoyé: ${message.substring(0, 100)}...`);
     
-    // Sauvegarder quand même la commande
     saveData(data);
     
     console.log('===== FIN COMMANDE (ERREUR) =====\n');
@@ -364,7 +299,6 @@ app.post('/api/sync-users', async (req, res) => {
     
     for (const userId of telegramUsers) {
       try {
-        // Récupérer les infos du user via Telegram API
         const response = await axios.post(
           `https://api.telegram.org/bot${BOT_TOKEN}/getChat`,
           { chat_id: userId }
@@ -374,20 +308,17 @@ app.post('/api/sync-users', async (req, res) => {
         const firstName = userInfo.first_name || 'Unknown';
         const username = userInfo.username || null;
         
-        // Mettre à jour les données
         data.firstNames = data.firstNames || {};
         data.usernames = data.usernames || {};
         
         let updated = false;
         
-        // Si le user avait pas de firstName, l'ajouter
         if (!data.firstNames[userId] || data.firstNames[userId] === 'Unknown') {
           data.firstNames[userId] = firstName;
           console.log(`✅ ${userId}: firstName = "${firstName}"`);
           updated = true;
         }
         
-        // Si le user avait pas d'username, l'ajouter
         if (username && !data.usernames[userId]) {
           data.usernames[userId] = username;
           console.log(`✅ ${userId}: username = "@${username}"`);
@@ -408,7 +339,6 @@ app.post('/api/sync-users', async (req, res) => {
       }
     }
     
-    // Sauvegarder les données mises à jour
     saveData(data);
     await commitToGithub('Synchronisation utilisateurs', data);
     
@@ -440,7 +370,6 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 
     console.log(`📤 Upload fichier: ${req.file.originalname}`);
 
-    // Upload sur Cloudinary
     const result = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
@@ -485,12 +414,17 @@ if (BOT_TOKEN) {
       const firstName = ctx.from.first_name || 'Unknown';
       const data = loadData();
       
-      console.log(`📱 /start: ${userName} (${userId})`);
+      console.log(`\n📱 /START REÇU`);
+      console.log(`  userId: ${userId}`);
+      console.log(`  userName: ${userName}`);
+      console.log(`  firstName: ${firstName}`);
       
-      // ✅ VÉRIFIER SI LE USER EST DANS LE CANAL
+      // Vérifier si le user est dans le canal
+      console.log(`\n🔍 Vérification adhésion canal...`);
       const isMember = await isChannelMember(userId);
+      
       if (!isMember) {
-        console.log(`❌ ${userName} n'est pas membre du canal`);
+        console.log(`\n❌ ${userName} n'est PAS membre du canal`);
         return ctx.reply(
           '❌ Tu dois rejoindre le canal pour accéder à la boutique.\n\n🔗 Clique ci-dessous :',
           {
@@ -506,87 +440,41 @@ if (BOT_TOKEN) {
         );
       }
       
-      console.log(`✅ ${userName} est membre du canal`);
+      console.log(`\n✅ ${userName} EST membre du canal`);
       
-      const existingToken = Object.keys(data.userTokens || {}).find(
-        t => data.userTokens[t].toString() === userId.toString()
-      );
-      
-      if (!existingToken) {
-        // 🆕 NOUVEL UTILISATEUR
-        const token = generateToken();
-        data.userTokens[token] = userId;
-        data.usernames = data.usernames || {};
-        data.usernames[userId] = userName;
-        data.firstNames = data.firstNames || {};
-        data.firstNames[userId] = firstName;
-        data.telegram_users = data.telegram_users || [];
-        
-        if (!data.telegram_users.includes(userId)) {
-          data.telegram_users.push(userId);
-        }
-        
-        saveData(data);
-        await commitToGithub(`Nouvel user: @${userName}`, data);
-        
-        console.log(`🆕 Nouvel user créé: ${userName} (firstName: ${firstName})`);
-        
-        const link = `${SITE_URL}?token=${token}&userId=${userId}`;
-        const welcomeMsg = `✅ Bienvenue @${userName} ! 🎉\n\nTu es autorisé à accéder à la boutique SVR 🛍️`;
-        
-        return ctx.reply(welcomeMsg, {
-          reply_markup: {
-            inline_keyboard: [[
-              {
-                text: '🛍️ Ouvrir la boutique',
-                web_app: {
-                  url: link
-                }
-              }
-            ]]
-          }
-        });
-      } else {
-        // ♻️ UTILISATEUR EXISTANT
-        data.firstNames = data.firstNames || {};
-        data.usernames = data.usernames || {};
-        
-        let updated = false;
-        
-        if (!data.firstNames[userId] || data.firstNames[userId] === 'Unknown') {
-          data.firstNames[userId] = firstName;
-          updated = true;
-        }
-        
-        if (userName && !data.usernames[userId]) {
-          data.usernames[userId] = userName;
-          updated = true;
-        }
-        
-        if (updated) {
-          saveData(data);
-        }
-        
-        console.log(`♻️ User existant: ${userName}`);
-        
-        const link = `${SITE_URL}?token=${existingToken}&userId=${userId}`;
-        const welcomeMsg = `✅ Tu as déjà accès ! 🎁\n\nClique pour ouvrir la boutique 🛍️`;
-        
-        return ctx.reply(welcomeMsg, {
-          reply_markup: {
-            inline_keyboard: [[
-              {
-                text: '🛍️ Ouvrir la boutique',
-                web_app: {
-                  url: link
-                }
-              }
-            ]]
-          }
-        });
+      // Ajouter l'utilisateur à la liste
+      if (!data.telegram_users.includes(userId)) {
+        data.telegram_users.push(userId);
       }
+      data.usernames = data.usernames || {};
+      data.usernames[userId] = userName;
+      data.firstNames = data.firstNames || {};
+      data.firstNames[userId] = firstName;
+      saveData(data);
+      
+      // Créer le lien simple vers le shop
+      const link = `${SITE_URL}?userId=${userId}`;
+      console.log(`📍 Lien WebApp: ${link}\n`);
+      
+      const welcomeMsg = `✅ Bienvenue @${userName} ! 🎉\n\nTu es autorisé à accéder à la boutique SVR 🛍️`;
+      
+      console.log(`📤 Envoi du message avec bouton WebApp...`);
+      return ctx.reply(welcomeMsg, {
+        reply_markup: {
+          inline_keyboard: [[
+            {
+              text: '🛍️ Ouvrir la boutique',
+              web_app: {
+                url: link
+              }
+            }
+          ]]
+        }
+      });
     } catch (err) {
-      console.error('❌ Erreur /start:', err);
+      console.error('\n❌ ERREUR /START:');
+      console.error('   Message:', err.message);
+      console.error('   Stack:', err.stack);
       ctx.reply('❌ Erreur. Réessaie.');
     }
   });
@@ -595,13 +483,15 @@ if (BOT_TOKEN) {
   bot.command('shop', async (ctx) => {
     try {
       const userId = ctx.from.id;
-      const data = loadData();
       
-      console.log(`📱 /shop: userId=${userId}`);
+      console.log(`\n📱 /SHOP REÇU`);
+      console.log(`  userId: ${userId}`);
       
       // Vérifier si le user est dans le canal
+      console.log(`🔍 Vérification adhésion canal...`);
       const isMember = await isChannelMember(userId);
       if (!isMember) {
+        console.log(`❌ ${userId} n'est PAS membre du canal\n`);
         return ctx.reply(
           '❌ Tu dois rejoindre le canal pour accéder à la boutique.\n\n🔗 Clique ci-dessous :',
           {
@@ -617,16 +507,11 @@ if (BOT_TOKEN) {
         );
       }
       
-      // Chercher le token existant
-      const existingToken = Object.keys(data.userTokens || {}).find(
-        t => data.userTokens[t].toString() === userId.toString()
-      );
+      console.log(`✅ ${userId} EST membre du canal`);
       
-      if (!existingToken) {
-        return ctx.reply('❌ Tu dois d\'abord taper /start');
-      }
-      
-      const link = `${SITE_URL}?token=${existingToken}&userId=${userId}`;
+      const link = `${SITE_URL}?userId=${userId}`;
+      console.log(`📍 Lien WebApp: ${link}\n`);
+      console.log(`📤 Envoi du message avec bouton WebApp...`);
       
       return ctx.reply('Ouvre la boutique 🛍️', {
         reply_markup: {
@@ -641,7 +526,8 @@ if (BOT_TOKEN) {
         }
       });
     } catch (err) {
-      console.error('❌ Erreur /shop:', err);
+      console.error('\n❌ ERREUR /SHOP:');
+      console.error('   Message:', err.message);
       ctx.reply('❌ Erreur. Réessaie.');
     }
   });
@@ -680,33 +566,19 @@ if (BOT_TOKEN) {
   console.error('❌ TELEGRAM_BOT_TOKEN manquant');
 }
 
-// ==================== SYNCHRONISATION ====================
+// ==================== LANCEMENT ====================
 
-const data = loadData();
-if (data.userTokens && typeof data.userTokens === 'object') {
-  const userIds = Object.values(data.userTokens).map(id => parseInt(id));
-  const telegramUsers = new Set(data.telegram_users || []);
-  userIds.forEach(id => {
-    if (!isNaN(id)) telegramUsers.add(id);
-  });
-  data.telegram_users = Array.from(telegramUsers);
-  saveData(data);
-  console.log(`✅ ${data.telegram_users.length} utilisateurs synchro`);
-}
-
-// Lancer checkShopHours toutes les minutes
 setInterval(() => {
   notificationService.checkShopHours();
 }, 60000);
 
-// ==================== DÉMARRAGE ====================
-
 app.listen(PORT, () => {
-  console.log(`🚀 Serveur port ${PORT}`);
-  console.log(`✅ BOT_TOKEN: ${BOT_TOKEN ? 'OK' : 'MANQUANT'}`);
-  console.log(`✅ CHANNEL_ID: ${CHANNEL_ID ? 'OK' : 'MANQUANT'}`);
-  console.log(`✅ CHANNEL_USERNAME: ${CHANNEL_USERNAME ? CHANNEL_USERNAME : 'MANQUANT (utilise SVR_TO)'}`);
-  console.log(`✅ OWNER_ID: ${OWNER_TELEGRAM_ID ? 'OK' : 'MANQUANT'}`);
-  console.log(`✅ MY_ID: ${MY_TELEGRAM_ID ? 'OK' : 'MANQUANT'}`);
-  console.log(`✅ CLOUDINARY: ${process.env.CLOUDINARY_CLOUD_NAME ? 'OK' : 'MANQUANT'}`);
+  console.log(`\n🚀 Serveur port ${PORT}`);
+  console.log(`✅ BOT_TOKEN: ${BOT_TOKEN ? 'OK' : '❌ MANQUANT'}`);
+  console.log(`✅ CHANNEL_ID: ${CHANNEL_ID ? 'OK' : '❌ MANQUANT'}`);
+  console.log(`✅ CHANNEL_USERNAME: ${CHANNEL_USERNAME ? CHANNEL_USERNAME : '❌ MANQUANT (défaut: SVR_TO)'}`);
+  console.log(`✅ OWNER_ID: ${OWNER_TELEGRAM_ID ? 'OK' : '❌ MANQUANT'}`);
+  console.log(`✅ MY_ID: ${MY_TELEGRAM_ID ? 'OK' : '❌ MANQUANT'}`);
+  console.log(`✅ CLOUDINARY: ${process.env.CLOUDINARY_CLOUD_NAME ? 'OK' : '❌ MANQUANT'}`);
+  console.log(`✅ SITE_URL: ${SITE_URL}\n`);
 });
