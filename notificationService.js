@@ -16,14 +16,13 @@ function loadData() {
   } catch (error) {
     console.error('❌ Erreur lecture data.json:', error);
   }
-  return { telegram_users: [], products: [], shop_settings: {}, lastHoursMessageId: null };
+  return { telegram_users: [], products: [], shop_settings: {}, lastHoursMessageId: null, lastHoursCheck: null };
 }
 
 // Sauvegarder les données
 function saveData(data) {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-    console.log('✅ data.json sauvegardé');
   } catch (error) {
     console.error('❌ Erreur sauvegarde:', error);
   }
@@ -57,7 +56,7 @@ async function checkShopHours() {
     return;
   }
 
-  // ✅ CORRECTED: Utiliser Intl pour obtenir l'heure de Paris correctement
+  // ✅ Obtenir l'heure de Paris
   const formatter = new Intl.DateTimeFormat('fr-FR', {
     timeZone: 'Europe/Paris',
     hour: '2-digit',
@@ -72,21 +71,28 @@ async function checkShopHours() {
 
   console.log(`⏰ Heure Paris: ${currentTime} | Ouverture: ${settings.opening_time} | Fermeture: ${settings.closing_time}`);
 
-  // Message d'ouverture
-  if (currentTime === settings.opening_time) {
-    // Supprimer le message précédent s'il existe
+  // ✅ ÉVITER LES DOUBLONS : vérifier si on vient de traiter cet horaire
+  const lastCheck = data.lastHoursCheck || {};
+
+  // ========== MESSAGE D'OUVERTURE ==========
+  if (currentTime === settings.opening_time && lastCheck.opening !== currentTime) {
+    console.log(`\n🔔 OUVERTURE DÉTECTÉE`);
+    
+    // Supprimer le message de fermeture précédent s'il existe
     if (data.lastHoursMessageId) {
       try {
+        console.log(`   Tentative suppression ancien message (ID: ${data.lastHoursMessageId})`);
         await axios.post(`${TELEGRAM_API_URL}/deleteMessage`, {
           chat_id: CHANNEL_ID,
           message_id: data.lastHoursMessageId
         });
-        console.log('✅ Message précédent supprimé');
+        console.log('   ✅ Message précédent supprimé');
       } catch (err) {
-        console.error('❌ Erreur suppression message:', err.message);
+        console.error('   ❌ Erreur suppression:', err.response?.data?.description || err.message);
       }
     }
 
+    // Envoyer le message d'ouverture
     const message = `🎉 <b>LA BOUTIQUE EST OUVERTE!</b> 🛍️\n\nTu peux passer ta commande de <b>2 manières</b> :\n\n1️⃣ En validant ton panier sur le site @svrshopbot\n2️⃣ Directement avec nous sur @SVR_TO\n\n⏰ Horaires: ${settings.opening_time} - ${settings.closing_time}`;
     
     try {
@@ -95,30 +101,35 @@ async function checkShopHours() {
         text: message,
         parse_mode: 'HTML'
       });
-      // Sauvegarder l'ID du message
+      
       data.lastHoursMessageId = response.data.result.message_id;
+      data.lastHoursCheck = { ...data.lastHoursCheck, opening: currentTime };
       saveData(data);
-      console.log(`✅ Message d'ouverture envoyé (ID: ${data.lastHoursMessageId})`);
+      console.log(`   ✅ Message d'ouverture envoyé (ID: ${data.lastHoursMessageId})\n`);
     } catch (err) {
-      console.error('❌ Erreur envoi message ouverture:', err.message);
+      console.error('   ❌ Erreur envoi:', err.response?.data?.description || err.message);
     }
   }
 
-  // Message de fermeture
-  if (currentTime === settings.closing_time) {
-    // Supprimer le message précédent s'il existe
+  // ========== MESSAGE DE FERMETURE ==========
+  if (currentTime === settings.closing_time && lastCheck.closing !== currentTime) {
+    console.log(`\n🔔 FERMETURE DÉTECTÉE`);
+    
+    // Supprimer le message d'ouverture s'il existe
     if (data.lastHoursMessageId) {
       try {
+        console.log(`   Tentative suppression message d'ouverture (ID: ${data.lastHoursMessageId})`);
         await axios.post(`${TELEGRAM_API_URL}/deleteMessage`, {
           chat_id: CHANNEL_ID,
           message_id: data.lastHoursMessageId
         });
-        console.log('✅ Message d\'ouverture supprimé');
+        console.log('   ✅ Message d\'ouverture supprimé');
       } catch (err) {
-        console.error('❌ Erreur suppression message:', err.message);
+        console.error('   ❌ Erreur suppression:', err.response?.data?.description || err.message);
       }
     }
 
+    // Envoyer le message de fermeture
     const message = `🌙 <b>La boutique ferme maintenant !</b>\n\nRevenez demain pour continuer vos achats 😴`;
     
     try {
@@ -127,11 +138,13 @@ async function checkShopHours() {
         text: message,
         parse_mode: 'HTML'
       });
+      
       data.lastHoursMessageId = null;
+      data.lastHoursCheck = { ...data.lastHoursCheck, closing: currentTime };
       saveData(data);
-      console.log('✅ Message de fermeture envoyé');
+      console.log('   ✅ Message de fermeture envoyé\n');
     } catch (err) {
-      console.error('❌ Erreur envoi message fermeture:', err.message);
+      console.error('   ❌ Erreur envoi:', err.response?.data?.description || err.message);
     }
   }
 }
