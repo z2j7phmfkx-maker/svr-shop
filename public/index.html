@@ -1416,15 +1416,14 @@
   </div>
 
   <script>
-    // ✅ INITIALISER TELEGRAM WEBAPP IMMÉDIATEMENT
-    if (window.Telegram && window.Telegram.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-      console.log('✅ Telegram WebApp initialisé');
-    } else {
-      console.warn('⚠️ Pas de Telegram WebApp détecté');
-    }
+    // ✅ INITIALISER TELEGRAM WEBAPP AU DÉMARRAGE
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    // ✅ RÉCUPÉRER L'userId DIRECTEMENT DEPUIS TELEGRAM
+    const userId = tg.initDataUnsafe?.user?.id;
+    console.log('[CLIENT] userId (Telegram):', userId);
 
     // ========================================
     // VARIABLES GLOBALES
@@ -1439,30 +1438,26 @@
     let selectedTariff = null;
     let currentPriceMode = null;
 
-    // ✅ VÉRIFICATION D'ACCÈS
+    // ✅ VÉRIFICATION D'ACCÈS SIMPLIFIÉE
     async function verifyAccess() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const userId = urlParams.get('userId');
+      console.log('\n[CLIENT] =============== VERIFICATION ACCÈS ===============');
+      console.log('[CLIENT] userId:', userId);
 
-      console.log('[CLIENT] Token:', token);
-      console.log('[CLIENT] UserId:', userId, '(type:', typeof userId, ')');
-
-      if (!token || !userId) {
-        console.log('[CLIENT] ❌ Token ou userId manquant');
+      if (!userId) {
+        console.log('[CLIENT] ❌ Pas de userId Telegram');
         showDenied();
         return;
       }
 
       try {
-        const response = await fetch('/api/verify-token', {
+        const response = await fetch('/api/verify-simple', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, userId })
+          body: JSON.stringify({ userId: userId })
         });
 
         const result = await response.json();
-        console.log('[CLIENT] Réponse:', result);
+        console.log('[CLIENT] Réponse serveur:', result);
 
         if (result.valid === true) {
           console.log('[CLIENT] ✅ ACCÈS AUTORISÉ');
@@ -2032,11 +2027,7 @@
         return;
       }
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const userId = urlParams.get('userId');
-
-      if (!token || !userId) {
+      if (!userId) {
         alert('Tu dois être authentifié pour commander');
         return;
       }
@@ -2045,7 +2036,6 @@
 
       pendingOrder = {
         userId: userId,
-        token: token,
         items: cart,
         total: totalPrice,
         deliveryOption: null,
