@@ -100,7 +100,7 @@ async function isChannelMember(userId) {
     });
     const status = response.data.result.status;
     console.log(`   ✅ Statut: ${status}`);
-    const isMember = ['member', 'administrator', 'creator', 'restricted'].includes(status);
+    const isMember = ['member', 'administrator', 'creator'].includes(status);
     console.log(`   ${isMember ? '✅' : '❌'} User ${userId} est ${isMember ? 'MEMBRE' : 'PAS MEMBRE'}`);
     return isMember;
   } catch (err) {
@@ -126,31 +126,6 @@ app.get('/data.json', (req, res) => {
 app.get('/api/products', (req, res) => {
   const data = loadData();
   res.json(data.products || []);
-});
-
-// ✅ NOUVELLE ROUTE SIMPLE : vérifier juste l'adhésion au canal
-app.post('/api/verify-simple', async (req, res) => {
-  const { userId } = req.body;
-  
-  console.log('\n[VERIFY-SIMPLE] ========================');
-  console.log(`  userId: ${userId}`);
-  
-  if (!userId) {
-    console.log('  ❌ userId manquant');
-    return res.json({ valid: false });
-  }
-
-  // Vérifier juste si la personne est dans le canal
-  console.log('  🔍 Vérification adhésion canal...');
-  const isMember = await isChannelMember(userId);
-  
-  if (isMember) {
-    console.log('  ✅ VALID TRUE');
-    return res.json({ valid: true });
-  }
-  
-  console.log('  ❌ VALID FALSE');
-  res.json({ valid: false });
 });
 
 app.post('/api/save-data', async (req, res) => {
@@ -568,9 +543,12 @@ if (BOT_TOKEN) {
 
 // ==================== LANCEMENT ====================
 
+// Appel initial + check toutes les 10 secondes
+notificationService.checkShopHours();
+
 setInterval(() => {
   notificationService.checkShopHours();
-}, 60000);
+}, 10000);
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Serveur port ${PORT}`);
