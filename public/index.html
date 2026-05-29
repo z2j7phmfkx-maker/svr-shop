@@ -1028,112 +1028,6 @@
       color: #8ab4d4;
     }
 
-    #authContainer {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #000000;
-      z-index: 2000;
-    }
-
-    .auth-box {
-      text-align: center;
-      background: rgba(20, 28, 50, 0.9);
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 0 40px rgba(100, 150, 180, 0.2);
-      border: 2px solid rgba(100, 150, 180, 0.3);
-      backdrop-filter: blur(10px);
-    }
-
-    .spinner {
-      border: 4px solid rgba(100, 150, 180, 0.2);
-      border-top: 4px solid #6496b4;
-      border-radius: 50%;
-      width: 35px;
-      height: 35px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .auth-box h2 {
-      color: #6496b4;
-      margin-bottom: 8px;
-      font-size: 16px;
-    }
-
-    .auth-box p {
-      color: #a0b0c0;
-      font-size: 12px;
-    }
-
-    #deniedContainer {
-      display: none;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #000000;
-      z-index: 2000;
-    }
-
-    .denied-box {
-      text-align: center;
-      background: rgba(40, 20, 20, 0.9);
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 0 40px rgba(220, 100, 100, 0.2);
-      border: 2px solid rgba(220, 100, 100, 0.3);
-      max-width: 350px;
-      backdrop-filter: blur(10px);
-    }
-
-    .denied-box h2 {
-      color: #ff6b6b;
-      margin-bottom: 12px;
-      font-size: 20px;
-    }
-
-    .denied-box p {
-      color: #b0a0a0;
-      margin-bottom: 15px;
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    .denied-box a {
-      display: inline-block;
-      background: linear-gradient(135deg, rgba(100, 150, 180, 0.4) 0%, rgba(100, 150, 180, 0.2) 100%);
-      color: #6496b4;
-      padding: 10px 20px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: bold;
-      transition: all 0.3s ease;
-      border: 1px solid rgba(100, 150, 180, 0.5);
-      font-size: 12px;
-    }
-
-    .denied-box a:hover {
-      background: linear-gradient(135deg, rgba(100, 150, 180, 0.6) 0%, rgba(100, 150, 180, 0.4) 100%);
-      transform: translateY(-2px);
-    }
-
     .loading-overlay {
       display: none;
       position: fixed;
@@ -1162,6 +1056,20 @@
       font-size: 12px;
       margin-bottom: 15px;
       text-align: center;
+    }
+
+    .spinner {
+      border: 4px solid rgba(100, 150, 180, 0.2);
+      border-top: 4px solid #6496b4;
+      border-radius: 50%;
+      width: 35px;
+      height: 35px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     @media (max-width: 768px) {
@@ -1267,53 +1175,34 @@
   </style>
 </head>
 <body>
-  <div id="authContainer">
-    <div class="auth-box">
-      <div class="spinner"></div>
-      <h2>Vérification d'accès</h2>
-      <p>Veuillez patienter...</p>
+  <div class="header-wrapper">
+    <div class="header">
+      <div class="logo">
+        <div class="logo-text">דהר</div>
+      </div>
+      <div class="header-content">
+        <h1>SVR SHOP</h1>
+        <p>Découvre nos produits exclusifs</p>
+      </div>
     </div>
   </div>
 
-  <div id="deniedContainer">
-    <div class="denied-box">
-      <h2>Accès Refusé</h2>
-      <p>Tu n'as pas accès à ce shop.</p>
-      <p>Rejoins le channel @SVR_TO pour accéder.</p>
-      <a href="https://t.me/SVR_TO" target="_blank">Rejoindre le channel</a>
+  <div class="concours-banner" id="concoursBanner" onclick="toggleConcours()">
+    <div class="concours-content">
+      <div class="concours-preview" id="concoursPreview">
+        Clique pour voir les détails <span class="expand-icon">▼</span>
+      </div>
+      <div class="concours-text" id="concoursText"></div>
     </div>
   </div>
 
-  <div id="mainContent" style="display: none;">
-    <div class="header-wrapper">
-      <div class="header">
-        <div class="logo">
-          <div class="logo-text">דהר</div>
-        </div>
-        <div class="header-content">
-          <h1>SVR SHOP</h1>
-          <p>Découvre nos produits exclusifs</p>
-        </div>
-      </div>
-    </div>
+  <div class="filter-section" id="filterSection"></div>
 
-    <div class="concours-banner" id="concoursBanner" onclick="toggleConcours()">
-      <div class="concours-content">
-        <div class="concours-preview" id="concoursPreview">
-          Clique pour voir les détails <span class="expand-icon">▼</span>
-        </div>
-        <div class="concours-text" id="concoursText"></div>
-      </div>
-    </div>
+  <div class="container">
+    <div class="products-grid" id="productsGrid"></div>
 
-    <div class="filter-section" id="filterSection"></div>
-
-    <div class="container">
-      <div class="products-grid" id="productsGrid"></div>
-
-      <div class="admin-link">
-        <a href="/admin">Accès Admin</a>
-      </div>
+    <div class="admin-link">
+      <a href="/admin">Accès Admin</a>
     </div>
   </div>
 
@@ -1416,14 +1305,14 @@
   </div>
 
   <script>
-    // ✅ INITIALISER TELEGRAM WEBAPP AU DÉMARRAGE
+    // ✅ INITIALISER TELEGRAM WEBAPP
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
 
-    // ✅ RÉCUPÉRER L'userId DIRECTEMENT DEPUIS TELEGRAM
+    // ✅ RÉCUPÉRER userId DEPUIS TELEGRAM
     const userId = tg.initDataUnsafe?.user?.id;
-    console.log('[CLIENT] userId (Telegram):', userId);
+    console.log('[CLIENT] userId:', userId);
 
     // ========================================
     // VARIABLES GLOBALES
@@ -1438,52 +1327,11 @@
     let selectedTariff = null;
     let currentPriceMode = null;
 
-    // ✅ VÉRIFICATION D'ACCÈS SIMPLIFIÉE
-    async function verifyAccess() {
-      console.log('\n[CLIENT] =============== VERIFICATION ACCÈS ===============');
-      console.log('[CLIENT] userId:', userId);
-
-      if (!userId) {
-        console.log('[CLIENT] ❌ Pas de userId Telegram');
-        showDenied();
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/verify-simple', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: userId })
-        });
-
-        const result = await response.json();
-        console.log('[CLIENT] Réponse serveur:', result);
-
-        if (result.valid === true) {
-          console.log('[CLIENT] ✅ ACCÈS AUTORISÉ');
-          loadShop();
-        } else {
-          console.log('[CLIENT] ❌ ACCÈS REFUSÉ');
-          showDenied();
-        }
-      } catch (error) {
-        console.error('[CLIENT] ❌ ERREUR:', error);
-        showDenied();
-      }
-    }
-
-    function showDenied() {
-      document.getElementById('authContainer').style.display = 'none';
-      document.getElementById('deniedContainer').style.display = 'flex';
-    }
-
+    // ✅ CHARGER LA BOUTIQUE DIRECTEMENT (SANS VÉRIFICATION)
     async function loadShop() {
       try {
         const response = await fetch('/data.json');
         shopData = await response.json();
-
-        document.getElementById('authContainer').style.display = 'none';
-        document.getElementById('mainContent').style.display = 'block';
 
         loadConcours();
         createFilterSection();
@@ -1496,7 +1344,6 @@
         }
       } catch (error) {
         console.error('Erreur chargement:', error);
-        showDenied();
       }
     }
 
@@ -2194,8 +2041,8 @@
       }
     });
 
-    // 🚀 LANCER LA VÉRIFICATION D'ACCÈS
-    verifyAccess();
+    // 🚀 CHARGER LA BOUTIQUE AU DÉMARRAGE
+    loadShop();
   </script>
 </body>
 </html>
