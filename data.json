@@ -391,6 +391,7 @@
   },
   "usernames": {
     "691802350": "flavio81",
+    "997131125": "🌝",
     "1005618489": "aleaas1",
     "1071479641": "Zoë",
     "1306096487": "pblt444",
@@ -433,9 +434,12 @@
     "6687775535": "Charlie",
     "7720334111": "Evzionvrs",
     "5820124205": "malya316",
-    "5607689520": "Sacha"
+    "5607689520": "Sacha",
+    "7867355700": "Ryan",
+    "8425448316": "Jdlou-anne",
+    "7726271508": "Sined"
   },
-  "orderCounter": 1023,
+  "orderCounter": 1024,
   "firstNames": {
     "691802350": "Flavien",
     "918980126": "d0tq1",
@@ -520,5 +524,9 @@
     "5820124205": "Malou",
     "5607689520": "Sacha"
   },
-  "lastHoursMessageId": 384
+  "lastHoursMessageId": 389,
+  "lastHoursCheck": {
+    "closing": "00:00",
+    "opening": "14:00"
+  }
 }
