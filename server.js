@@ -543,12 +543,13 @@ if (BOT_TOKEN) {
 
 // ==================== LANCEMENT ====================
 
-// Appel initial + check toutes les 10 secondes
+// Appel initial au démarrage
 notificationService.checkShopHours();
 
+// Check toutes les heures (3600000 ms = 1 heure)
 setInterval(() => {
   notificationService.checkShopHours();
-}, 10000);
+}, 3600000);
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Serveur port ${PORT}`);
