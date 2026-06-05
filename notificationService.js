@@ -16,7 +16,17 @@ function loadData() {
   } catch (error) {
     console.error('❌ Erreur lecture data.json:', error);
   }
-  return { telegram_users: [], products: [], shop_settings: {}, lastHoursMessageId: null, lastHoursCheck: null };
+  return {
+    telegram_users: [],
+    products: [],
+    shop_settings: {
+      opening_time: '14:00',
+      closing_time: '00:00',
+      timezone: 'Europe/Paris'
+    },
+    lastHoursMessageId: null,
+    lastHoursCheck: { opening: '', closing: '' }
+  };
 }
 
 // Sauvegarder les données
@@ -53,6 +63,7 @@ async function checkShopHours() {
   const settings = data.shop_settings || {};
   
   if (!settings.opening_time || !settings.closing_time) {
+    console.log('⚠️ Horaires non configurés');
     return;
   }
 
@@ -71,11 +82,15 @@ async function checkShopHours() {
 
   console.log(`⏰ Heure Paris: ${currentTime} | Ouverture: ${settings.opening_time} | Fermeture: ${settings.closing_time}`);
 
-  // ✅ ÉVITER LES DOUBLONS : vérifier si on vient de traiter cet horaire
-  const lastCheck = data.lastHoursCheck || {};
+  // ✅ Initialiser lastHoursCheck s'il n'existe pas
+  if (!data.lastHoursCheck) {
+    data.lastHoursCheck = { opening: '', closing: '' };
+  }
+
+  const lastCheck = data.lastHoursCheck;
 
   // ========== MESSAGE D'OUVERTURE ==========
-  if (currentTime === settings.opening_time && lastCheck.opening !== currentTime) {
+  if (currentTime === settings.opening_time && (!lastCheck.opening || lastCheck.opening !== currentTime)) {
     console.log(`\n🔔 OUVERTURE DÉTECTÉE`);
     
     // Supprimer le message de fermeture précédent s'il existe
@@ -88,7 +103,11 @@ async function checkShopHours() {
         });
         console.log('   ✅ Message précédent supprimé');
       } catch (err) {
-        console.error('   ❌ Erreur suppression:', err.response?.data?.description || err.message);
+        if (err.response?.data?.description?.includes('message to delete not found')) {
+          console.log('   ⚠️ Message déjà supprimé ou introuvable');
+        } else {
+          console.error('   ❌ Erreur suppression:', err.response?.data?.description || err.message);
+        }
       }
     }
 
@@ -103,7 +122,7 @@ async function checkShopHours() {
       });
       
       data.lastHoursMessageId = response.data.result.message_id;
-      data.lastHoursCheck = { ...data.lastHoursCheck, opening: currentTime };
+      data.lastHoursCheck.opening = currentTime;
       saveData(data);
       console.log(`   ✅ Message d'ouverture envoyé (ID: ${data.lastHoursMessageId})\n`);
     } catch (err) {
@@ -112,7 +131,7 @@ async function checkShopHours() {
   }
 
   // ========== MESSAGE DE FERMETURE ==========
-  if (currentTime === settings.closing_time && lastCheck.closing !== currentTime) {
+  if (currentTime === settings.closing_time && (!lastCheck.closing || lastCheck.closing !== currentTime)) {
     console.log(`\n🔔 FERMETURE DÉTECTÉE`);
     
     // Supprimer le message d'ouverture s'il existe
@@ -125,7 +144,11 @@ async function checkShopHours() {
         });
         console.log('   ✅ Message d\'ouverture supprimé');
       } catch (err) {
-        console.error('   ❌ Erreur suppression:', err.response?.data?.description || err.message);
+        if (err.response?.data?.description?.includes('message to delete not found')) {
+          console.log('   ⚠️ Message déjà supprimé ou introuvable');
+        } else {
+          console.error('   ❌ Erreur suppression:', err.response?.data?.description || err.message);
+        }
       }
     }
 
@@ -133,16 +156,16 @@ async function checkShopHours() {
     const message = `🌙 <b>La boutique ferme maintenant !</b>\n\nRevenez demain pour continuer vos achats 😴`;
     
     try {
-      await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
+      const response = await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
         chat_id: CHANNEL_ID,
         text: message,
         parse_mode: 'HTML'
       });
       
-      data.lastHoursMessageId = null;
-      data.lastHoursCheck = { ...data.lastHoursCheck, closing: currentTime };
+      data.lastHoursMessageId = response.data.result.message_id;
+      data.lastHoursCheck.closing = currentTime;
       saveData(data);
-      console.log('   ✅ Message de fermeture envoyé\n');
+      console.log(`   ✅ Message de fermeture envoyé (ID: ${response.data.result.message_id})\n`);
     } catch (err) {
       console.error('   ❌ Erreur envoi:', err.response?.data?.description || err.message);
     }
