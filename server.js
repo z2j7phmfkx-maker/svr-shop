@@ -543,13 +543,23 @@ if (BOT_TOKEN) {
 
 // ==================== LANCEMENT ====================
 
-// Appel initial au démarrage
-notificationService.checkShopHours();
+function scheduleFirstCheck() {
+  const now = new Date();
+  const secondsUntilNextMinute = 60 - now.getSeconds();
+  const msUntilNextMinute = secondsUntilNextMinute * 1000;
 
-// Check toutes les heures (3600000 ms = 1 heure)
-setInterval(() => {
-  notificationService.checkShopHours();
-}, 3600000);
+  console.log(`⏰ Premier check dans ${secondsUntilNextMinute}s (à la prochaine minute pile)`);
+
+  setTimeout(() => {
+    notificationService.checkShopHours();
+    // Après le premier check, utiliser setInterval pour les suivants
+    setInterval(() => {
+      notificationService.checkShopHours();
+    }, 60000);
+  }, msUntilNextMinute);
+}
+
+scheduleFirstCheck();
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Serveur port ${PORT}`);
