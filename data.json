@@ -290,7 +290,7 @@
       "id": 1779380085097,
       "name": "TABAC🚬",
       "category": "EXTRA",
-      "stock": "Rupture de stock",
+      "stock": "En stock",
       "description": "Paquets de tabac par 20 venant principalement d’Espagne ou Afrique (Maroc, Sénégal, Côte d’ivoire…) selon les arrivages, on peut retrouver les classiques type Camel, Philipp Morris, Marlboro Red ou Light à voir aussi selon les arrivages ",
       "tariffs": "1=8|10=70",
       "promoTariffs": "",
@@ -536,9 +536,11 @@
     "5258867541": "Emy",
     "8077029696": "M"
   },
-  "lastHoursMessageId": 389,
+  "lastHoursMessageId": 395,
   "lastHoursCheck": {
     "closing": "00:00",
-    "opening": "14:00"
+    "opening": "14:00",
+    "openingHour": "14",
+    "closingHour": null
   }
 }
