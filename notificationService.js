@@ -22,7 +22,7 @@ function loadData() {
       timezone: 'Europe/Paris'
     },
     lastHoursMessageId: null,
-    lastHoursCheck: { opening: '', closing: '' }
+    lastHoursCheck: { openingHour: null, closingHour: null }
   };
 }
 
@@ -41,12 +41,11 @@ function initializeChecks() {
   console.log('\n🔄 === INITIALISATION DES CHECKS ===');
   const data = loadData();
   
-  // Réinitialiser les flags
   if (!data.lastHoursCheck) {
-    data.lastHoursCheck = { opening: '', closing: '' };
+    data.lastHoursCheck = { openingHour: null, closingHour: null };
   } else {
-    data.lastHoursCheck.opening = '';
-    data.lastHoursCheck.closing = '';
+    data.lastHoursCheck.openingHour = null;
+    data.lastHoursCheck.closingHour = null;
   }
   
   data.lastHoursMessageId = null;
@@ -137,20 +136,24 @@ async function checkShopHours() {
   // ✅ Initialiser lastHoursCheck s'il n'existe pas
   if (!data.lastHoursCheck) {
     console.log('   ⚠️ lastHoursCheck était null - INIT');
-    data.lastHoursCheck = { opening: '', closing: '' };
+    data.lastHoursCheck = { openingHour: null, closingHour: null };
   }
 
   const lastCheck = data.lastHoursCheck;
-  console.log(`   📋 lastCheck.opening: "${lastCheck.opening}"`);
-  console.log(`   📋 lastCheck.closing: "${lastCheck.closing}"`);
+  console.log(`   📋 lastCheck.openingHour: ${lastCheck.openingHour}`);
+  console.log(`   📋 lastCheck.closingHour: ${lastCheck.closingHour}`);
 
   // ========== MESSAGE D'OUVERTURE ==========
   console.log(`\n   📊 Check OUVERTURE:`);
-  console.log(`      currentTime === opening_time: ${currentTime} === ${settings.opening_time} = ${currentTime === settings.opening_time}`);
-  console.log(`      !lastCheck.opening: ${!lastCheck.opening}`);
-  console.log(`      lastCheck.opening !== currentTime: ${lastCheck.opening} !== ${currentTime} = ${lastCheck.opening !== currentTime}`);
+  const isOpeningTime = currentTime === settings.opening_time;
+  const openingNotYetSent = lastCheck.openingHour !== hours;
   
-  if (currentTime === settings.opening_time && (!lastCheck.opening || lastCheck.opening !== currentTime)) {
+  console.log(`      currentTime === opening_time: ${currentTime} === ${settings.opening_time} = ${isOpeningTime}`);
+  console.log(`      lastCheck.openingHour: ${lastCheck.openingHour}`);
+  console.log(`      current hour: ${hours}`);
+  console.log(`      openingNotYetSent: ${openingNotYetSent}`);
+  
+  if (isOpeningTime && openingNotYetSent) {
     console.log(`\n🔔 ✅ CONDITION OUVERTURE VRAIE - ENVOI DU MESSAGE`);
     
     // Supprimer le message de fermeture précédent s'il existe
@@ -176,8 +179,6 @@ async function checkShopHours() {
     
     try {
       console.log(`   📤 Envoi message d'ouverture...`);
-      console.log(`   API_URL: ${TELEGRAM_API_URL}`);
-      console.log(`   CHANNEL_ID: ${CHANNEL_ID}`);
       
       const response = await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
         chat_id: CHANNEL_ID,
@@ -189,7 +190,7 @@ async function checkShopHours() {
       console.log(`   Message ID: ${response.data.result.message_id}`);
       
       data.lastHoursMessageId = response.data.result.message_id;
-      data.lastHoursCheck.opening = currentTime;
+      data.lastHoursCheck.openingHour = hours;
       saveData(data);
       console.log(`   ✅ Données sauvegardées\n`);
     } catch (err) {
@@ -206,11 +207,15 @@ async function checkShopHours() {
 
   // ========== MESSAGE DE FERMETURE ==========
   console.log(`\n   📊 Check FERMETURE:`);
-  console.log(`      currentTime === closing_time: ${currentTime} === ${settings.closing_time} = ${currentTime === settings.closing_time}`);
-  console.log(`      !lastCheck.closing: ${!lastCheck.closing}`);
-  console.log(`      lastCheck.closing !== currentTime: ${lastCheck.closing} !== ${currentTime} = ${lastCheck.closing !== currentTime}`);
+  const isClosingTime = currentTime === settings.closing_time;
+  const closingNotYetSent = lastCheck.closingHour !== hours;
   
-  if (currentTime === settings.closing_time && (!lastCheck.closing || lastCheck.closing !== currentTime)) {
+  console.log(`      currentTime === closing_time: ${currentTime} === ${settings.closing_time} = ${isClosingTime}`);
+  console.log(`      lastCheck.closingHour: ${lastCheck.closingHour}`);
+  console.log(`      current hour: ${hours}`);
+  console.log(`      closingNotYetSent: ${closingNotYetSent}`);
+  
+  if (isClosingTime && closingNotYetSent) {
     console.log(`\n🔔 ✅ CONDITION FERMETURE VRAIE - ENVOI DU MESSAGE`);
     
     // Supprimer le message d'ouverture s'il existe
@@ -236,8 +241,6 @@ async function checkShopHours() {
     
     try {
       console.log(`   📤 Envoi message de fermeture...`);
-      console.log(`   API_URL: ${TELEGRAM_API_URL}`);
-      console.log(`   CHANNEL_ID: ${CHANNEL_ID}`);
       
       const response = await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
         chat_id: CHANNEL_ID,
@@ -249,7 +252,7 @@ async function checkShopHours() {
       console.log(`   Message ID: ${response.data.result.message_id}`);
       
       data.lastHoursMessageId = response.data.result.message_id;
-      data.lastHoursCheck.closing = currentTime;
+      data.lastHoursCheck.closingHour = hours;
       saveData(data);
       console.log(`   ✅ Données sauvegardées\n`);
     } catch (err) {
