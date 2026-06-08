@@ -267,7 +267,9 @@
       ],
       "isNew": true,
       "newUntil": "2026-05-25",
-      "createdAt": "2026-05-17T00:41:10.420Z"
+      "createdAt": "2026-05-17T00:41:10.420Z",
+      "tariffsLabel": "",
+      "allowCustomPrice": true
     },
     {
       "id": 1779014167980,
