@@ -36,6 +36,25 @@ function saveData(data) {
   }
 }
 
+// Initialiser les checks au démarrage
+function initializeChecks() {
+  console.log('\n🔄 === INITIALISATION DES CHECKS ===');
+  const data = loadData();
+  
+  // Réinitialiser les flags
+  if (!data.lastHoursCheck) {
+    data.lastHoursCheck = { opening: '', closing: '' };
+  } else {
+    data.lastHoursCheck.opening = '';
+    data.lastHoursCheck.closing = '';
+  }
+  
+  data.lastHoursMessageId = null;
+  
+  saveData(data);
+  console.log('✅ Checks réinitialisés - prêt pour les horaires\n');
+}
+
 // Envoyer un message au channel
 async function notifyAllUsers(message) {
   const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -282,6 +301,9 @@ function addUserToNotifications(userId) {
     console.log(`✅ Utilisateur ${userId} ajouté`);
   }
 }
+
+// Initialiser au chargement du module
+initializeChecks();
 
 module.exports = {
   notifyAllUsers,
