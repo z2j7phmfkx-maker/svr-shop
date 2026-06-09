@@ -541,7 +541,7 @@ if (BOT_TOKEN) {
   console.error('❌ TELEGRAM_BOT_TOKEN manquant');
 }
 
-// ==================== LANCEMENT ====================
+// ==================== SCHEDULING HORAIRES ====================
 
 function scheduleFirstCheck() {
   const now = new Date();
@@ -550,16 +550,22 @@ function scheduleFirstCheck() {
 
   console.log(`⏰ Premier check dans ${secondsUntilNextMinute}s (à la prochaine minute pile)`);
 
-  setTimeout(() => {
-    notificationService.checkShopHours();
-    // Après le premier check, utiliser setInterval pour les suivants
-    setInterval(() => {
-      notificationService.checkShopHours();
+  setTimeout(async () => {
+    await notificationService.checkShopHours();
+    const data = loadData();
+    await commitToGithub('Check horaires boutique', data);
+    
+    setInterval(async () => {
+      await notificationService.checkShopHours();
+      const data = loadData();
+      await commitToGithub('Check horaires boutique', data);
     }, 60000);
   }, msUntilNextMinute);
 }
 
 scheduleFirstCheck();
+
+// ==================== LANCEMENT SERVEUR ====================
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Serveur port ${PORT}`);
