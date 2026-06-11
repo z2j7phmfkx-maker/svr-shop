@@ -315,5 +315,6 @@ module.exports = {
   notifyNewProduct,
   notifyLimitedStock,
   notifyBackInStock,
-  addUserToNotifications
+  addUserToNotifications,
+  loadData
 };
