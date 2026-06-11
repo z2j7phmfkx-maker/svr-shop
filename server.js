@@ -552,13 +552,18 @@ function scheduleFirstCheck() {
 
   setTimeout(async () => {
     await notificationService.checkShopHours();
-    const data = loadData();
-    await commitToGithub('Check horaires boutique', data);
     
     setInterval(async () => {
+      const dataBefore = JSON.stringify(notificationService.loadData());
       await notificationService.checkShopHours();
-      const data = loadData();
-      await commitToGithub('Check horaires boutique', data);
+      const dataAfter = JSON.stringify(notificationService.loadData());
+      
+      // Commit SEULEMENT si les données ont changé (message envoyé/supprimé)
+      if (dataBefore !== dataAfter) {
+        const data = notificationService.loadData();
+        await commitToGithub('Check horaires boutique', data);
+        console.log('✅ Commit GitHub (message envoyé/supprimé)');
+      }
     }, 60000);
   }, msUntilNextMinute);
 }
