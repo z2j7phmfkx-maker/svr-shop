@@ -583,11 +583,11 @@
     "8077029696": "M",
     "5454823453": "salomé"
   },
-  "lastHoursMessageId": 405,
+  "lastHoursMessageId": 407,
   "lastHoursCheck": {
     "closing": "00:00",
     "opening": "14:00",
-    "openingHour": null,
+    "openingHour": "14",
     "closingHour": "00"
   }
 }
