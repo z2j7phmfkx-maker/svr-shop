@@ -16,13 +16,9 @@ function loadData() {
   return {
     telegram_users: [],
     products: [],
-    shop_settings: {
-      opening_time: '14:00',
-      closing_time: '00:00',
-      timezone: 'Europe/Paris'
-    },
-    lastHoursMessageId: null,
-    lastHoursCheck: { openingHour: null, closingHour: null }
+    shop_settings: {},
+    concours: {},
+    orderCounter: 1000
   };
 }
 
@@ -36,48 +32,24 @@ function saveData(data) {
   }
 }
 
-// Initialiser les checks au démarrage
-function initializeChecks() {
-  console.log('\n🔄 === INITIALISATION DES CHECKS ===');
-  const data = loadData();
-  
-  if (!data.lastHoursCheck) {
-    data.lastHoursCheck = { openingHour: null, closingHour: null };
-  } else {
-    data.lastHoursCheck.openingHour = null;
-    data.lastHoursCheck.closingHour = null;
-  }
-  
-  data.lastHoursMessageId = null;
-  
-  saveData(data);
-  console.log('✅ Checks réinitialisés - prêt pour les horaires\n');
-}
-
 // Envoyer un message au channel
 async function notifyAllUsers(message) {
   const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
   const CHANNEL_ID = process.env.CHANNEL_ID;
   const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
-  console.log('\n📤 === NOTIFYALLUSERS APPELÉE ===');
-  console.log(`   BOT_TOKEN défini: ${TELEGRAM_BOT_TOKEN ? 'OUI' : '❌ NON'}`);
-  console.log(`   CHANNEL_ID défini: ${CHANNEL_ID ? 'OUI' : '❌ NON'}`);
-  console.log(`   CHANNEL_ID value: ${CHANNEL_ID}`);
-  
   if (!CHANNEL_ID) {
-    console.error('❌ CHANNEL_ID non défini - IMPOSSIBLE D\'ENVOYER');
+    console.error('❌ CHANNEL_ID non défini');
     return;
   }
 
   if (!TELEGRAM_BOT_TOKEN) {
-    console.error('❌ TELEGRAM_BOT_TOKEN non défini - IMPOSSIBLE D\'ENVOYER');
+    console.error('❌ TELEGRAM_BOT_TOKEN non défini');
     return;
   }
 
   try {
-    console.log(`   📝 Message à envoyer: ${message.substring(0, 50)}...`);
-    console.log(`   📡 URL API: ${TELEGRAM_API_URL.substring(0, 40)}...`);
+    console.log(`\n📤 Envoi notification: ${message.substring(0, 50)}...`);
     
     const response = await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
       chat_id: CHANNEL_ID,
@@ -85,186 +57,13 @@ async function notifyAllUsers(message) {
       parse_mode: 'HTML'
     });
     
-    console.log(`   ✅ Notification envoyée au channel - Message ID: ${response.data.result.message_id}`);
+    console.log(`✅ Notification envoyée - Message ID: ${response.data.result.message_id}`);
   } catch (error) {
-    console.error('❌ Erreur envoi channel:', {
+    console.error('❌ Erreur envoi:', {
       status: error.response?.status,
       description: error.response?.data?.description,
       message: error.message
     });
-  }
-}
-
-// Vérifier les horaires d'ouverture/fermeture avec fuseau horaire Paris
-async function checkShopHours() {
-  const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-  const CHANNEL_ID = process.env.CHANNEL_ID;
-  const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
-  
-  console.log('\n⏰ === CHECK SHOP HOURS LANCÉ ===');
-  console.log(`   BOT_TOKEN: ${TELEGRAM_BOT_TOKEN ? '✅ OK' : '❌ UNDEFINED'}`);
-  console.log(`   CHANNEL_ID: ${CHANNEL_ID ? '✅ OK (' + CHANNEL_ID + ')' : '❌ UNDEFINED'}`);
-  
-  const data = loadData();
-  const settings = data.shop_settings || {};
-  
-  console.log(`   opening_time: ${settings.opening_time || '❌ UNDEFINED'}`);
-  console.log(`   closing_time: ${settings.closing_time || '❌ UNDEFINED'}`);
-  
-  if (!settings.opening_time || !settings.closing_time) {
-    console.log('⚠️ Horaires non configurés - STOP');
-    return;
-  }
-
-  // ✅ Obtenir l'heure de Paris
-  const formatter = new Intl.DateTimeFormat('fr-FR', {
-    timeZone: 'Europe/Paris',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-
-  const parts = formatter.formatToParts(new Date());
-  const hours = parts.find(p => p.type === 'hour')?.value || '00';
-  const minutes = parts.find(p => p.type === 'minute')?.value || '00';
-  const currentTime = `${hours}:${minutes}`;
-
-  console.log(`\n   ⏰ Heure Paris: ${currentTime}`);
-  console.log(`   🔔 Ouverture attendue: ${settings.opening_time}`);
-  console.log(`   🌙 Fermeture attendue: ${settings.closing_time}`);
-
-  // ✅ Initialiser lastHoursCheck s'il n'existe pas
-  if (!data.lastHoursCheck) {
-    console.log('   ⚠️ lastHoursCheck était null - INIT');
-    data.lastHoursCheck = { openingHour: null, closingHour: null };
-  }
-
-  const lastCheck = data.lastHoursCheck;
-  console.log(`   📋 lastCheck.openingHour: ${lastCheck.openingHour}`);
-  console.log(`   📋 lastCheck.closingHour: ${lastCheck.closingHour}`);
-
-  // ========== MESSAGE D'OUVERTURE ==========
-  console.log(`\n   📊 Check OUVERTURE:`);
-  const isOpeningTime = currentTime === settings.opening_time;
-  const openingNotYetSent = lastCheck.openingHour !== hours;
-  
-  console.log(`      currentTime === opening_time: ${currentTime} === ${settings.opening_time} = ${isOpeningTime}`);
-  console.log(`      lastCheck.openingHour: ${lastCheck.openingHour}`);
-  console.log(`      current hour: ${hours}`);
-  console.log(`      openingNotYetSent: ${openingNotYetSent}`);
-  
-  if (isOpeningTime && openingNotYetSent) {
-    console.log(`\n🔔 ✅ CONDITION OUVERTURE VRAIE - ENVOI DU MESSAGE`);
-    
-    // Supprimer le message de fermeture précédent s'il existe
-    if (data.lastHoursMessageId) {
-      try {
-        console.log(`   Tentative suppression ancien message (ID: ${data.lastHoursMessageId})`);
-        await axios.post(`${TELEGRAM_API_URL}/deleteMessage`, {
-          chat_id: CHANNEL_ID,
-          message_id: data.lastHoursMessageId
-        });
-        console.log('   ✅ Message précédent supprimé');
-      } catch (err) {
-        if (err.response?.data?.description?.includes('message to delete not found')) {
-          console.log('   ⚠️ Message déjà supprimé ou introuvable');
-        } else {
-          console.error('   ❌ Erreur suppression:', err.response?.data?.description || err.message);
-        }
-      }
-    }
-
-    // Envoyer le message d'ouverture
-    const message = `🎉 <b>LA BOUTIQUE EST OUVERTE!</b> 🛍️\n\nTu peux passer ta commande de <b>2 manières</b> :\n\n1️⃣ En validant ton panier sur le site @svrshopbot\n2️⃣ Directement avec nous sur @SVR_TO\n\n⏰ Horaires: ${settings.opening_time} - ${settings.closing_time}`;
-    
-    try {
-      console.log(`   📤 Envoi message d'ouverture...`);
-      
-      const response = await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
-        chat_id: CHANNEL_ID,
-        text: message,
-        parse_mode: 'HTML'
-      });
-      
-      console.log(`   ✅ Message d'ouverture envoyé avec succès!`);
-      console.log(`   Message ID: ${response.data.result.message_id}`);
-      
-      data.lastHoursMessageId = response.data.result.message_id;
-      data.lastHoursCheck.openingHour = hours;
-      saveData(data);
-      console.log(`   ✅ Données sauvegardées\n`);
-    } catch (err) {
-      console.error('   ❌ ERREUR ENVOI OUVERTURE:', {
-        status: err.response?.status,
-        description: err.response?.data?.description,
-        parameters: err.response?.data?.parameters,
-        message: err.message
-      });
-    }
-  } else {
-    console.log(`   ❌ Condition ouverture fausse - pas d'envoi`);
-  }
-
-  // ========== MESSAGE DE FERMETURE ==========
-  console.log(`\n   📊 Check FERMETURE:`);
-  const isClosingTime = currentTime === settings.closing_time;
-  const closingNotYetSent = lastCheck.closingHour !== hours;
-  
-  console.log(`      currentTime === closing_time: ${currentTime} === ${settings.closing_time} = ${isClosingTime}`);
-  console.log(`      lastCheck.closingHour: ${lastCheck.closingHour}`);
-  console.log(`      current hour: ${hours}`);
-  console.log(`      closingNotYetSent: ${closingNotYetSent}`);
-  
-  if (isClosingTime && closingNotYetSent) {
-    console.log(`\n🔔 ✅ CONDITION FERMETURE VRAIE - ENVOI DU MESSAGE`);
-    
-    // Supprimer le message d'ouverture s'il existe
-    if (data.lastHoursMessageId) {
-      try {
-        console.log(`   Tentative suppression message d'ouverture (ID: ${data.lastHoursMessageId})`);
-        await axios.post(`${TELEGRAM_API_URL}/deleteMessage`, {
-          chat_id: CHANNEL_ID,
-          message_id: data.lastHoursMessageId
-        });
-        console.log('   ✅ Message d\'ouverture supprimé');
-      } catch (err) {
-        if (err.response?.data?.description?.includes('message to delete not found')) {
-          console.log('   ⚠️ Message déjà supprimé ou introuvable');
-        } else {
-          console.error('   ❌ Erreur suppression:', err.response?.data?.description || err.message);
-        }
-      }
-    }
-
-    // Envoyer le message de fermeture
-    const message = `🌙 <b>La boutique ferme maintenant !</b>\n\nRevenez demain pour continuer vos achats 😴`;
-    
-    try {
-      console.log(`   📤 Envoi message de fermeture...`);
-      
-      const response = await axios.post(`${TELEGRAM_API_URL}/sendMessage`, {
-        chat_id: CHANNEL_ID,
-        text: message,
-        parse_mode: 'HTML'
-      });
-      
-      console.log(`   ✅ Message de fermeture envoyé avec succès!`);
-      console.log(`   Message ID: ${response.data.result.message_id}`);
-      
-      data.lastHoursMessageId = response.data.result.message_id;
-      data.lastHoursCheck.closingHour = hours;
-      saveData(data);
-      console.log(`   ✅ Données sauvegardées\n`);
-    } catch (err) {
-      console.error('   ❌ ERREUR ENVOI FERMETURE:', {
-        status: err.response?.status,
-        description: err.response?.data?.description,
-        parameters: err.response?.data?.parameters,
-        message: err.message
-      });
-    }
-  } else {
-    console.log(`   ❌ Condition fermeture fausse - pas d'envoi`);
   }
 }
 
@@ -305,12 +104,8 @@ function addUserToNotifications(userId) {
   }
 }
 
-// Initialiser au chargement du module
-initializeChecks();
-
 module.exports = {
   notifyAllUsers,
-  checkShopHours,
   notifyOutOfStock,
   notifyNewProduct,
   notifyLimitedStock,
