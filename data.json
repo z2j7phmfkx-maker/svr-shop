@@ -261,7 +261,7 @@
       "name": "TABAC🚬",
       "category": "EXTRA",
       "stock": "En stock",
-      "description": "Paquets de tabac par 20 venant principalement d’Espagne ou Afrique (Maroc, Sénégal, Côte d’ivoire…) selon les arrivages, on peut retrouver les classiques type Camel, Philipp Morris, Marlboro Red ou Light à voir aussi selon les arrivages ",
+      "description": "Paquets de tabac par 20 venant principalement d'Espagne ou Afrique (Maroc, Sénégal, Côte d'ivoire…) selon les arrivages, on peut retrouver les classiques type Camel, Philipp Morris, Marlboro Red ou Light à voir aussi selon les arrivages ",
       "tariffs": "1=8|10=70",
       "promoTariffs": "",
       "tariffsLabel": "",
@@ -343,7 +343,7 @@
     "svr_l8cqa8wngrcu66rlnkyr8": 6597416117,
     "svr_mf0zx4e05jk5kuek35bq1g": 5425953857,
     "svr_0lxfln28zianpimnaxsd48l": 7720334111,
-    "svr_ocxd915k67og9y46i5zt6": 7282060412,
+    "svr_ocxd915k67og9a46i5zt6": 7282060412,
     "svr_rf6c06wueabx07k419abdk": 2035719485,
     "svr_dck4qmphaz28jfh22vtpv": 8585289920,
     "svr_i209p4kpcciltgbc2njsuj": 6797056167,
@@ -531,12 +531,5 @@
     "8077029696": "M",
     "5454823453": "salomé",
     "7123472967": "Lina"
-  },
-  "lastHoursMessageId": 407,
-  "lastHoursCheck": {
-    "closing": "00:00",
-    "opening": "14:00",
-    "openingHour": "14",
-    "closingHour": "00"
   }
 }
