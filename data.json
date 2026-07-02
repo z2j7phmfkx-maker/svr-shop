@@ -272,6 +272,25 @@
       "isNew": true,
       "newUntil": "2026-06-14",
       "createdAt": "2026-06-08T20:40:05.063Z"
+    },
+    {
+      "id": 1783036155288,
+      "name": "DOUBLE STATIC PLASMA POISON RUNTZ",
+      "category": "HASH",
+      "stock": "Stock limité",
+      "description": "Le “double static sift” est une technique utilisée pour améliorer la qualité du haschich. Le “static sift” consiste à utiliser l’électricité statique pour séparer la résine de la plante des petites impuretés comme les morceaux de feuilles. Quand on parle de “double static sift”, cela signifie que cette opération est réalisée deux fois de suite. La première fois permet déjà de nettoyer la résine, et la seconde sert à la purifier encore davantage. Le résultat est un produit plus propre, plus concentré et généralement de meilleure qualité.",
+      "tariffs": "1.2g=20|10g=110",
+      "promoTariffs": "",
+      "tariffsLabel": "g",
+      "allowCustomPrice": false,
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1783036138/svr-shop/wglfmdcbsduvbvabwrd8.jpg",
+      "gallery": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1783036147/svr-shop/gtg2zrophebp2pzffrgc.mp4"
+      ],
+      "isNew": true,
+      "newUntil": "",
+      "createdAt": "2026-07-02T23:49:15.288Z"
     }
   ],
   "userTokens": {
