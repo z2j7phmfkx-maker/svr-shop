@@ -168,25 +168,6 @@
       "createdAt": "2026-03-28T07:49:49.406Z"
     },
     {
-      "id": 1774681507311,
-      "name": "TROPICANA🌺",
-      "category": "WEED",
-      "description": "La Tropicanna regorge de délicieux terpènes et contient aussi beaucoup de THC. Avec 26 % de cannabinoïde, cette variété à dominance sativa se concentre sur une expérience énergisante à tête claire. Des notes de citron, de citron vert et d'orange sont clairement présentes dans la fumée, complétées par des parfums de fruits des bois et d'herbes pour une touche surprenante. Les effets sont joyeux et élévateurs, avec des niveaux renforcés de créativité et de motivation.",
-      "tariffs": "1.2g=20|2g=30|3.2g=40|4g=50|5g=60|6g=70|7g=80|8g=90|10g=100",
-      "promoTariffs": "",
-      "stock": "Stock limité",
-      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774681495/ncapkiqwncrreswivlun.jpg",
-      "gallery": [],
-      "videos": [
-        "https://res.cloudinary.com/diezs6eqa/video/upload/v1774681502/iitutqskd3z5pisxlcie.mov"
-      ],
-      "createdAt": "2026-03-28T07:05:07.311Z",
-      "isNew": false,
-      "newUntil": "",
-      "tariffsLabel": "",
-      "allowCustomPrice": false
-    },
-    {
       "id": 1774991687897,
       "name": "RUNTZ⚡️",
       "category": "HASH",
@@ -205,9 +186,9 @@
     },
     {
       "id": 1774993351068,
-      "name": "Sunset Sherbet 🍧",
+      "name": "KETAMA🇲🇦",
       "category": "HASH",
-      "description": "Le filtré Sunset Sherbet se distingue par ses arômes sucrés et fruités, avec des notes d’agrumes, de fruits rouges et une légère touche crémeuse. Fabriqué à partir de la variété Sunset Sherbet, il est obtenu par un procédé de filtration qui permet de récupérer principalement les trichomes tout en limitant les impuretés végétales, donnant une résine généralement plus propre et de bonne qualité.",
+      "description": "Le Ketama (haschich marocain) est réputé pour sa puissance modérée, avec un taux de THC généralement compris entre 10 % et 20 %, selon la qualité. Les effets sont plutôt relaxants, avec une sensation de détente corporelle et un léger apaisement mental. Au niveau du goût, il se caractérise par des notes terreuses et épicées, souvent accompagnées d'une touche boisée et parfois légèrement sucrée.",
       "tariffs": "2.5g=20|10g=70|20g=130",
       "isNew": true,
       "newUntil": "2026-04-10",
@@ -218,9 +199,7 @@
         "https://res.cloudinary.com/diezs6eqa/video/upload/v1774993345/zaoxoymhpwkpzfohjnwx.mov"
       ],
       "createdAt": "2026-03-31T21:42:31.068Z",
-      "promoTariffs": "",
-      "tariffsLabel": "",
-      "allowCustomPrice": true
+      "promoTariffs": ""
     },
     {
       "id": 1778978470420,
