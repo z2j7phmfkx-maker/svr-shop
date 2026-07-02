@@ -186,20 +186,22 @@
     },
     {
       "id": 1774993351068,
-      "name": "KETAMA🇲🇦",
+      "name": "SUNSET SHERBET 🍦",
       "category": "HASH",
-      "description": "Le Ketama (haschich marocain) est réputé pour sa puissance modérée, avec un taux de THC généralement compris entre 10 % et 20 %, selon la qualité. Les effets sont plutôt relaxants, avec une sensation de détente corporelle et un léger apaisement mental. Au niveau du goût, il se caractérise par des notes terreuses et épicées, souvent accompagnées d'une touche boisée et parfois légèrement sucrée.",
+      "description": "Le filtré Sunset Sherbet se distingue par ses arômes sucrés et fruités, avec des notes d’agrumes, de fruits rouges et une légère touche crémeuse. Fabriqué à partir de la variété Sunset Sherbet, il est obtenu par un procédé de filtration qui permet de récupérer principalement les trichomes tout en limitant les impuretés végétales, donnant une résine généralement plus propre et de bonne qualité.",
       "tariffs": "2.5g=20|10g=70|20g=130",
       "isNew": true,
       "newUntil": "2026-04-10",
       "stock": "En stock",
-      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1774993338/mnresmu0xmf7ngsbpmsr.jpg",
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1783035559/svr-shop/wpafeflwps3qwlfiwesg.jpg",
       "gallery": [],
       "videos": [
-        "https://res.cloudinary.com/diezs6eqa/video/upload/v1774993345/zaoxoymhpwkpzfohjnwx.mov"
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1783035566/svr-shop/g1aezogdfdtebszvg8ct.mp4"
       ],
       "createdAt": "2026-03-31T21:42:31.068Z",
-      "promoTariffs": ""
+      "promoTariffs": "",
+      "tariffsLabel": "",
+      "allowCustomPrice": true
     },
     {
       "id": 1778978470420,
