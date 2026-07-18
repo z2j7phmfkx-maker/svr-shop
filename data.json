@@ -298,6 +298,25 @@
       "isNew": true,
       "newUntil": "",
       "createdAt": "2026-07-18T19:53:51.672Z"
+    },
+    {
+      "id": 1784404625587,
+      "name": "SUPER SILVER HAZE 🥈",
+      "category": "WEED",
+      "stock": "En stock",
+      "description": "La Super Silver Haze est une variété connue pour ses arômes d’agrumes, de citron et d’épices, avec une légère touche boisée et terreuse. Elle est appréciée pour ses têtes résineuses et son profil aromatique frais et intense.",
+      "tariffs": "2,5g=20|10g=70|20g=130",
+      "promoTariffs": "",
+      "tariffsLabel": "",
+      "allowCustomPrice": true,
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1784404596/svr-shop/dbchqrcrmuf8nommagn8.jpg",
+      "gallery": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1784404606/svr-shop/zgv5evdpojbeb4zgakz3.mp4"
+      ],
+      "isNew": true,
+      "newUntil": "",
+      "createdAt": "2026-07-18T19:57:05.587Z"
     }
   ],
   "userTokens": {
