@@ -317,6 +317,25 @@
       "isNew": true,
       "newUntil": "",
       "createdAt": "2026-07-18T19:57:05.587Z"
+    },
+    {
+      "id": 1784404784924,
+      "name": "BANANA SHERBET 🍌",
+      "category": "WEED",
+      "stock": "Stock limité",
+      "description": "La Banana Sherbet est une variété connue pour ses arômes de banane mûre, de fruits tropicaux et de notes sucrées, avec une légère touche crémeuse. Elle est appréciée pour ses têtes résineuses et son profil aromatique gourmand et fruité.",
+      "tariffs": "2g=20|10g=80|20g=150",
+      "promoTariffs": "",
+      "tariffsLabel": "",
+      "allowCustomPrice": true,
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1784404755/svr-shop/b1fjlumenm5wych8m0qh.jpg",
+      "gallery": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1784404781/svr-shop/oqbre5azim62gmiuqkwy.mp4"
+      ],
+      "isNew": true,
+      "newUntil": "",
+      "createdAt": "2026-07-18T19:59:44.924Z"
     }
   ],
   "userTokens": {
