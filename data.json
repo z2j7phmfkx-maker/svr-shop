@@ -279,6 +279,25 @@
       "isNew": true,
       "newUntil": "",
       "createdAt": "2026-07-18T19:48:45.933Z"
+    },
+    {
+      "id": 1784404431672,
+      "name": "CRITICAL MASS 🇦🇫",
+      "category": "WEED",
+      "stock": "En stock",
+      "description": "La Critical Mass est une variété connue pour ses arômes doux et sucrés, avec des notes de terre, d’épices et une légère touche fruitée. Elle est appréciée pour ses grosses têtes très résineuses et son profil aromatique riche.",
+      "tariffs": "2,5g=20|10g=70|20g=130",
+      "promoTariffs": "",
+      "tariffsLabel": "",
+      "allowCustomPrice": true,
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1784404405/svr-shop/k519klf5thtlvvavuilt.jpg",
+      "gallery": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1784404412/svr-shop/thbr1gaogfn42u0hwkpi.mp4"
+      ],
+      "isNew": true,
+      "newUntil": "",
+      "createdAt": "2026-07-18T19:53:51.672Z"
     }
   ],
   "userTokens": {
