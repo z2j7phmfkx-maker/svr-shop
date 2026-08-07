@@ -337,6 +337,23 @@
       "isNew": true,
       "newUntil": "",
       "createdAt": "2026-07-18T19:59:44.924Z"
+    },
+    {
+      "id": 1786111455801,
+      "name": "🧽 MONSTER CALIMOUSSE - JAUNE MOUSSEUX",
+      "category": "HASH",
+      "stock": "En stock",
+      "description": "Le Monster Calimousse – Jaune Mousseux se distingue par sa teinte jaune-beige, son aspect mousseux et sa texture souple et friable. Présenté comme élaboré à partir de génétiques californiennes, il affiche un profil aromatique annoncé comme intense et une forte teneur en THC.",
+      "tariffs": "3g=20|5g=30|10g=50|20g=90",
+      "promoTariffs": "",
+      "tariffsLabel": "",
+      "allowCustomPrice": true,
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1786111361/svr-shop/v5fixyqwhurtgj5cgy1v.jpg",
+      "gallery": [],
+      "videos": [],
+      "isNew": true,
+      "newUntil": "",
+      "createdAt": "2026-08-07T14:04:15.802Z"
     }
   ],
   "userTokens": {
