@@ -244,6 +244,25 @@
       "createdAt": "2026-07-02T23:49:15.288Z"
     },
     {
+      "id": 1784404125933,
+      "name": "ORANGE BUD 🍊",
+      "category": "WEED",
+      "stock": "Stock limité",
+      "description": "La Orange Bud est une variété connue pour ses arômes d’orange, de mandarine et d’agrumes, avec une légère touche sucrée. Elle est appréciée pour ses têtes denses, résineuses et son profil aromatique frais et fruité.",
+      "tariffs": "2,5g=20|10g=70|20g=130",
+      "promoTariffs": "",
+      "tariffsLabel": "",
+      "allowCustomPrice": true,
+      "image": "https://res.cloudinary.com/diezs6eqa/image/upload/v1784404091/svr-shop/scoqbk9tyf7ny2zlrjxm.jpg",
+      "gallery": [],
+      "videos": [
+        "https://res.cloudinary.com/diezs6eqa/video/upload/v1784404120/svr-shop/hy94xjbd1rla8hpqn65h.mp4"
+      ],
+      "isNew": true,
+      "newUntil": "",
+      "createdAt": "2026-07-18T19:48:45.933Z"
+    },
+    {
       "id": 1784404431672,
       "name": "CRITICAL MASS 🇦🇫",
       "category": "WEED",
