@@ -107,12 +107,13 @@ function requireAdmin(req, res, next) {
 }
 
 function verifyTelegramInitData(initData) {
+  params.delete('hash');
+  params.delete('signature');
   if (!BOT_TOKEN || typeof initData !== 'string' || initData.length > 8192) throw new Error('Authentification Telegram absente');
   const params = new URLSearchParams(initData);
   const receivedHash = params.get('hash');
   const authDate = Number(params.get('auth_date'));
   if (!receivedHash || !Number.isSafeInteger(authDate)) throw new Error('Authentification Telegram invalide');
-  params.delete('hash');
   const dataCheckString = [...params.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}=${v}`).join('\n');
   const secret = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
   const expectedHash = crypto.createHmac('sha256', secret).update(dataCheckString).digest('hex');
