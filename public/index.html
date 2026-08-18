@@ -1172,20 +1172,62 @@
         font-size: 20px;
       }
     }
+    .header-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto 15px;
+}
+
+.header {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid rgba(100, 150, 180, 0.45);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 32px rgba(0, 80, 255, 0.22),
+    0 0 24px rgba(0, 180, 255, 0.18);
+}
+
+.header-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2048 / 704;
+  object-fit: cover;
+  object-position: center;
+}
+
+@media (max-width: 480px) {
+  .header-wrapper {
+    margin-bottom: 10px;
+  }
+
+  .header {
+    padding: 0;
+    border-radius: 12px;
+  }
+
+  .header-banner {
+    min-height: 115px;
+    object-fit: cover;
+  }
+}
   </style>
 </head>
 <body>
-  <div class="header-wrapper">
-    <div class="header">
-      <div class="logo">
-        <div class="logo-text">דהר</div>
-      </div>
-      <div class="header-content">
-        <h1>SVR SHOP</h1>
-        <p>Découvre nos produits exclusifs</p>
-      </div>
-    </div>
+<header class="header-wrapper">
+  <div class="header">
+    <img
+      class="header-banner"
+      src="/svr-shop-banner.png"
+      alt="SVR SHOP"
+      width="2048"
+      height="704"
+    >
   </div>
+</header>
 
   <div class="concours-banner" id="concoursBanner">
     <div class="concours-content">
