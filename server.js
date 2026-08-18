@@ -356,12 +356,36 @@ if (BOT_TOKEN) {
   const shopButton = { reply_markup: { inline_keyboard: [[{ text: '🛍️ Ouvrir la boutique', web_app: { url: process.env.SITE_URL } }]] } };
   bot.start(ctx => ctx.reply('Bienvenue. Ouvre la boutique avec le bouton sécurisé ci-dessous.', shopButton));
   bot.command('shop', ctx => ctx.reply('Ouvre la boutique.', shopButton));
-  bot.on('channel_post', async (ctx) => {
-bot.on('channel_post', async (ctx) => {
-  console.log('CANAL DÉTECTÉ', {
-    id: ctx.chat.id,
-    titre: ctx.chat.title
-  });
+  bot.command('testannonce', async (ctx) => {
+  if (
+    String(ctx.from.id) !==
+    String(process.env.OWNER_TELEGRAM_ID)
+  ) {
+    return;
+  }
+
+  const chatId = process.env.SCHEDULED_CHAT_ID;
+
+  if (!chatId) {
+    return ctx.reply('❌ SCHEDULED_CHAT_ID est absent.');
+  }
+
+  try {
+    await notifications.sendTelegramMessage(
+      chatId,
+      '✅ Message automatique de test'
+    );
+
+    await ctx.reply('✅ Message envoyé dans le canal.');
+  } catch (error) {
+    logSafeError('Échec du test d’annonce', error);
+
+    await ctx.reply(
+      `❌ Envoi impossible : ${
+        error.response?.data?.description || error.message
+      }`
+    );
+  }
 });
   bot.catch(error => logSafeError('Erreur bot Telegram', error));
   bot.launch({ dropPendingUpdates: true }).catch(error => logSafeError('Démarrage bot impossible', error));
