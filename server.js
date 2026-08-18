@@ -257,7 +257,7 @@ function buildTrustedOrder(input, products) {
     if (!tariff) throw new Error('Tarif inexistant');
     const price = tariff.price;
     const grams = tariff.size;
-    return { id: product.id, name: product.name, price, grams, quantity: requested.quantity };
+    return { id: product.id, name: product.name, category: product.category, price, grams, quantity: requested.quantity };
   });
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   if (input.deliveryOption === 'livraison' && total < 50) throw new Error('Minimum de livraison non atteint');
@@ -323,7 +323,11 @@ app.post('/api/order', orderLimiter, requireTelegram, async (req, res, next) => 
     data.orderCounter += 1;
     const orderNumber = data.orderCounter;
     const e = notifications.escapeTelegramHtml;
-    const itemsText = order.items.map(item => `• <b>${e(item.name)}</b> — ${item.grams.toFixed(2)} × ${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`).join('\n');
+    const itemsText = order.items.map(item => {
+      const formattedQuantity = Number(item.grams).toString();
+      const unit = item.category === 'WEED' || item.category === 'HASH' ? ' gr' : '';
+      return `• <b>${e(item.name)}</b> — ${formattedQuantity}${unit} × ${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`;
+    }).join('\n');
     const displayName = req.telegramUser.username ? `@${e(req.telegramUser.username)}` : e(req.telegramUser.first_name || `Utilisateur ${req.telegramUser.id}`);
     const delivery = order.deliveryOption === 'sur_place' ? 'Sur place' : 'Livraison';
     const message = `<b>📦 Commande #${orderNumber}</b>\n\n<b>Client :</b> ${displayName}\n<b>Articles :</b>\n${itemsText}\n\n<b>Total :</b> ${order.total.toFixed(2)}€\n<b>Créneau :</b> ${e(order.timeSlot)}\n<b>Type :</b> ${delivery}`;
