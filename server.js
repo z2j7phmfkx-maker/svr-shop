@@ -11,6 +11,7 @@ const { v2: cloudinary } = require('cloudinary');
 const axios = require('axios');
 const { Telegraf } = require('telegraf');
 const { z } = require('zod');
+const cron = require('node-cron');
 const notifications = require('./notificationService');
 
 const app = express();
@@ -23,6 +24,16 @@ const allowedMediaHosts = new Set((process.env.ALLOWED_MEDIA_HOSTS || 'res.cloud
 const completedRequests = new Map();
 const processingRequests = new Set();
 let writeQueue = Promise.resolve();
+
+function logSafeError(context, error) {
+  console.error(context, {
+    name: error?.name,
+    code: error?.code,
+    status: error?.response?.status,
+    description: error?.response?.data?.description,
+    message: error?.response?.data?.description || error?.message || 'Erreur inconnue'
+  });
+}
 
 if (process.env.TRUST_PROXY) app.set('trust proxy', Number(process.env.TRUST_PROXY));
 
@@ -142,6 +153,33 @@ async function isChannelMember(userId) {
     { timeout: 10_000 }
   );
   return ['member', 'administrator', 'creator'].includes(response.data?.result?.status);
+}
+
+function scheduleDailyMessages() {
+  const chatId = process.env.SCHEDULED_CHAT_ID;
+  if (!chatId) {
+    console.warn('Messages programmés désactivés : SCHEDULED_CHAT_ID absent');
+    return;
+  }
+
+  const schedule = (expression, message, name) => {
+    cron.schedule(expression, async () => {
+      try {
+        await notifications.sendTelegramMessage(chatId, message);
+        console.log(`Message programmé envoyé : ${name}`);
+      } catch (error) {
+        logSafeError(`Échec du message programmé : ${name}`, error);
+      }
+    }, {
+      timezone: 'Europe/Paris',
+      noOverlap: true,
+      name
+    });
+  };
+
+  schedule('0 14 * * *', 'La boutique est ouverte 🛍️. Passe ta commande dès maintenant. Via le bot: @svrshop_bot ou par message privé @SVR_TOV', 'ouverture-14h');
+  schedule('0 0 * * *', 'La boutique est fermée ❌❌❌. A demain.🫡', 'fermeture-minuit');
+  console.log('Messages quotidiens programmés à 14:00 et 00:00 (Europe/Paris)');
 }
 
 function isAllowedMediaUrl(value) {
@@ -313,7 +351,7 @@ app.post('/api/order', orderLimiter, requireTelegram, async (req, res, next) => 
 
 app.use((_req, res) => res.status(404).json({ error: 'Ressource introuvable' }));
 app.use((error, _req, res, _next) => {
-  console.error(error);
+  logSafeError('Erreur HTTP', error);
   if (error instanceof z.ZodError) return res.status(400).json({ error: 'Données invalides', fields: error.issues.map(issue => ({ path: issue.path.join('.'), message: issue.message })) });
   if (error instanceof multer.MulterError) return res.status(400).json({ error: 'Upload invalide' });
   const safeErrors = new Set(['Produit indisponible','Tarif inexistant','Tarif invalide','Montant personnalisé interdit','Montant personnalisé hors limites','Minimum de livraison non atteint']);
@@ -325,13 +363,12 @@ if (BOT_TOKEN) {
   bot = new Telegraf(BOT_TOKEN);
   const shopButton = { reply_markup: { inline_keyboard: [[{ text: '🛍️ Ouvrir la boutique', web_app: { url: process.env.SITE_URL } }]] } };
   bot.start(ctx => ctx.reply('Bienvenue. Ouvre la boutique avec le bouton sécurisé ci-dessous.', shopButton));
-  bot.command('id', async (ctx) => {
-  await ctx.reply(`Ton Telegram ID est : ${ctx.from.id}`);
-});
   bot.command('shop', ctx => ctx.reply('Ouvre la boutique.', shopButton));
-  bot.catch(error => console.error('Erreur bot Telegram:', error));
-  bot.launch({ dropPendingUpdates: true }).catch(error => console.error('Démarrage bot impossible:', error));
+  bot.catch(error => logSafeError('Erreur bot Telegram', error));
+  bot.launch({ dropPendingUpdates: true }).catch(error => logSafeError('Démarrage bot impossible', error));
 }
+
+scheduleDailyMessages();
 
 const server = app.listen(PORT, () => console.log(`Serveur démarré sur le port ${PORT}`));
 function shutdown(signal) {
