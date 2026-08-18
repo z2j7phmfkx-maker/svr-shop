@@ -356,6 +356,9 @@ if (BOT_TOKEN) {
   const shopButton = { reply_markup: { inline_keyboard: [[{ text: '🛍️ Ouvrir la boutique', web_app: { url: process.env.SITE_URL } }]] } };
   bot.start(ctx => ctx.reply('Bienvenue. Ouvre la boutique avec le bouton sécurisé ci-dessous.', shopButton));
   bot.command('shop', ctx => ctx.reply('Ouvre la boutique.', shopButton));
+  bot.on('channel_post', async (ctx) => {
+  console.log('CHANNEL_ID détecté :', ctx.chat.id);
+});
   bot.catch(error => logSafeError('Erreur bot Telegram', error));
   bot.launch({ dropPendingUpdates: true }).catch(error => logSafeError('Démarrage bot impossible', error));
 }
