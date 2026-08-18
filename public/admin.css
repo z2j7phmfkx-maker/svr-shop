@@ -1,0 +1,10 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; }
+body { margin: 0; background: #0b1020; color: #e8edf7; }
+main { width: min(1100px, calc(100% - 32px)); margin: 32px auto; }
+textarea { width: 100%; min-height: 65vh; padding: 14px; background: #111a30; color: #e8edf7; border: 1px solid #54708f; border-radius: 8px; font: 13px/1.45 ui-monospace, monospace; resize: vertical; }
+.actions, section { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+button { border: 1px solid #6496b4; background: #182840; color: white; padding: 10px 16px; border-radius: 7px; cursor: pointer; }
+button:disabled { opacity: .5; cursor: wait; }
+output { overflow-wrap: anywhere; }
+#status.error { color: #ff8181; }
+#status.success { color: #7ee2a8; }

@@ -1187,7 +1187,7 @@
     </div>
   </div>
 
-  <div class="concours-banner" id="concoursBanner" onclick="toggleConcours()">
+  <div class="concours-banner" id="concoursBanner">
     <div class="concours-content">
       <div class="concours-preview" id="concoursPreview">
         Clique pour voir les détails <span class="expand-icon">▼</span>
@@ -1208,7 +1208,7 @@
 
   <div id="modalAddCart" class="modal-add-cart">
     <div class="modal-add-cart-content">
-      <button class="modal-add-cart-close" onclick="closeAddCartModal()">&times;</button>
+      <button class="modal-add-cart-close" id="closeAddCartButton">&times;</button>
       
       <div class="modal-add-cart-product">
         <h2 id="addCartProductName"></h2>
@@ -1223,44 +1223,44 @@
       <div class="custom-price-section" id="customPriceDiv">
         <label>💶 Ou rentre un montant personnalisé:</label>
         <div class="price-input-group">
-          <input type="number" id="customPriceInput" placeholder="Ex: 30" min="20" max="100" step="0.01" oninput="calculateGramsFromPrice()">
+          <input type="number" id="customPriceInput" placeholder="Ex: 30" min="0" max="10000" step="0.01">
           <span style="display: flex; align-items: center; color: #6496b4; font-weight: bold;">€</span>
         </div>
         <div class="price-result" id="priceResult"></div>
       </div>
 
       <div class="modal-add-cart-buttons">
-        <button class="btn-cancel" onclick="closeAddCartModal()">Annuler</button>
-        <button class="btn-add-to-cart-modal" onclick="confirmAddToCart()">Ajouter au panier</button>
+        <button class="btn-cancel" id="cancelAddCartButton">Annuler</button>
+        <button class="btn-add-to-cart-modal" id="confirmAddCartButton">Ajouter au panier</button>
       </div>
     </div>
   </div>
 
   <div id="deliveryModal" class="modal">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeDeliveryModal()">&times;</button>
+      <button class="modal-close" id="closeDeliveryButton">&times;</button>
       <h3 class="modal-title">Comment veux-tu recevoir ta commande ?</h3>
       
       <div id="deliveryWarning"></div>
       <div id="deliveryOptionsContainer" style="margin-top: 20px;"></div>
       
       <div style="margin-top: 20px; display: flex; gap: 10px;">
-        <button class="btn-cancel" onclick="closeDeliveryModal()" style="flex: 1;">Annuler</button>
-        <button class="btn-add-to-cart-modal" onclick="confirmDeliveryOption()" style="flex: 1; background: linear-gradient(135deg, rgba(50, 150, 100, 0.4) 0%, rgba(50, 150, 100, 0.2) 100%); border: 2px solid rgba(50, 150, 100, 0.6); color: #6bc34a;">Continuer</button>
+        <button class="btn-cancel" id="cancelDeliveryButton" style="flex: 1;">Annuler</button>
+        <button class="btn-add-to-cart-modal" id="confirmDeliveryButton" style="flex: 1; background: linear-gradient(135deg, rgba(50, 150, 100, 0.4) 0%, rgba(50, 150, 100, 0.2) 100%); border: 2px solid rgba(50, 150, 100, 0.6); color: #6bc34a;">Continuer</button>
       </div>
     </div>
   </div>
 
   <div id="timeSlotModal" class="modal">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeTimeSlotModal()">&times;</button>
+      <button class="modal-close" id="closeTimeSlotButton">&times;</button>
       <h3 class="modal-title">Choisir un créneau de livraison</h3>
       
       <div id="timeSlotsContainer" style="margin-top: 20px;"></div>
       
       <div style="margin-top: 20px; display: flex; gap: 10px;">
-        <button class="btn-cancel" onclick="closeTimeSlotModal()" style="flex: 1;">Annuler</button>
-        <button class="btn-add-to-cart-modal" onclick="confirmTimeSlot()" style="flex: 1; background: linear-gradient(135deg, rgba(50, 150, 100, 0.4) 0%, rgba(50, 150, 100, 0.2) 100%); border: 2px solid rgba(50, 150, 100, 0.6); color: #6bc34a;">Confirmer</button>
+        <button class="btn-cancel" id="cancelTimeSlotButton" style="flex: 1;">Annuler</button>
+        <button class="btn-add-to-cart-modal" id="confirmTimeSlotButton" style="flex: 1; background: linear-gradient(135deg, rgba(50, 150, 100, 0.4) 0%, rgba(50, 150, 100, 0.2) 100%); border: 2px solid rgba(50, 150, 100, 0.6); color: #6bc34a;">Confirmer</button>
       </div>
     </div>
   </div>
@@ -1279,18 +1279,18 @@
     <div class="cart-total">
       <h3>Total : <span id="cartTotal">0€</span></h3>
     </div>
-    <button class="btn-checkout" onclick="checkout()">Valider la commande</button>
-    <button class="btn-continue" onclick="closeCart()">Continuer vos achats</button>
+    <button class="btn-checkout" id="checkoutButton">Valider la commande</button>
+    <button class="btn-continue" id="continueButton">Continuer vos achats</button>
   </div>
 
-  <div class="cart-button-float" onclick="openCart()">
+  <div class="cart-button-float" id="openCartButton">
     <span class="cart-icon">🛒</span>
     <span class="cart-count" id="cartCount">0</span>
   </div>
 
   <div class="modal" id="productModal">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <button class="modal-close" id="closeProductButton">&times;</button>
       <h3 class="modal-title" id="modalTitle"></h3>
       <img class="modal-main-image" id="modalMainImage" src="" alt="Produit">
       
@@ -1304,745 +1304,6 @@
     </div>
   </div>
 
-  <script>
-    // ✅ INITIALISER TELEGRAM WEBAPP
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-
-    // ✅ RÉCUPÉRER userId DEPUIS TELEGRAM
-    const userId = tg.initDataUnsafe?.user?.id;
-    console.log('[CLIENT] userId:', userId);
-
-    // ========================================
-    // VARIABLES GLOBALES
-    // ========================================
-    let shopData = {};
-    let currentFilter = 'Tous';
-    let cart = [];
-    let currentProduct = null;
-    let selectedDeliveryOption = null;
-    let selectedTimeSlot = null;
-    let pendingOrder = null;
-    let selectedTariff = null;
-    let currentPriceMode = null;
-
-    // ✅ CHARGER LA BOUTIQUE DIRECTEMENT (SANS VÉRIFICATION)
-    async function loadShop() {
-      try {
-        const response = await fetch('/data.json');
-        shopData = await response.json();
-
-        loadConcours();
-        createFilterSection();
-        loadProducts();
-
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) {
-          cart = JSON.parse(savedCart);
-          updateCart();
-        }
-      } catch (error) {
-        console.error('Erreur chargement:', error);
-      }
-    }
-
-    function loadConcours() {
-      const description = shopData.concours?.description || '';
-      document.getElementById('concoursText').textContent = description;
-    }
-
-    function toggleConcours() {
-      const banner = document.getElementById('concoursBanner');
-      const text = document.getElementById('concoursText');
-      const preview = document.getElementById('concoursPreview');
-
-      banner.classList.toggle('expanded');
-      text.classList.toggle('expanded');
-      preview.classList.toggle('hidden');
-    }
-
-    function createFilterSection() {
-      const filterSection = document.getElementById('filterSection');
-      const categories = ['Tous', 'WEED', 'HASH', 'EXTRA'];
-      
-      categories.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = 'filter-btn';
-        if (cat === 'Tous') btn.classList.add('active');
-        btn.textContent = cat;
-        btn.onclick = () => setFilter(cat);
-        filterSection.appendChild(btn);
-      });
-    }
-
-    function setFilter(category) {
-      currentFilter = category;
-      
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.textContent === category) btn.classList.add('active');
-      });
-
-      loadProducts();
-    }
-
-    function loadProducts() {
-      const grid = document.getElementById('productsGrid');
-      grid.innerHTML = '';
-
-      let filteredProducts = shopData.products || [];
-
-      if (currentFilter !== 'Tous') {
-        filteredProducts = filteredProducts.filter(p => p.category === currentFilter);
-      }
-
-      filteredProducts.forEach(product => {
-        const card = document.createElement('div');
-        card.className = 'product-card';
-
-        let badges = '';
-        
-        if (product.isNew) {
-          const today = new Date().toISOString().split('T')[0];
-          const newUntilDate = product.newUntil;
-          
-          if (newUntilDate && today <= newUntilDate) {
-            badges += '<span class="badge badge-new">✨ NOUVEAU</span>';
-          }
-        }
-        
-        if (product.promoTariffs) {
-          badges += '<span class="badge badge-promo">🏷️ PROMO</span>';
-        }
-
-        if (product.stock === 'Stock limité') {
-          badges += '<span class="badge badge-stock">⚠️ STOCK LIMITÉ</span>';
-        }
-
-        if (product.stock === 'Rupture de stock') {
-          badges += '<span class="badge badge-rupture">❌ RUPTURE DE STOCK</span>';
-        }
-
-        const displayPrice = product.tariffs?.split('|')[0]?.split('=')[1] || 'N/A';
-
-        const priceHTML = `<div class="product-price">À partir de <span>${displayPrice}€</span></div>`;
-
-        card.innerHTML = `
-          <img class="product-image" src="${product.image}" alt="${product.name}" loading="lazy">
-          <div class="product-info">
-            <div class="product-name">${product.name}</div>
-            <div class="product-badges">${badges}</div>
-            ${priceHTML}
-            <button class="btn-add-cart" onclick="openAddCartModal(event, ${JSON.stringify(product).replace(/"/g, '&quot;')})" ${product.stock === 'Rupture de stock' ? 'disabled' : ''}>
-              ${product.stock === 'Rupture de stock' ? 'Rupture' : 'Ajouter au panier 🛒'}
-            </button>
-          </div>
-        `;
-
-        card.addEventListener('click', (e) => {
-          if (!e.target.classList.contains('btn-add-cart')) {
-            openModal(product);
-          }
-        });
-
-        grid.appendChild(card);
-      });
-
-      if (filteredProducts.length === 0) {
-        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #a0b0c0; padding: 30px 20px; font-size: 13px;">Aucun produit trouvé</div>';
-      }
-    }
-
-    function openAddCartModal(event, product) {
-      event.stopPropagation();
-      
-      currentProduct = product;
-      selectedTariff = null;
-      currentPriceMode = null;
-
-      document.getElementById('addCartProductName').textContent = product.name;
-      document.getElementById('addCartProductImage').src = product.image;
-      document.getElementById('customPriceInput').value = '';
-      document.getElementById('priceResult').innerHTML = '';
-      
-      const normalTariffs = product.tariffs.split('|').map(t => {
-        const [size, price] = t.split('=');
-        return {
-          size: size.trim(),
-          price: parseFloat(price.trim()),
-          grams: parseFloat(size.trim())
-        };
-      });
-
-      let promoTariffs = {};
-      if (product.promoTariffs) {
-        product.promoTariffs.split('|').forEach(t => {
-          const [size, price] = t.split('=');
-          promoTariffs[size.trim()] = parseFloat(price.trim());
-        });
-      }
-
-      currentProduct.tariffOptions = normalTariffs;
-      currentProduct.promoTariffsParsed = promoTariffs;
-      
-      const quantityBtns = document.getElementById('quantityButtons');
-      quantityBtns.innerHTML = '';
-      
-      const tariffsLabel = product.tariffsLabel || '';
-      
-      normalTariffs.forEach(tariff => {
-        const btn = document.createElement('button');
-        btn.className = 'quantity-btn';
-        
-        const displaySize = tariffsLabel ? tariff.size + tariffsLabel : tariff.size;
-        const promoPrice = promoTariffs[tariff.size];
-        
-        if (promoPrice) {
-          btn.innerHTML = `${displaySize} - <span style="text-decoration: line-through; color: #999;">${tariff.price}€</span> <span style="color: #ff6b6b; font-weight: bold;">${promoPrice}€</span>`;
-          btn.onclick = () => selectTariff(btn, { ...tariff, price: promoPrice });
-        } else {
-          btn.textContent = `${displaySize} - ${tariff.price}€`;
-          btn.onclick = () => selectTariff(btn, tariff);
-        }
-        
-        quantityBtns.appendChild(btn);
-      });
-      
-      const customPriceDiv = document.getElementById('customPriceDiv');
-      if (product.allowCustomPrice === false) {
-        customPriceDiv.classList.add('hidden');
-      } else {
-        customPriceDiv.classList.remove('hidden');
-      }
-      
-      document.getElementById('modalAddCart').classList.add('active');
-    }
-
-    function selectTariff(btn, tariff) {
-      document.querySelectorAll('#quantityButtons .quantity-btn').forEach(b => {
-        b.classList.remove('selected');
-      });
-      btn.classList.add('selected');
-      
-      selectedTariff = tariff;
-      currentPriceMode = 'tariff';
-      
-      document.getElementById('customPriceInput').value = '';
-      document.getElementById('priceResult').innerHTML = '';
-    }
-
-    function calculateGramsFromPrice() {
-      const priceInput = document.getElementById('customPriceInput');
-      const resultDiv = document.getElementById('priceResult');
-      const price = parseFloat(priceInput.value);
-
-      if (!price || price <= 0) {
-        resultDiv.innerHTML = '';
-        selectedTariff = null;
-        currentPriceMode = null;
-        return;
-      }
-
-      let allTariffs = [...currentProduct.tariffOptions];
-      
-      if (currentProduct.promoTariffsParsed && Object.keys(currentProduct.promoTariffsParsed).length > 0) {
-        Object.entries(currentProduct.promoTariffsParsed).forEach(([size, promoPrice]) => {
-          const grams = parseFloat(size);
-          const existingIndex = allTariffs.findIndex(t => t.grams === grams);
-          
-          if (existingIndex !== -1) {
-            allTariffs[existingIndex].price = parseFloat(promoPrice);
-            allTariffs[existingIndex].isPromo = true;
-          } else {
-            allTariffs.push({
-              size: size,
-              price: parseFloat(promoPrice),
-              grams: grams,
-              isPromo: true
-            });
-          }
-        });
-      }
-
-      allTariffs.sort((a, b) => a.grams - b.grams);
-
-      if (!allTariffs || allTariffs.length === 0) {
-        resultDiv.innerHTML = '<span style="color: #ff6b6b;">Erreur: tarifs introuvables</span>';
-        return;
-      }
-
-      const minPrice = allTariffs[0].price;
-      const maxPrice = allTariffs[allTariffs.length - 1].price;
-
-      if (price < minPrice) {
-        resultDiv.innerHTML = `<span style="color: #ff6b6b;">Montant insuffisant (min: ${minPrice}€)</span>`;
-        return;
-      }
-
-      if (price > maxPrice) {
-        resultDiv.innerHTML = `<span style="color: #ff6b6b;">Montant trop élevé (max: ${maxPrice}€)</span>`;
-        return;
-      }
-
-      let lowerTariff = allTariffs[0];
-      
-      for (let i = 0; i < allTariffs.length; i++) {
-        if (allTariffs[i].price <= price) {
-          lowerTariff = allTariffs[i];
-        } else {
-          break;
-        }
-      }
-
-      const pricePerGram = lowerTariff.price / lowerTariff.grams;
-      const calculatedGrams = price / pricePerGram;
-
-      selectedTariff = {
-        size: lowerTariff.size,
-        price: price,
-        grams: calculatedGrams,
-        baseTariff: lowerTariff.size,
-        isPromo: lowerTariff.isPromo || false
-      };
-
-      currentPriceMode = 'custom';
-
-      const gramText = calculatedGrams.toFixed(2);
-      const promoLabel = lowerTariff.isPromo ? ' (PROMO)' : '';
-      const tariffText = `${lowerTariff.size} = ${lowerTariff.price}€${promoLabel}`;
-      
-      resultDiv.innerHTML = `
-        <strong>${price}€ = ${gramText}g</strong><br>
-        <span style="font-size: 10px; color: #888;">Tarif appliqué: ${tariffText}</span>
-      `;
-    }
-
-    function confirmAddToCart() {
-      if (!selectedTariff) {
-        alert('Sélectionne une quantité ou un montant !');
-        return;
-      }
-
-      const cartItem = {
-        id: currentProduct.id,
-        name: currentProduct.name,
-        price: selectedTariff.price,
-        grams: selectedTariff.grams,
-        quantity: 1
-      };
-
-      const existingItem = cart.find(item => 
-        item.id === currentProduct.id && 
-        Math.abs(item.grams - selectedTariff.grams) < 0.01 && 
-        Math.abs(item.price - selectedTariff.price) < 0.01
-      );
-      
-      if (existingItem) {
-        existingItem.quantity += 1;
-      } else {
-        cart.push(cartItem);
-      }
-
-      updateCart();
-      closeAddCartModal();
-      showNotification(`${currentProduct.name} ajouté au panier ! ✅`);
-    }
-
-    function closeAddCartModal() {
-      document.getElementById('modalAddCart').classList.remove('active');
-      currentProduct = null;
-      selectedTariff = null;
-      currentPriceMode = null;
-    }
-
-    function updateCart() {
-      const cartItemsDiv = document.getElementById('cartItems');
-      const cartCount = document.getElementById('cartCount');
-      const cartTotal = document.getElementById('cartTotal');
-
-      cartItemsDiv.innerHTML = '';
-      let total = 0;
-      let count = 0;
-
-      cart.forEach((item, index) => {
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-        count += item.quantity;
-
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'cart-item';
-        itemDiv.innerHTML = `
-          <div class="cart-item-name">${item.name}</div>
-          <div class="cart-item-details">${item.grams.toFixed(2)}g - ${item.price}€</div>
-          <div class="cart-item-quantity">
-            <button onclick="decreaseQuantity(${index})">−</button>
-            <span>${item.quantity}x</span>
-            <button onclick="increaseQuantity(${index})">+</button>
-            <span style="flex: 1; text-align: right; color: #6496b4; font-weight: bold;">${itemTotal.toFixed(2)}€</span>
-          </div>
-          <button class="cart-item-remove" onclick="removeFromCart(${index})">Supprimer ✕</button>
-        `;
-        cartItemsDiv.appendChild(itemDiv);
-      });
-
-      cartCount.textContent = count;
-      cartTotal.textContent = total.toFixed(2) + '€';
-      
-      localStorage.setItem('cart', JSON.stringify(cart));
-    }
-
-    function increaseQuantity(index) {
-      cart[index].quantity++;
-      updateCart();
-    }
-
-    function decreaseQuantity(index) {
-      if (cart[index].quantity > 1) {
-        cart[index].quantity--;
-      } else {
-        removeFromCart(index);
-      }
-      updateCart();
-    }
-
-    function removeFromCart(index) {
-      cart.splice(index, 1);
-      updateCart();
-    }
-
-    function openCart() {
-      document.getElementById('cartPanel').classList.add('active');
-    }
-
-    function closeCart() {
-      document.getElementById('cartPanel').classList.remove('active');
-    }
-
-    document.querySelector('.close-cart-btn').addEventListener('click', closeCart);
-
-    function openDeliveryModal(totalPrice) {
-      const warningDiv = document.getElementById('deliveryWarning');
-      const container = document.getElementById('deliveryOptionsContainer');
-      
-      warningDiv.innerHTML = '';
-      container.innerHTML = '';
-      
-      const options = [
-        { label: '🏪 Sur place', value: 'sur_place' },
-        { label: '🚚 Livraison (min. 50€)', value: 'livraison' }
-      ];
-      
-      options.forEach(option => {
-        const btn = document.createElement('button');
-        btn.className = 'quantity-btn';
-        btn.textContent = option.label;
-        btn.style.marginBottom = '10px';
-        
-        if (option.value === 'livraison' && totalPrice < 50) {
-          btn.disabled = true;
-          btn.title = 'Minimum 50€ pour la livraison';
-          btn.textContent = '🚚 Livraison (min. 50€) ❌';
-        }
-        
-        btn.onclick = () => selectDeliveryOption(btn, option.value);
-        container.appendChild(btn);
-      });
-
-      if (totalPrice < 50) {
-        const warningMsg = document.createElement('div');
-        warningMsg.className = 'warning-message';
-        warningMsg.textContent = `⚠️ Livraison disponible à partir de 50€ (Actuellement: ${totalPrice.toFixed(2)}€)`;
-        warningDiv.appendChild(warningMsg);
-      }
-      
-      document.getElementById('deliveryModal').classList.add('active');
-    }
-
-    function selectDeliveryOption(btn, value) {
-      document.querySelectorAll('#deliveryOptionsContainer .quantity-btn').forEach(b => {
-        b.classList.remove('selected');
-      });
-      btn.classList.add('selected');
-      selectedDeliveryOption = value;
-    }
-
-    function closeDeliveryModal() {
-      document.getElementById('deliveryModal').classList.remove('active');
-      selectedDeliveryOption = null;
-    }
-
-    function confirmDeliveryOption() {
-      if (!selectedDeliveryOption) {
-        alert('Sélectionne une option !');
-        return;
-      }
-
-      pendingOrder.deliveryOption = selectedDeliveryOption;
-      closeDeliveryModal();
-      openTimeSlotModal();
-    }
-
-    function openTimeSlotModal() {
-      const container = document.getElementById('timeSlotsContainer');
-      container.innerHTML = '';
-      
-      const timeSlots = [
-        '14:00 - 15:00',
-        '15:00 - 16:00',
-        '16:00 - 17:00',
-        '17:00 - 18:00',
-        '18:00 - 19:00',
-        '19:00 - 20:00',
-        '20:00 - 21:00',
-        '21:00 - 22:00',
-        '22:00 - 23:00',
-        '23:00 - 00:00'
-      ];
-      
-      timeSlots.forEach(slot => {
-        const btn = document.createElement('button');
-        btn.className = 'quantity-btn';
-        btn.textContent = slot;
-        btn.style.marginBottom = '10px';
-        btn.onclick = () => selectTimeSlot(btn, slot);
-        container.appendChild(btn);
-      });
-      
-      document.getElementById('timeSlotModal').classList.add('active');
-    }
-
-    function selectTimeSlot(btn, slot) {
-      document.querySelectorAll('#timeSlotsContainer .quantity-btn').forEach(b => {
-        b.classList.remove('selected');
-      });
-      btn.classList.add('selected');
-      selectedTimeSlot = slot;
-    }
-
-    function closeTimeSlotModal() {
-      document.getElementById('timeSlotModal').classList.remove('active');
-      selectedTimeSlot = null;
-      pendingOrder = null;
-    }
-
-    async function confirmTimeSlot() {
-      if (!selectedTimeSlot) {
-        alert('Sélectionne un créneau horaire !');
-        return;
-      }
-
-      if (!pendingOrder) {
-        alert('Erreur: commande non trouvée');
-        return;
-      }
-
-      pendingOrder.timeSlot = selectedTimeSlot;
-
-      document.getElementById('loadingOverlay').classList.add('active');
-
-      try {
-        const response = await fetch('/api/order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(pendingOrder)
-        });
-
-        const result = await response.json();
-        document.getElementById('loadingOverlay').classList.remove('active');
-
-        if (result.success) {
-          alert('✅ Nous avons bien reçu ta commande !');
-          cart = [];
-          localStorage.removeItem('cart');
-          updateCart();
-          closeCart();
-          closeTimeSlotModal();
-        } else {
-          alert('Erreur lors de la commande');
-        }
-      } catch (error) {
-        document.getElementById('loadingOverlay').classList.remove('active');
-        console.error('Erreur:', error);
-        alert('Erreur: ' + error.message);
-      }
-    }
-
-    async function checkout() {
-      if (cart.length === 0) {
-        alert('Ton panier est vide !');
-        return;
-      }
-
-      if (!userId) {
-        alert('Tu dois être authentifié pour commander');
-        return;
-      }
-
-      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-      pendingOrder = {
-        userId: userId,
-        items: cart,
-        total: totalPrice,
-        deliveryOption: null,
-        timeSlot: null
-      };
-
-      openDeliveryModal(totalPrice);
-    }
-
-    function showNotification(message) {
-      const notif = document.createElement('div');
-      notif.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: rgba(50, 150, 100, 0.8);
-        color: #fff;
-        padding: 15px 20px;
-        border-radius: 8px;
-        z-index: 10000;
-        animation: slideIn 0.3s ease;
-      `;
-      notif.textContent = message;
-      document.body.appendChild(notif);
-      setTimeout(() => notif.remove(), 3000);
-    }
-
-    function openModal(product) {
-      document.getElementById('modalTitle').textContent = product.name;
-      document.getElementById('modalMainImage').src = product.image;
-      document.getElementById('modalDescription').textContent = product.description || 'Pas de description';
-
-      const gallery = document.getElementById('modalGallery');
-      gallery.innerHTML = '';
-      
-      const mainThumb = document.createElement('img');
-      mainThumb.className = 'gallery-thumb active';
-      mainThumb.src = product.image;
-      mainThumb.alt = product.name;
-      mainThumb.onclick = () => {
-        document.getElementById('modalMainImage').src = product.image;
-        document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
-        mainThumb.classList.add('active');
-      };
-      gallery.appendChild(mainThumb);
-
-      if (product.gallery && product.gallery.length > 0) {
-        product.gallery.forEach(img => {
-          const thumb = document.createElement('img');
-          thumb.className = 'gallery-thumb';
-          thumb.src = img;
-          thumb.alt = product.name;
-          thumb.loading = 'lazy';
-          thumb.onclick = () => {
-            document.getElementById('modalMainImage').src = img;
-            document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
-            thumb.classList.add('active');
-          };
-          gallery.appendChild(thumb);
-        });
-      }
-
-      const tariffsDiv = document.getElementById('modalTariffs');
-      tariffsDiv.innerHTML = '';
-      
-      if (product.tariffs) {
-        const normalLabel = document.createElement('strong');
-        normalLabel.textContent = 'Tarifs:';
-        tariffsDiv.appendChild(normalLabel);
-        
-        const tariffsLabel = product.tariffsLabel || '';
-        
-        const normalTariffs = product.tariffs.split('|').map(t => {
-          const [size, price] = t.split('=');
-          return { size: size.trim(), price: price.trim() };
-        });
-
-        const promoTariffs = {};
-        if (product.promoTariffs && product.promoTariffs.trim()) {
-          product.promoTariffs.split('|').forEach(t => {
-            const [size, price] = t.split('=');
-            promoTariffs[size.trim()] = price.trim();
-          });
-        }
-
-        normalTariffs.forEach(tariff => {
-          const row = document.createElement('div');
-          row.className = 'tariff-row';
-          
-          const displaySize = tariffsLabel ? tariff.size + tariffsLabel : tariff.size;
-          const promoPrice = promoTariffs[tariff.size];
-          
-          if (promoPrice) {
-            row.innerHTML = `
-              <span>${displaySize}</span>
-              <span>
-                <span class="tariff-price-original">${tariff.price}€</span>
-                <span class="tariff-price-promo">${promoPrice}€</span>
-              </span>
-            `;
-          } else {
-            row.innerHTML = `
-              <span>${displaySize}</span>
-              <span class="tariff-price">${tariff.price}€</span>
-            `;
-          }
-          
-          tariffsDiv.appendChild(row);
-        });
-      }
-
-      const videosDiv = document.getElementById('modalVideos');
-      videosDiv.innerHTML = '';
-      if (product.videos && product.videos.length > 0) {
-        const videosTitle = document.createElement('h4');
-        videosTitle.textContent = 'Vidéos:';
-        videosDiv.appendChild(videosTitle);
-
-        product.videos.forEach(video => {
-          const videoEl = document.createElement('video');
-          videoEl.className = 'video-player';
-          videoEl.controls = true;
-          videoEl.src = video;
-          videosDiv.appendChild(videoEl);
-        });
-      }
-
-      document.getElementById('productModal').classList.add('active');
-    }
-
-    function closeModal() {
-      document.getElementById('productModal').classList.remove('active');
-    }
-
-    document.getElementById('productModal').addEventListener('click', (e) => {
-      if (e.target.id === 'productModal') {
-        closeModal();
-      }
-    });
-
-    document.getElementById('modalAddCart').addEventListener('click', (e) => {
-      if (e.target.id === 'modalAddCart') {
-        closeAddCartModal();
-      }
-    });
-
-    document.getElementById('deliveryModal').addEventListener('click', (e) => {
-      if (e.target.id === 'deliveryModal') {
-        closeDeliveryModal();
-      }
-    });
-
-    document.getElementById('timeSlotModal').addEventListener('click', (e) => {
-      if (e.target.id === 'timeSlotModal') {
-        closeTimeSlotModal();
-      }
-    });
-
-    // 🚀 CHARGER LA BOUTIQUE AU DÉMARRAGE
-    loadShop();
-  </script>
+  <script src="/app.js" defer></script>
 </body>
 </html>
