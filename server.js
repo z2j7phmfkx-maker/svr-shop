@@ -31,7 +31,7 @@ const MY_TELEGRAM_ID = process.env.MY_TELEGRAM_ID;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = 'z2j7phmfkx-maker/svr-shop';
 const SITE_URL = process.env.SITE_URL || 'https://svr-shop.onrender.com';
-const CHANNEL_USERNAME = process.env.CHANNEL_USERNAME || 'SVR_TO';
+const CHANNEL_USERNAME = process.env.CHANNEL_USERNAME || 'SVR_TOV';
 
 // ==================== UTILITAIRES ====================
 
@@ -547,7 +547,7 @@ app.listen(PORT, () => {
   console.log(`\n🚀 Serveur port ${PORT}`);
   console.log(`✅ BOT_TOKEN: ${BOT_TOKEN ? 'OK' : '❌ MANQUANT'}`);
   console.log(`✅ CHANNEL_ID: ${CHANNEL_ID ? 'OK' : '❌ MANQUANT'}`);
-  console.log(`✅ CHANNEL_USERNAME: ${CHANNEL_USERNAME ? CHANNEL_USERNAME : '❌ MANQUANT (défaut: SVR_TO)'}`);
+  console.log(`✅ CHANNEL_USERNAME: ${CHANNEL_USERNAME ? CHANNEL_USERNAME : '❌ MANQUANT (défaut: SVR_TOV)'}`);
   console.log(`✅ OWNER_ID: ${OWNER_TELEGRAM_ID ? 'OK' : '❌ MANQUANT'}`);
   console.log(`✅ MY_ID: ${MY_TELEGRAM_ID ? 'OK' : '❌ MANQUANT'}`);
   console.log(`✅ CLOUDINARY: ${process.env.CLOUDINARY_CLOUD_NAME ? 'OK' : '❌ MANQUANT'}`);
