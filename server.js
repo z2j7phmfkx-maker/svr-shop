@@ -105,27 +105,65 @@ function requireAdmin(req, res, next) {
   res.set('Cache-Control', 'no-store');
   next();
 }
-
 function verifyTelegramInitData(initData) {
-  params.delete('hash');
-  params.delete('signature');
-  if (!BOT_TOKEN || typeof initData !== 'string' || initData.length > 8192) throw new Error('Authentification Telegram absente');
+  if (
+    !BOT_TOKEN ||
+    typeof initData !== 'string' ||
+    initData.length > 8192
+  ) {
+    throw new Error('Authentification Telegram absente');
+  }
+
   const params = new URLSearchParams(initData);
   const receivedHash = params.get('hash');
   const authDate = Number(params.get('auth_date'));
-  if (!receivedHash || !Number.isSafeInteger(authDate)) throw new Error('Authentification Telegram invalide');
-  const dataCheckString = [...params.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}=${v}`).join('\n');
-  const secret = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
-  const expectedHash = crypto.createHmac('sha256', secret).update(dataCheckString).digest('hex');
-  if (!safeEqualText(receivedHash, expectedHash)) throw new Error('Signature Telegram invalide');
+
+  if (!receivedHash || !Number.isSafeInteger(authDate)) {
+    throw new Error('Authentification Telegram invalide');
+  }
+
+  params.delete('hash');
+  params.delete('signature');
+
+  const dataCheckString = [...params.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
+
+  const secret = crypto
+    .createHmac('sha256', 'WebAppData')
+    .update(BOT_TOKEN)
+    .digest();
+
+  const expectedHash = crypto
+    .createHmac('sha256', secret)
+    .update(dataCheckString)
+    .digest('hex');
+
+  if (!safeEqualText(receivedHash, expectedHash)) {
+    throw new Error('Signature Telegram invalide');
+  }
+
   const age = Math.floor(Date.now() / 1000) - authDate;
-  if (age < -30 || age > AUTH_MAX_AGE) throw new Error('Authentification Telegram expirée');
+
+  if (age < -30 || age > AUTH_MAX_AGE) {
+    throw new Error('Authentification Telegram expirée');
+  }
+
   let user;
-  try { user = JSON.parse(params.get('user') || 'null'); } catch { user = null; }
-  if (!user || !Number.isSafeInteger(user.id)) throw new Error('Utilisateur Telegram invalide');
+
+  try {
+    user = JSON.parse(params.get('user') || 'null');
+  } catch {
+    user = null;
+  }
+
+  if (!user || !Number.isSafeInteger(user.id)) {
+    throw new Error('Utilisateur Telegram invalide');
+  }
+
   return user;
 }
-
 function requireTelegram(req, res, next) {
   try {
     req.telegramUser = verifyTelegramInitData(req.get('x-telegram-init-data') || '');
