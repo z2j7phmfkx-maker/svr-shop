@@ -359,6 +359,37 @@ if (BOT_TOKEN) {
   bot.on('channel_post', async (ctx) => {
   console.log('CHANNEL_ID détecté :', ctx.chat.id);
 });
+  bot.command('testannonce', async (ctx) => {
+  if (
+    String(ctx.from.id) !==
+    String(process.env.OWNER_TELEGRAM_ID)
+  ) {
+    return;
+  }
+
+  const chatId = process.env.SCHEDULED_CHAT_ID;
+
+  if (!chatId) {
+    return ctx.reply('❌ SCHEDULED_CHAT_ID est absent.');
+  }
+
+  try {
+    await notifications.sendTelegramMessage(
+      chatId,
+      '✅ Message automatique de test'
+    );
+
+    await ctx.reply('✅ Message envoyé dans le canal.');
+  } catch (error) {
+    logSafeError('Échec du test d’annonce', error);
+
+    await ctx.reply(
+      `❌ Envoi impossible : ${
+        error.response?.data?.description || error.message
+      }`
+    );
+  }
+});
   bot.catch(error => logSafeError('Erreur bot Telegram', error));
   bot.launch({ dropPendingUpdates: true }).catch(error => logSafeError('Démarrage bot impossible', error));
 }
