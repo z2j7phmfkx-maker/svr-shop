@@ -1,555 +1,341 @@
-const express = require('express');
-const path = require('path');
-const { Telegraf } = require('telegraf');
-const axios = require('axios');
+'use strict';
+
+const crypto = require('crypto');
 const fs = require('fs');
+const path = require('path');
+const express = require('express');
+const helmet = require('helmet');
+const { rateLimit } = require('express-rate-limit');
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const notificationService = require('./notificationService');
+const { v2: cloudinary } = require('cloudinary');
+const axios = require('axios');
+const { Telegraf } = require('telegraf');
+const { z } = require('zod');
+const notifications = require('./notificationService');
 
 const app = express();
-app.use(express.json());
-app.use(express.static('public'));
+const DATA_FILE = path.join(__dirname, 'data.json');
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const PORT = Number(process.env.PORT || 10000);
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const AUTH_MAX_AGE = Number(process.env.TELEGRAM_AUTH_MAX_AGE_SECONDS || 900);
+const allowedMediaHosts = new Set((process.env.ALLOWED_MEDIA_HOSTS || 'res.cloudinary.com').split(',').map(v => v.trim()).filter(Boolean));
+const completedRequests = new Map();
+const processingRequests = new Set();
+let writeQueue = Promise.resolve();
 
-// Configuration Cloudinary
+if (process.env.TRUST_PROXY) app.set('trust proxy', Number(process.env.TRUST_PROXY));
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configuration multer
-const upload = multer({ storage: multer.memoryStorage() });
+app.disable('x-powered-by');
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", 'https://telegram.org'],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com'],
+      mediaSrc: ["'self'", 'https://res.cloudinary.com'],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'none'"],
+      formAction: ["'self'"],
+      frameAncestors: ['https://web.telegram.org', 'https://*.telegram.org']
+    }
+  },
+  referrerPolicy: { policy: 'no-referrer' },
+  hsts: { maxAge: 31_536_000, includeSubDomains: true }
+}));
+app.use(express.json({ limit: '100kb', strict: true }));
+app.use(express.static(PUBLIC_DIR, { index: false, etag: true, maxAge: '1h', dotfiles: 'deny' }));
 
-// Configuration
-const DATA_FILE = path.join(__dirname, 'data.json');
-const PORT = process.env.PORT || 10000;
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const CHANNEL_ID = process.env.CHANNEL_ID;
-const OWNER_TELEGRAM_ID = process.env.OWNER_TELEGRAM_ID;
-const MY_TELEGRAM_ID = process.env.MY_TELEGRAM_ID;
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_REPO = 'z2j7phmfkx-maker/svr-shop';
-const SITE_URL = process.env.SITE_URL || 'https://svr-shop.onrender.com';
-const CHANNEL_USERNAME = process.env.CHANNEL_USERNAME || 'SVR_TOV';
-
-// ==================== UTILITAIRES ====================
+const apiLimiter = rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false });
+const orderLimiter = rateLimit({ windowMs: 10 * 60_000, limit: 8, standardHeaders: 'draft-8', legacyHeaders: false });
+const adminLimiter = rateLimit({ windowMs: 15 * 60_000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false });
+app.use('/api', apiLimiter);
 
 function loadData() {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-    }
-  } catch (err) {
-    console.error('❌ Erreur chargement data.json:', err.message);
-  }
-  return { 
-    telegram_users: [], 
-    usernames: {},
-    firstNames: {},
-    shop_settings: {}, 
-    products: [],
-    concours: {},
-    orderCounter: 1000
+  const parsed = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+  return {
+    products: Array.isArray(parsed.products) ? parsed.products : [],
+    shop_settings: parsed.shop_settings || {},
+    concours: parsed.concours || {},
+    orderCounter: Number.isSafeInteger(parsed.orderCounter) ? parsed.orderCounter : 1000
   };
 }
 
-function saveData(data) {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-    console.log('✅ data.json sauvegardé');
-  } catch (err) {
-    console.error('❌ Erreur sauvegarde:', err.message);
-  }
+function saveDataAtomic(data) {
+  writeQueue = writeQueue.then(async () => {
+    const temp = `${DATA_FILE}.${process.pid}.${crypto.randomUUID()}.tmp`;
+    await fs.promises.writeFile(temp, `${JSON.stringify(data, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+    await fs.promises.rename(temp, DATA_FILE);
+  });
+  return writeQueue;
 }
 
-async function commitToGithub(message, data) {
-  if (!GITHUB_TOKEN) {
-    console.warn('⚠️ GITHUB_TOKEN non défini');
-    return;
+function safeEqualText(a, b) {
+  const left = Buffer.from(String(a));
+  const right = Buffer.from(String(b));
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
+
+function requireAdmin(req, res, next) {
+  const expectedUser = process.env.ADMIN_USERNAME;
+  const expectedPassword = process.env.ADMIN_PASSWORD;
+  const authorization = req.get('authorization') || '';
+  if (!expectedUser || !expectedPassword || !authorization.startsWith('Basic ')) {
+    res.set('WWW-Authenticate', 'Basic realm="Administration", charset="UTF-8"');
+    return res.status(401).send('Authentification requise');
   }
+
+  let credentials;
+  try { credentials = Buffer.from(authorization.slice(6), 'base64').toString('utf8'); }
+  catch { return res.status(401).send('Authentification invalide'); }
+  const separator = credentials.indexOf(':');
+  const user = separator >= 0 ? credentials.slice(0, separator) : '';
+  const password = separator >= 0 ? credentials.slice(separator + 1) : '';
+  if (!safeEqualText(user, expectedUser) || !safeEqualText(password, expectedPassword)) {
+    return res.status(401).send('Authentification invalide');
+  }
+  res.set('Cache-Control', 'no-store');
+  next();
+}
+
+function verifyTelegramInitData(initData) {
+  if (!BOT_TOKEN || typeof initData !== 'string' || initData.length > 8192) throw new Error('Authentification Telegram absente');
+  const params = new URLSearchParams(initData);
+  const receivedHash = params.get('hash');
+  const authDate = Number(params.get('auth_date'));
+  if (!receivedHash || !Number.isSafeInteger(authDate)) throw new Error('Authentification Telegram invalide');
+  params.delete('hash');
+  const dataCheckString = [...params.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${k}=${v}`).join('\n');
+  const secret = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
+  const expectedHash = crypto.createHmac('sha256', secret).update(dataCheckString).digest('hex');
+  if (!safeEqualText(receivedHash, expectedHash)) throw new Error('Signature Telegram invalide');
+  const age = Math.floor(Date.now() / 1000) - authDate;
+  if (age < -30 || age > AUTH_MAX_AGE) throw new Error('Authentification Telegram expirée');
+  let user;
+  try { user = JSON.parse(params.get('user') || 'null'); } catch { user = null; }
+  if (!user || !Number.isSafeInteger(user.id)) throw new Error('Utilisateur Telegram invalide');
+  return user;
+}
+
+function requireTelegram(req, res, next) {
   try {
-    const content = Buffer.from(JSON.stringify(data, null, 2)).toString('base64');
-    const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/data.json`;
-    const response = await axios.get(url, {
-      headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-    await axios.put(url, {
-      message,
-      content,
-      sha: response.data.sha
-    }, {
-      headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-    console.log(`✅ GitHub: "${message}"`);
-  } catch (err) {
-    console.error('❌ Erreur commit:', err.response?.data?.message || err.message);
+    req.telegramUser = verifyTelegramInitData(req.get('x-telegram-init-data') || '');
+    next();
+  } catch (error) {
+    res.status(401).json({ success: false, error: error.message });
   }
 }
 
 async function isChannelMember(userId) {
-  if (!BOT_TOKEN || !CHANNEL_ID) {
-    console.error('❌ BOT_TOKEN ou CHANNEL_ID manquant');
-    return false;
-  }
-  try {
-    console.log(`   🔍 getChatMember(${CHANNEL_ID}, ${userId})`);
-    const response = await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`, {
-      chat_id: CHANNEL_ID,
-      user_id: userId
-    });
-    const status = response.data.result.status;
-    console.log(`   ✅ Statut: ${status}`);
-    const isMember = ['member', 'administrator', 'creator'].includes(status);
-    console.log(`   ${isMember ? '✅' : '❌'} User ${userId} est ${isMember ? 'MEMBRE' : 'PAS MEMBRE'}`);
-    return isMember;
-  } catch (err) {
-    console.error('   ❌ Erreur:', err.response?.data?.description || err.message);
-    return false;
-  }
+  if (!process.env.CHANNEL_ID) return true;
+  const response = await axios.post(
+    `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`,
+    { chat_id: process.env.CHANNEL_ID, user_id: userId },
+    { timeout: 10_000 }
+  );
+  return ['member', 'administrator', 'creator'].includes(response.data?.result?.status);
 }
 
-// ==================== ROUTES EXPRESS ====================
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-app.get('/data.json', (req, res) => {
-  res.json(loadData());
-});
-
-app.get('/api/products', (req, res) => {
-  const data = loadData();
-  res.json(data.products || []);
-});
-
-app.post('/api/save-data', async (req, res) => {
-  const { products, shop_settings, editingProductId } = req.body;
-  const oldData = loadData();
-  const newData = { ...oldData, products, shop_settings };
-  
-  saveData(newData);
-  
-  for (const newProd of products) {
-    const oldProd = oldData.products.find(p => p.id === newProd.id);
-    
-    let minPrice = 'N/A';
-    if (newProd.tariffs) {
-      const prices = newProd.tariffs.split('|').map(t => {
-        const price = t.split('=')[1];
-        return parseInt(price) || 0;
-      });
-      minPrice = Math.min(...prices);
-    }
-    
-    if (editingProductId && newProd.id === editingProductId) {
-      console.log(`📝 Produit modifié (pas de notification): ${newProd.name}`);
-      continue;
-    }
-    
-    if (!oldProd) {
-      await notificationService.notifyNewProduct(newProd.name, minPrice, newProd.category);
-    } else if (newProd.stock === 0 && oldProd.stock > 0) {
-      await notificationService.notifyOutOfStock(newProd.name);
-    } else if (newProd.stock > 0 && oldProd.stock === 0) {
-      await notificationService.notifyBackInStock(newProd.name, minPrice);
-    } else if (newProd.stock <= 3 && newProd.stock > 0 && oldProd.stock > 3) {
-      await notificationService.notifyLimitedStock(newProd.name, minPrice);
-    }
-  }
-  
-  await commitToGithub('Mise à jour produits', newData);
-  res.json({ success: true });
-});
-
-app.post('/api/order', async (req, res) => {
-  console.log('\n🚀 ===== NOUVELLE COMMANDE REÇUE =====');
-  console.log('📦 Body complet reçu:', JSON.stringify(req.body, null, 2));
-  
-  const { userId, items, total, timeSlot, deliveryOption } = req.body;
-  const data = loadData();
-  
-  console.log('\n📋 PARAMÈTRES EXTRAITS:');
-  console.log('  ✓ userId:', userId);
-  console.log('  ✓ items:', items ? `${items.length} items` : 'undefined');
-  console.log('  ✓ total:', total);
-  console.log('  ✓ timeSlot:', timeSlot);
-  console.log('  ✓ deliveryOption:', deliveryOption);
-  
-  if (!data.orderCounter) {
-    data.orderCounter = 1000;
-  }
-  if (!data.firstNames) {
-    data.firstNames = {};
-  }
-  
-  const orderNumber = ++data.orderCounter;
-  
-  console.log(`\n📦 Nouvelle commande #${orderNumber} - userId: ${userId}`);
-  
-  let userName = 'Utilisateur inconnu';
-  
-  if (data.usernames && data.usernames[userId]) {
-    userName = `@${data.usernames[userId]}`;
-    console.log(`✅ Username trouvé: ${userName}`);
-  } else if (data.firstNames && data.firstNames[userId]) {
-    userName = data.firstNames[userId];
-    console.log(`✅ FirstName trouvé: ${userName}`);
-  } else {
-    console.warn(`⚠️ Aucun nom trouvé pour userId=${userId}`);
-  }
-  
-  let itemsText = items.map(item => {
-    const itemPrice = (item.price * item.quantity).toFixed(2);
-    return `• <b>${item.name}</b> - ${item.grams.toFixed(2)}g x${item.quantity} = ${itemPrice}€`;
-  }).join('\n');
-  
-  const deliveryLabel = deliveryOption === 'sur_place' ? '🏪 Sur place' : '🚚 Livraison';
-  
-  const message = `<b>📦 Nouvelle commande #${orderNumber}</b>\n\n<b>👤 Client:</b> ${userName}\n\n<b>Articles:</b>\n${itemsText}\n\n<b>💰 Total:</b> ${total.toFixed(2)}€\n\n<b>⏰ Créneau:</b> ${timeSlot || 'Non spécifié'}\n<b>📍 Type:</b> ${deliveryLabel}`;
-  
-  console.log('\n📝 Message à envoyer:');
-  console.log(message);
-  
+function isAllowedMediaUrl(value) {
+  if (value === '' || value == null) return true;
   try {
-    console.log(`\n📤 Envoi à OWNER_TELEGRAM_ID: ${OWNER_TELEGRAM_ID}`);
-    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      chat_id: OWNER_TELEGRAM_ID,
-      text: message,
-      parse_mode: 'HTML'
-    });
-    console.log('✅ Commande notifiée au propriétaire');
-    
-    if (MY_TELEGRAM_ID && MY_TELEGRAM_ID !== OWNER_TELEGRAM_ID) {
-      console.log(`📤 Envoi à MY_TELEGRAM_ID: ${MY_TELEGRAM_ID}`);
-      await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        chat_id: MY_TELEGRAM_ID,
-        text: message,
-        parse_mode: 'HTML'
-      });
-      console.log('✅ Commande notifiée aussi à toi');
+    const url = new URL(value);
+    return url.protocol === 'https:' && allowedMediaHosts.has(url.hostname);
+  } catch { return false; }
+}
+
+const productSchema = z.object({
+  id: z.union([z.string().min(1).max(80), z.number().int().nonnegative()]),
+  name: z.string().trim().min(1).max(120),
+  category: z.enum(['WEED', 'HASH', 'EXTRA']),
+  description: z.string().max(5000).default(''),
+  tariffs: z.string().trim().min(3).max(1000),
+  promoTariffs: z.string().max(1000).optional().default(''),
+  stock: z.union([z.enum(['En stock', 'Stock limité', 'Rupture de stock']), z.number().int().nonnegative()]),
+  image: z.string().refine(isAllowedMediaUrl, 'URL image interdite'),
+  gallery: z.array(z.string().refine(isAllowedMediaUrl, 'URL galerie interdite')).max(20).default([]),
+  videos: z.array(z.string().refine(isAllowedMediaUrl, 'URL vidéo interdite')).max(10).default([]),
+  createdAt: z.string().max(60).optional(),
+  tariffsLabel: z.string().max(20).optional(),
+  allowCustomPrice: z.boolean().optional(),
+  isNew: z.boolean().optional(),
+  newUntil: z.string().max(20).optional()
+}).strict();
+
+const saveSchema = z.object({
+  products: z.array(productSchema).max(500),
+  shop_settings: z.object({
+    opening_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+    closing_time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+    closed_days: z.array(z.string().max(20)).max(7),
+    timezone: z.string().max(80)
+  }).strict(),
+  concours: z.object({ description: z.string().max(10_000) }).strict().optional()
+}).strict();
+
+const orderSchema = z.object({
+  items: z.array(z.object({
+    productId: z.union([z.string().min(1).max(80), z.number().int().nonnegative()]),
+    mode: z.enum(['tariff', 'custom']),
+    size: z.number().positive().max(10_000).optional(),
+    amount: z.number().positive().max(10_000).optional(),
+    quantity: z.number().int().min(1).max(20)
+  }).strict()).min(1).max(30),
+  deliveryOption: z.enum(['sur_place', 'livraison']),
+  timeSlot: z.enum(['14:00 - 15:00','15:00 - 16:00','16:00 - 17:00','17:00 - 18:00','18:00 - 19:00','19:00 - 20:00','20:00 - 21:00','21:00 - 22:00','22:00 - 23:00','23:00 - 00:00'])
+}).strict();
+
+function parseTariffs(product) {
+  const promo = new Map();
+  for (const entry of String(product.promoTariffs || '').split('|').filter(Boolean)) {
+    const [size, price] = entry.split('=').map(Number);
+    if (size > 0 && price > 0) promo.set(size, price);
+  }
+  return String(product.tariffs).split('|').map(entry => {
+    const [size, normalPrice] = entry.split('=').map(Number);
+    if (!(size > 0 && normalPrice > 0)) throw new Error(`Tarif invalide pour ${product.name}`);
+    return { size, price: promo.get(size) || normalPrice };
+  }).sort((a, b) => a.size - b.size);
+}
+
+function buildTrustedOrder(input, products) {
+  const items = input.items.map(requested => {
+    const product = products.find(p => String(p.id) === String(requested.productId));
+    if (!product || product.stock === 'Rupture de stock' || product.stock === 0) throw new Error('Produit indisponible');
+    const tariffs = parseTariffs(product);
+    let price;
+    let grams;
+    if (requested.mode === 'tariff') {
+      const tariff = tariffs.find(t => Math.abs(t.size - requested.size) < 0.0001);
+      if (!tariff) throw new Error('Tarif inexistant');
+      price = tariff.price;
+      grams = tariff.size;
+    } else {
+      if (product.allowCustomPrice === false || !requested.amount) throw new Error('Montant personnalisé interdit');
+      const min = tariffs[0];
+      const max = tariffs.at(-1);
+      if (requested.amount < min.price || requested.amount > max.price) throw new Error('Montant personnalisé hors limites');
+      const base = [...tariffs].reverse().find(t => t.price <= requested.amount) || min;
+      price = requested.amount;
+      grams = requested.amount / (base.price / base.size);
     }
-    
-    saveData(data);
-    await commitToGithub(`Commande #${orderNumber}`, data);
-    
-    console.log('✅ Commande notifiée avec succès');
-    console.log('===== FIN COMMANDE =====\n');
+    return { id: product.id, name: product.name, price, grams, quantity: requested.quantity };
+  });
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  if (input.deliveryOption === 'livraison' && total < 50) throw new Error('Minimum de livraison non atteint');
+  return { items, total: Math.round(total * 100) / 100, deliveryOption: input.deliveryOption, timeSlot: input.timeSlot };
+}
+
+app.get('/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+app.get('/admin', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
+
+app.get('/api/catalog', (_req, res) => {
+  const data = loadData();
+  res.set('Cache-Control', 'public, max-age=60');
+  res.json({ products: data.products, shop_settings: data.shop_settings, concours: data.concours });
+});
+
+app.get('/api/admin/data', adminLimiter, requireAdmin, (_req, res) => res.json(loadData()));
+
+app.put('/api/admin/data', adminLimiter, requireAdmin, async (req, res, next) => {
+  try {
+    const input = saveSchema.parse(req.body);
+    const oldData = loadData();
+    const nextData = { ...oldData, ...input };
+    await saveDataAtomic(nextData);
     res.json({ success: true });
-  } catch (err) {
-    console.error('\n❌ ERREUR NOTIFICATION TELEGRAM:');
-    console.error(`   Status: ${err.response?.status}`);
-    console.error(`   Data: ${JSON.stringify(err.response?.data)}`);
-    console.error(`   Message: ${err.message}`);
-    
-    saveData(data);
-    
-    console.log('===== FIN COMMANDE (ERREUR) =====\n');
-    res.status(500).json({ error: 'Erreur notification Telegram', details: err.response?.data?.description || err.message });
-  }
+  } catch (error) { next(error); }
 });
 
-app.post('/api/sync-users', async (req, res) => {
-  try {
-    const data = loadData();
-    const telegramUsers = data.telegram_users || [];
-    
-    if (telegramUsers.length === 0) {
-      return res.json({ 
-        success: false, 
-        message: 'Aucun utilisateur à synchroniser' 
-      });
-    }
-    
-    console.log(`\n🔄 Synchronisation de ${telegramUsers.length} utilisateurs...`);
-    
-    let syncedCount = 0;
-    let errorCount = 0;
-    const results = [];
-    
-    for (const userId of telegramUsers) {
-      try {
-        const response = await axios.post(
-          `https://api.telegram.org/bot${BOT_TOKEN}/getChat`,
-          { chat_id: userId }
-        );
-        
-        const userInfo = response.data.result;
-        const firstName = userInfo.first_name || 'Unknown';
-        const username = userInfo.username || null;
-        
-        data.firstNames = data.firstNames || {};
-        data.usernames = data.usernames || {};
-        
-        let updated = false;
-        
-        if (!data.firstNames[userId] || data.firstNames[userId] === 'Unknown') {
-          data.firstNames[userId] = firstName;
-          console.log(`✅ ${userId}: firstName = "${firstName}"`);
-          updated = true;
-        }
-        
-        if (username && !data.usernames[userId]) {
-          data.usernames[userId] = username;
-          console.log(`✅ ${userId}: username = "@${username}"`);
-          updated = true;
-        }
-        
-        if (updated) {
-          syncedCount++;
-          results.push({ userId, firstName, username, status: 'synced' });
-        } else {
-          results.push({ userId, firstName, username, status: 'already_set' });
-        }
-        
-      } catch (err) {
-        console.error(`❌ Erreur sync userId ${userId}:`, err.message);
-        errorCount++;
-        results.push({ userId, status: 'error', error: err.message });
-      }
-    }
-    
-    saveData(data);
-    await commitToGithub('Synchronisation utilisateurs', data);
-    
-    console.log(`\n✅ Sync terminée: ${syncedCount} users mis à jour, ${errorCount} erreurs\n`);
-    
-    res.json({ 
-      success: true,
-      synced: syncedCount,
-      errors: errorCount,
-      total: telegramUsers.length,
-      message: `${syncedCount} utilisateurs synchronisés avec succès`,
-      results: results
-    });
-    
-  } catch (err) {
-    console.error('❌ Erreur sync globale:', err);
-    res.status(500).json({ 
-      success: false, 
-      error: err.message 
-    });
-  }
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024, files: 1, fields: 5 },
+  fileFilter: (_req, file, cb) => cb(null, ['image/jpeg','image/png','image/webp','video/mp4','video/quicktime'].includes(file.mimetype))
 });
 
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post('/api/admin/upload', adminLimiter, requireAdmin, upload.single('file'), async (req, res, next) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Aucun fichier fourni' });
-    }
-
-    console.log(`📤 Upload fichier: ${req.file.originalname}`);
-
+    if (!req.file) return res.status(400).json({ error: 'Fichier absent ou type interdit' });
     const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'svr-shop',
-          resource_type: 'auto'
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      );
+      const stream = cloudinary.uploader.upload_stream({ folder: 'svr-shop', resource_type: 'auto' }, (error, value) => error ? reject(error) : resolve(value));
       stream.end(req.file.buffer);
     });
+    res.json({ success: true, url: result.secure_url });
+  } catch (error) { next(error); }
+});
 
-    console.log(`✅ Image uploadée: ${result.secure_url}`);
+app.post('/api/order', orderLimiter, requireTelegram, async (req, res, next) => {
+  let requestKey;
+  try {
+    const idempotencyKey = req.get('idempotency-key');
+    if (!idempotencyKey || !/^[A-Za-z0-9_-]{16,100}$/.test(idempotencyKey)) return res.status(400).json({ error: 'Clé d’idempotence invalide' });
+    requestKey = `${req.telegramUser.id}:${idempotencyKey}`;
+    if (completedRequests.has(requestKey)) return res.json(completedRequests.get(requestKey));
+    if (processingRequests.has(requestKey)) return res.status(409).json({ error: 'Commande déjà en cours' });
+    processingRequests.add(requestKey);
 
-    res.json({
-      success: true,
-      url: result.secure_url
-    });
+    if (!await isChannelMember(req.telegramUser.id)) {
+      processingRequests.delete(requestKey);
+      return res.status(403).json({ error: 'Adhésion au canal requise' });
+    }
 
+    const input = orderSchema.parse(req.body);
+    const data = loadData();
+    const order = buildTrustedOrder(input, data.products);
+    data.orderCounter += 1;
+    const orderNumber = data.orderCounter;
+    const e = notifications.escapeTelegramHtml;
+    const itemsText = order.items.map(item => `• <b>${e(item.name)}</b> — ${item.grams.toFixed(2)} × ${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`).join('\n');
+    const displayName = req.telegramUser.username ? `@${e(req.telegramUser.username)}` : e(req.telegramUser.first_name || `Utilisateur ${req.telegramUser.id}`);
+    const delivery = order.deliveryOption === 'sur_place' ? 'Sur place' : 'Livraison';
+    const message = `<b>📦 Commande #${orderNumber}</b>\n\n<b>Client :</b> ${displayName}\n<b>Articles :</b>\n${itemsText}\n\n<b>Total :</b> ${order.total.toFixed(2)}€\n<b>Créneau :</b> ${e(order.timeSlot)}\n<b>Type :</b> ${delivery}`;
+    await notifications.sendTelegramMessage(process.env.OWNER_TELEGRAM_ID, message);
+    if (process.env.MY_TELEGRAM_ID && process.env.MY_TELEGRAM_ID !== process.env.OWNER_TELEGRAM_ID) await notifications.sendTelegramMessage(process.env.MY_TELEGRAM_ID, message);
+    await saveDataAtomic(data);
+    const response = { success: true, orderNumber };
+    completedRequests.set(requestKey, response);
+    setTimeout(() => completedRequests.delete(requestKey), 30 * 60_000).unref();
+    processingRequests.delete(requestKey);
+    res.status(201).json(response);
   } catch (error) {
-    console.error('❌ Erreur upload:', error);
-    res.status(500).json({ 
-      error: 'Erreur upload Cloudinary',
-      details: error.message 
-    });
+    if (requestKey) processingRequests.delete(requestKey);
+    next(error);
   }
 });
 
-// ==================== BOT TELEGRAM ====================
+app.use((_req, res) => res.status(404).json({ error: 'Ressource introuvable' }));
+app.use((error, _req, res, _next) => {
+  console.error(error);
+  if (error instanceof z.ZodError) return res.status(400).json({ error: 'Données invalides', fields: error.issues.map(issue => ({ path: issue.path.join('.'), message: issue.message })) });
+  if (error instanceof multer.MulterError) return res.status(400).json({ error: 'Upload invalide' });
+  const safeErrors = new Set(['Produit indisponible','Tarif inexistant','Tarif invalide','Montant personnalisé interdit','Montant personnalisé hors limites','Minimum de livraison non atteint']);
+  res.status(safeErrors.has(error.message) ? 400 : 500).json({ error: safeErrors.has(error.message) ? error.message : 'Erreur interne' });
+});
 
 let bot;
-
 if (BOT_TOKEN) {
   bot = new Telegraf(BOT_TOKEN);
-  
-  bot.start(async (ctx) => {
-    try {
-      const userId = ctx.from.id;
-      const userName = ctx.from.username || ctx.from.first_name || `User${userId}`;
-      const firstName = ctx.from.first_name || 'Unknown';
-      const data = loadData();
-      
-      console.log(`\n📱 /START REÇU`);
-      console.log(`  userId: ${userId}`);
-      console.log(`  userName: ${userName}`);
-      console.log(`  firstName: ${firstName}`);
-      
-      // Vérifier si le user est dans le canal
-      console.log(`\n🔍 Vérification adhésion canal...`);
-      const isMember = await isChannelMember(userId);
-      
-      if (!isMember) {
-        console.log(`\n❌ ${userName} n'est PAS membre du canal`);
-        return ctx.reply(
-          '❌ Tu dois rejoindre le canal pour accéder à la boutique.\n\n🔗 Clique ci-dessous :',
-          {
-            reply_markup: {
-              inline_keyboard: [[
-                {
-                  text: '📱 Rejoindre le canal',
-                  url: `https://t.me/${CHANNEL_USERNAME}`
-                }
-              ]]
-            }
-          }
-        );
-      }
-      
-      console.log(`\n✅ ${userName} EST membre du canal`);
-      
-      // Ajouter l'utilisateur à la liste
-      if (!data.telegram_users.includes(userId)) {
-        data.telegram_users.push(userId);
-      }
-      data.usernames = data.usernames || {};
-      data.usernames[userId] = userName;
-      data.firstNames = data.firstNames || {};
-      data.firstNames[userId] = firstName;
-      saveData(data);
-      
-      // Créer le lien simple vers le shop
-      const link = `${SITE_URL}?userId=${userId}`;
-      console.log(`📍 Lien WebApp: ${link}\n`);
-      
-      const welcomeMsg = `✅ Bienvenue @${userName} ! 🎉\n\nTu es autorisé à accéder à la boutique SVR 🛍️`;
-      
-      console.log(`📤 Envoi du message avec bouton WebApp...`);
-      return ctx.reply(welcomeMsg, {
-        reply_markup: {
-          inline_keyboard: [[
-            {
-              text: '🛍️ Ouvrir la boutique',
-              web_app: {
-                url: link
-              }
-            }
-          ]]
-        }
-      });
-    } catch (err) {
-      console.error('\n❌ ERREUR /START:');
-      console.error('   Message:', err.message);
-      console.error('   Stack:', err.stack);
-      ctx.reply('❌ Erreur. Réessaie.');
-    }
-  });
-  
-  // ✅ COMMANDE /shop
-  bot.command('shop', async (ctx) => {
-    try {
-      const userId = ctx.from.id;
-      
-      console.log(`\n📱 /SHOP REÇU`);
-      console.log(`  userId: ${userId}`);
-      
-      // Vérifier si le user est dans le canal
-      console.log(`🔍 Vérification adhésion canal...`);
-      const isMember = await isChannelMember(userId);
-      if (!isMember) {
-        console.log(`❌ ${userId} n'est PAS membre du canal\n`);
-        return ctx.reply(
-          '❌ Tu dois rejoindre le canal pour accéder à la boutique.\n\n🔗 Clique ci-dessous :',
-          {
-            reply_markup: {
-              inline_keyboard: [[
-                {
-                  text: '📱 Rejoindre le canal',
-                  url: `https://t.me/${CHANNEL_USERNAME}`
-                }
-              ]]
-            }
-          }
-        );
-      }
-      
-      console.log(`✅ ${userId} EST membre du canal`);
-      
-      const link = `${SITE_URL}?userId=${userId}`;
-      console.log(`📍 Lien WebApp: ${link}\n`);
-      console.log(`📤 Envoi du message avec bouton WebApp...`);
-      
-      return ctx.reply('Ouvre la boutique 🛍️', {
-        reply_markup: {
-          inline_keyboard: [[
-            {
-              text: '🛍️ Boutique',
-              web_app: {
-                url: link
-              }
-            }
-          ]]
-        }
-      });
-    } catch (err) {
-      console.error('\n❌ ERREUR /SHOP:');
-      console.error('   Message:', err.message);
-      ctx.reply('❌ Erreur. Réessaie.');
-    }
-  });
-  
-  bot.catch((err) => {
-    console.error('🚨 Erreur bot:', err);
-  });
-  
-  axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/deleteWebhook`)
-    .then(() => {
-      bot.launch({
-        polling: {
-          interval: 3000,
-          timeout: 30,
-          allowedUpdates: ['message', 'callback_query']
-        }
-      }).then(() => {
-        console.log('✅ Bot lancé (polling)');
-      }).catch(err => {
-        console.error('❌ Erreur bot launch:', err);
-      });
-    })
-    .catch(err => {
-      console.error('❌ Erreur deleteWebhook:', err.message);
-    });
-  
-  process.once('SIGINT', () => {
-    console.log('Arrêt du bot...');
-    bot.stop('SIGINT');
-  });
-  process.once('SIGTERM', () => {
-    console.log('Arrêt du bot...');
-    bot.stop('SIGTERM');
-  });
-} else {
-  console.error('❌ TELEGRAM_BOT_TOKEN manquant');
+  const shopButton = { reply_markup: { inline_keyboard: [[{ text: '🛍️ Ouvrir la boutique', web_app: { url: process.env.SITE_URL } }]] } };
+  bot.start(ctx => ctx.reply('Bienvenue. Ouvre la boutique avec le bouton sécurisé ci-dessous.', shopButton));
+  bot.command('shop', ctx => ctx.reply('Ouvre la boutique.', shopButton));
+  bot.catch(error => console.error('Erreur bot Telegram:', error));
+  bot.launch({ dropPendingUpdates: true }).catch(error => console.error('Démarrage bot impossible:', error));
 }
 
-// ==================== LANCEMENT SERVEUR ====================
-
-app.listen(PORT, () => {
-  console.log(`\n🚀 Serveur port ${PORT}`);
-  console.log(`✅ BOT_TOKEN: ${BOT_TOKEN ? 'OK' : '❌ MANQUANT'}`);
-  console.log(`✅ CHANNEL_ID: ${CHANNEL_ID ? 'OK' : '❌ MANQUANT'}`);
-  console.log(`✅ CHANNEL_USERNAME: ${CHANNEL_USERNAME ? CHANNEL_USERNAME : '❌ MANQUANT (défaut: SVR_TOV)'}`);
-  console.log(`✅ OWNER_ID: ${OWNER_TELEGRAM_ID ? 'OK' : '❌ MANQUANT'}`);
-  console.log(`✅ MY_ID: ${MY_TELEGRAM_ID ? 'OK' : '❌ MANQUANT'}`);
-  console.log(`✅ CLOUDINARY: ${process.env.CLOUDINARY_CLOUD_NAME ? 'OK' : '❌ MANQUANT'}`);
-  console.log(`✅ SITE_URL: ${SITE_URL}\n`);
-});
+const server = app.listen(PORT, () => console.log(`Serveur démarré sur le port ${PORT}`));
+function shutdown(signal) {
+  console.log(`${signal}: arrêt en cours`);
+  if (bot) bot.stop(signal);
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 10_000).unref();
+}
+process.once('SIGTERM', () => shutdown('SIGTERM'));
+process.once('SIGINT', () => shutdown('SIGINT'));

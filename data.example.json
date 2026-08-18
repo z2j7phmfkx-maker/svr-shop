@@ -1,0 +1,11 @@
+{
+  "products": [],
+  "shop_settings": {
+    "opening_time": "14:00",
+    "closing_time": "00:00",
+    "closed_days": [],
+    "timezone": "Europe/Paris"
+  },
+  "concours": { "description": "" },
+  "orderCounter": 1000
+}
