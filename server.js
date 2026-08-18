@@ -177,8 +177,8 @@ function scheduleDailyMessages() {
     });
   };
 
-  schedule('0 14 * * *', 'La boutique est ouverte 🛍️. Passe ta commande dès maintenant. Via le bot: @svrshop_bot ou par message privé @SVR_TOV', 'ouverture-14h');
-  schedule('0 0 * * *', 'La boutique est fermée ❌❌❌. A demain.🫡', 'fermeture-minuit');
+  schedule('0 14 * * *', 'La boutique est ouverte', 'ouverture-14h');
+  schedule('0 0 * * *', 'La boutique est fermée', 'fermeture-minuit');
   console.log('Messages quotidiens programmés à 14:00 et 00:00 (Europe/Paris)');
 }
 
@@ -222,9 +222,8 @@ const saveSchema = z.object({
 const orderSchema = z.object({
   items: z.array(z.object({
     productId: z.union([z.string().min(1).max(80), z.number().int().nonnegative()]),
-    mode: z.enum(['tariff', 'custom']),
-    size: z.number().positive().max(10_000).optional(),
-    amount: z.number().positive().max(10_000).optional(),
+    mode: z.literal('tariff'),
+    size: z.number().positive().max(10_000),
     quantity: z.number().int().min(1).max(20)
   }).strict()).min(1).max(30),
   deliveryOption: z.enum(['sur_place', 'livraison']),
@@ -232,13 +231,18 @@ const orderSchema = z.object({
 }).strict();
 
 function parseTariffs(product) {
+  const parseNumericValue = value => Number.parseFloat(String(value ?? '').trim().replace(',', '.'));
   const promo = new Map();
   for (const entry of String(product.promoTariffs || '').split('|').filter(Boolean)) {
-    const [size, price] = entry.split('=').map(Number);
+    const [rawSize, rawPrice] = entry.split('=');
+    const size = parseNumericValue(rawSize);
+    const price = parseNumericValue(rawPrice);
     if (size > 0 && price > 0) promo.set(size, price);
   }
   return String(product.tariffs).split('|').map(entry => {
-    const [size, normalPrice] = entry.split('=').map(Number);
+    const [rawSize, rawPrice] = entry.split('=');
+    const size = parseNumericValue(rawSize);
+    const normalPrice = parseNumericValue(rawPrice);
     if (!(size > 0 && normalPrice > 0)) throw new Error(`Tarif invalide pour ${product.name}`);
     return { size, price: promo.get(size) || normalPrice };
   }).sort((a, b) => a.size - b.size);
@@ -249,22 +253,10 @@ function buildTrustedOrder(input, products) {
     const product = products.find(p => String(p.id) === String(requested.productId));
     if (!product || product.stock === 'Rupture de stock' || product.stock === 0) throw new Error('Produit indisponible');
     const tariffs = parseTariffs(product);
-    let price;
-    let grams;
-    if (requested.mode === 'tariff') {
-      const tariff = tariffs.find(t => Math.abs(t.size - requested.size) < 0.0001);
-      if (!tariff) throw new Error('Tarif inexistant');
-      price = tariff.price;
-      grams = tariff.size;
-    } else {
-      if (product.allowCustomPrice === false || !requested.amount) throw new Error('Montant personnalisé interdit');
-      const min = tariffs[0];
-      const max = tariffs.at(-1);
-      if (requested.amount < min.price || requested.amount > max.price) throw new Error('Montant personnalisé hors limites');
-      const base = [...tariffs].reverse().find(t => t.price <= requested.amount) || min;
-      price = requested.amount;
-      grams = requested.amount / (base.price / base.size);
-    }
+    const tariff = tariffs.find(t => Math.abs(t.size - requested.size) < 0.0001);
+    if (!tariff) throw new Error('Tarif inexistant');
+    const price = tariff.price;
+    const grams = tariff.size;
     return { id: product.id, name: product.name, price, grams, quantity: requested.quantity };
   });
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);

@@ -56,6 +56,16 @@ Commit également le nouveau `package-lock.json` produit par `npm install`.
 
 `SITE_URL` doit être l'URL HTTPS exacte de la boutique et cette URL doit être autorisée dans BotFather. Le bouton Telegram ne transmet plus `?userId=...` : l'identité est prouvée par la signature de `Telegram.WebApp.initData`.
 
+La variable `TELEGRAM_BOT_TOKEN` doit contenir le token du même bot que celui dont le bouton ouvre la boutique, sans espaces, guillemets ni retour à la ligne.
+
+Pour publier les annonces quotidiennes dans un canal, ajoute également :
+
+```env
+SCHEDULED_CHAT_ID=@username_public_du_canal
+```
+
+Le bot doit être administrateur du canal et autorisé à publier. Les messages « La boutique est ouverte » et « La boutique est fermée » sont envoyés respectivement à 14:00 et 00:00 dans le fuseau `Europe/Paris`, qui suit automatiquement l'heure d'été et l'heure d'hiver.
+
 Une commande ouverte directement dans un navigateur normal sera refusée. C'est volontaire : elle doit être envoyée depuis la Web App Telegram.
 
 ## 7. Vérifier l'administration
@@ -74,8 +84,8 @@ L'authentification HTTP Basic est acceptable uniquement sous HTTPS. Pour une éq
 Depuis Telegram :
 
 1. ajoute un tarif normal ;
-2. teste un montant personnalisé dans les limites ;
-3. modifie manuellement le prix dans les outils du navigateur : le serveur doit l'ignorer ;
+2. vérifie que seuls les tarifs prédéfinis sont proposés ;
+3. modifie manuellement le prix dans les outils du navigateur : le serveur doit l'ignorer et refuser tout tarif inexistant ;
 4. tente une livraison sous 50 € : le serveur doit la refuser ;
 5. renvoie exactement la même requête avec la même clé d'idempotence : une seule commande doit être créée ;
 6. tente plus de huit commandes en dix minutes : le rate limiting doit intervenir.
