@@ -19,14 +19,22 @@ function safeMediaUrl(value) {
   } catch { return ''; }
 }
 
+function parseNumericValue(value) {
+  return Number.parseFloat(String(value ?? '').trim().replace(',', '.'));
+}
+
 function parseTariffs(product) {
   const promotions = new Map();
   String(product.promoTariffs || '').split('|').filter(Boolean).forEach(entry => {
-    const [size, price] = entry.split('=').map(Number);
+    const [rawSize, rawPrice] = entry.split('=');
+    const size = parseNumericValue(rawSize);
+    const price = parseNumericValue(rawPrice);
     if (size > 0 && price > 0) promotions.set(size, price);
   });
   return String(product.tariffs || '').split('|').map(entry => {
-    const [size, normalPrice] = entry.split('=').map(Number);
+    const [rawSize, rawPrice] = entry.split('=');
+    const size = parseNumericValue(rawSize);
+    const normalPrice = parseNumericValue(rawPrice);
     return { size, normalPrice, price: promotions.get(size) || normalPrice, isPromo: promotions.has(size) };
   }).filter(t => t.size > 0 && t.price > 0).sort((a, b) => a.size - b.size);
 }
@@ -105,8 +113,6 @@ function openAddCartModal(product) {
   selectedChoice = null;
   $('addCartProductName').textContent = product.name;
   $('addCartProductImage').src = safeMediaUrl(product.image);
-  $('customPriceInput').value = '';
-  $('priceResult').textContent = '';
   const buttons = $('quantityButtons');
   buttons.replaceChildren();
   for (const tariff of parseTariffs(product)) {
@@ -116,28 +122,10 @@ function openAddCartModal(product) {
       buttons.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
       button.classList.add('selected');
       selectedChoice = { mode: 'tariff', size: tariff.size, price: tariff.price, grams: tariff.size };
-      $('customPriceInput').value = '';
-      $('priceResult').textContent = '';
     });
     buttons.appendChild(button);
   }
-  $('customPriceDiv').classList.toggle('hidden', product.allowCustomPrice === false);
   $('modalAddCart').classList.add('active');
-}
-
-function calculateCustomAmount() {
-  const amount = Number($('customPriceInput').value);
-  const tariffs = parseTariffs(currentProduct || {});
-  selectedChoice = null;
-  $('quantityButtons').querySelectorAll('button').forEach(b => b.classList.remove('selected'));
-  if (!amount || !tariffs.length) return void ($('priceResult').textContent = '');
-  const min = tariffs[0];
-  const max = tariffs.at(-1);
-  if (amount < min.price || amount > max.price) return void ($('priceResult').textContent = `Montant autorisé : ${min.price.toFixed(2)}€ à ${max.price.toFixed(2)}€`);
-  const base = [...tariffs].reverse().find(t => t.price <= amount) || min;
-  const grams = amount / (base.price / base.size);
-  selectedChoice = { mode: 'custom', amount, price: amount, grams };
-  $('priceResult').textContent = `${amount.toFixed(2)}€ = ${grams.toFixed(2)}g`;
 }
 
 function closeAddCartModal() { $('modalAddCart').classList.remove('active'); currentProduct = null; selectedChoice = null; }
@@ -230,7 +218,7 @@ async function submitOrder() {
   if (!selectedTimeSlot) return alert('Sélectionne un créneau.');
   $('loadingOverlay').classList.add('active');
   try {
-    const items = cart.map(({ productId, mode, size, amount, quantity }) => ({ productId, mode, ...(mode === 'tariff' ? { size } : { amount }), quantity }));
+    const items = cart.map(({ productId, size, quantity }) => ({ productId, mode: 'tariff', size, quantity }));
     const response = await fetch('/api/order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': tg.initData, 'Idempotency-Key': crypto.randomUUID().replaceAll('-', '') },
@@ -274,7 +262,6 @@ function openProductModal(product) {
 }
 
 $('concoursBanner').addEventListener('click', () => { $('concoursBanner').classList.toggle('expanded'); $('concoursText').classList.toggle('expanded'); $('concoursPreview').classList.toggle('hidden'); });
-$('customPriceInput').addEventListener('input', calculateCustomAmount);
 $('closeAddCartButton').addEventListener('click', closeAddCartModal);
 $('cancelAddCartButton').addEventListener('click', closeAddCartModal);
 $('confirmAddCartButton').addEventListener('click', confirmAddToCart);
