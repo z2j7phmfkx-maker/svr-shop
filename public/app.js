@@ -39,6 +39,12 @@ function parseTariffs(product) {
   }).filter(t => t.size > 0 && t.price > 0).sort((a, b) => a.size - b.size);
 }
 
+function formatQuantity(product, quantity) {
+  const formatted = Number(quantity).toString();
+  if (product.category === 'WEED' || product.category === 'HASH') return `${formatted} gr`;
+  return product.tariffsLabel ? `${formatted}${product.tariffsLabel}` : formatted;
+}
+
 function element(tag, options = {}, children = []) {
   const node = document.createElement(tag);
   if (options.className) node.className = options.className;
@@ -116,7 +122,7 @@ function openAddCartModal(product) {
   const buttons = $('quantityButtons');
   buttons.replaceChildren();
   for (const tariff of parseTariffs(product)) {
-    const label = product.tariffsLabel ? `${tariff.size}${product.tariffsLabel}` : tariff.size;
+    const label = formatQuantity(product, tariff.size);
     const button = element('button', { className: 'quantity-btn', text: `${label} - ${tariff.price.toFixed(2)}€${tariff.isPromo ? ' (promo)' : ''}` });
     button.addEventListener('click', () => {
       buttons.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
@@ -135,7 +141,7 @@ function confirmAddToCart() {
   const key = `${currentProduct.id}:${selectedChoice.mode}:${selectedChoice.size || selectedChoice.amount}`;
   const existing = cart.find(item => item.key === key);
   if (existing) existing.quantity += 1;
-  else cart.push({ key, productId: currentProduct.id, name: currentProduct.name, ...selectedChoice, quantity: 1 });
+  else cart.push({ key, productId: currentProduct.id, name: currentProduct.name, category: currentProduct.category, ...selectedChoice, quantity: 1 });
   updateCart();
   closeAddCartModal();
 }
@@ -158,7 +164,8 @@ function updateCart() {
     count += item.quantity;
     const box = element('div', { className: 'cart-item' });
     box.appendChild(element('div', { className: 'cart-item-name', text: item.name }));
-    box.appendChild(element('div', { className: 'cart-item-details', text: `${item.grams.toFixed(2)}g - ${item.price.toFixed(2)}€` }));
+    const product = shopData.products.find(candidate => String(candidate.id) === String(item.productId)) || item;
+    box.appendChild(element('div', { className: 'cart-item-details', text: `${formatQuantity(product, item.grams)} - ${item.price.toFixed(2)}€` }));
     const row = element('div', { className: 'cart-item-quantity' });
     const minus = element('button', { text: '−' });
     const plus = element('button', { text: '+' });
@@ -248,7 +255,7 @@ function openProductModal(product) {
   });
   const tariffs = $('modalTariffs');
   tariffs.replaceChildren(element('strong', { text: 'Tarifs :' }));
-  parseTariffs(product).forEach(t => tariffs.appendChild(element('div', { className: 'tariff-row', text: `${t.size}${product.tariffsLabel || ''} — ${t.price.toFixed(2)}€${t.isPromo ? ' (promo)' : ''}` })));
+  parseTariffs(product).forEach(t => tariffs.appendChild(element('div', { className: 'tariff-row', text: `${formatQuantity(product, t.size)} — ${t.price.toFixed(2)}€${t.isPromo ? ' (promo)' : ''}` })));
   const videos = $('modalVideos');
   videos.replaceChildren();
   (product.videos || []).forEach(source => {
