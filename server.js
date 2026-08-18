@@ -325,6 +325,9 @@ if (BOT_TOKEN) {
   bot = new Telegraf(BOT_TOKEN);
   const shopButton = { reply_markup: { inline_keyboard: [[{ text: '🛍️ Ouvrir la boutique', web_app: { url: process.env.SITE_URL } }]] } };
   bot.start(ctx => ctx.reply('Bienvenue. Ouvre la boutique avec le bouton sécurisé ci-dessous.', shopButton));
+  bot.command('id', async (ctx) => {
+  await ctx.reply(`Ton Telegram ID est : ${ctx.from.id}`);
+});
   bot.command('shop', ctx => ctx.reply('Ouvre la boutique.', shopButton));
   bot.catch(error => console.error('Erreur bot Telegram:', error));
   bot.launch({ dropPendingUpdates: true }).catch(error => console.error('Démarrage bot impossible:', error));
