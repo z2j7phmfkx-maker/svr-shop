@@ -1120,32 +1120,132 @@
   margin: 0 auto 15px;
 }
 
+    .header-wrapper {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 12px;
+}
+
+.header {
+  min-height: 100px;
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 18px;
+  overflow: hidden;
+
+  background: linear-gradient(
+    135deg,
+    rgba(15, 30, 60, 0.98) 0%,
+    rgba(20, 45, 80, 0.98) 100%
+  );
+
+  border: 1px solid rgba(100, 150, 180, 0.4);
+  border-radius: 22px;
+
+  box-shadow:
+    0 6px 24px rgba(0, 80, 180, 0.2),
+    0 0 18px rgba(100, 150, 180, 0.15);
+}
+
+.logo {
+  width: 105px;
+  height: 75px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-size: 68px;
+  line-height: 1;
+  letter-spacing: 4px;
+}
+
+.header-content {
+  min-width: 0;
+  text-align: left;
+}
+
+.header h1 {
+  margin: 0 0 5px;
+  font-size: 25px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.header p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+@media (max-width: 480px) {
+  .header-wrapper {
+    max-width: 370px;
+    margin-bottom: 10px;
+  }
+
+  .header {
+    min-height: 82px;
+    padding: 10px 14px;
+    flex-direction: row;
+    gap: 12px;
+    border-radius: 18px;
+  }
+
+  .logo {
+    width: 78px;
+    height: 58px;
+  }
+
+  .logo-text {
+    font-size: 50px;
+    letter-spacing: 2px;
+  }
+
+  .header h1 {
+    font-size: 19px;
+  }
+
+  .header p {
+    font-size: 9px;
+  }
+}
 
   </style>
 </head>
-<body>
 
+
+<body>
+  <div class="header-wrapper">
+    <div class="header">
+      <div class="logo">
+        <div class="logo-text">דהר</div>
+      </div>
+
+      <div class="header-content">
+        <h1>SVR SHOP</h1>
+        <p>Découvre nos produits exclusifs</p>
+      </div>
+    </div>
+  </div>
 
   <div class="concours-banner" id="concoursBanner">
     <div class="concours-content">
       <div class="concours-preview" id="concoursPreview">
-        Clique pour voir les détails <span class="expand-icon">▼</span>
+        Clique pour voir les détails
+        <span class="expand-icon">▼</span>
       </div>
+
       <div class="concours-text" id="concoursText"></div>
     </div>
   </div>
-<div class="header-wrapper">
-  <div class="header">
-    <div class="logo">
-      <div class="logo-text">דהר</div>
-    </div>
-
-    <div class="header-content">
-      <h1>SVR SHOP</h1>
-      <p>Découvre nos produits exclusifs</p>
-    </div>
-  </div>
-</div>
+  <div class="concours-banner" id="concoursBanner">
+  
   <div class="filter-section" id="filterSection"></div>
 
   <div class="container">
