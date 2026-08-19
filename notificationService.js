@@ -12,11 +12,26 @@ async function sendTelegramMessage(chatId, message) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token || !chatId) throw new Error('Configuration Telegram incomplète');
 
-  await axios.post(
+  const response = await axios.post(
     `https://api.telegram.org/bot${token}/sendMessage`,
     { chat_id: chatId, text: message, parse_mode: 'HTML' },
     { timeout: 10_000 }
   );
+
+  return response.data.result;
+}
+
+async function deleteTelegramMessage(chatId, messageId) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token || !chatId || !messageId) return false;
+
+  await axios.post(
+    `https://api.telegram.org/bot${token}/deleteMessage`,
+    { chat_id: chatId, message_id: messageId },
+    { timeout: 10_000 }
+  );
+
+  return true;
 }
 
 async function notifyAllUsers(message) {
@@ -43,6 +58,7 @@ async function notifyBackInStock(productName, price) {
 module.exports = {
   escapeTelegramHtml,
   sendTelegramMessage,
+  deleteTelegramMessage,
   notifyAllUsers,
   notifyOutOfStock,
   notifyNewProduct,

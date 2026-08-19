@@ -76,7 +76,8 @@ function loadData() {
     products: Array.isArray(parsed.products) ? parsed.products : [],
     shop_settings: parsed.shop_settings || {},
     concours: parsed.concours || {},
-    orderCounter: Number.isSafeInteger(parsed.orderCounter) ? parsed.orderCounter : 1000
+    orderCounter: Number.isSafeInteger(parsed.orderCounter) ? parsed.orderCounter : 1000,
+    scheduledMessages: parsed.scheduledMessages || { opening: null, closing: null }
   };
 }
 
@@ -162,24 +163,73 @@ function scheduleDailyMessages() {
     return;
   }
 
-  const schedule = (expression, message, name) => {
-    cron.schedule(expression, async () => {
-      try {
-        await notifications.sendTelegramMessage(chatId, message);
-        console.log(`Message programmé envoyé : ${name}`);
-      } catch (error) {
-        logSafeError(`Échec du message programmé : ${name}`, error);
-      }
-    }, {
-      timezone: 'Europe/Paris',
-      noOverlap: true,
-      name
-    });
-  };
+  async function deletePreviousMessage(data, key) {
+    const messageId = data.scheduledMessages?.[key];
+    if (!messageId) return;
 
-  schedule('0 14 * * *', 'La boutique est ouverte', 'ouverture-14h');
-  schedule('0 0 * * *', 'La boutique est fermée', 'fermeture-minuit');
-  console.log('Messages quotidiens programmés à 14:00 et 00:00 (Europe/Paris)');
+    try {
+      await notifications.deleteTelegramMessage(chatId, messageId);
+      console.log(`Ancien message supprimé : ${key}`);
+    } catch (error) {
+      logSafeError(`Suppression impossible : ${key}`, error);
+    }
+
+    data.scheduledMessages[key] = null;
+  }
+
+  async function publishMessage({ message, name, deleteKey, saveKey }) {
+    try {
+      const data = loadData();
+      data.scheduledMessages ||= { opening: null, closing: null };
+
+      await deletePreviousMessage(data, deleteKey);
+      const sentMessage = await notifications.sendTelegramMessage(chatId, message);
+      data.scheduledMessages[saveKey] = sentMessage.message_id;
+      await saveDataAtomic(data);
+      console.log(`Message programmé envoyé : ${name}`);
+    } catch (error) {
+      logSafeError(`Échec du message programmé : ${name}`, error);
+    }
+  }
+
+  cron.schedule('0 14 * * *', async () => {
+    await publishMessage({
+      name: 'ouverture-14h',
+      deleteKey: 'closing',
+      saveKey: 'opening',
+      message: `LA BOUTIQUE EST OUVERTE! 🛍️
+
+Tu peux passer ta commande de 2 manières :
+
+1️⃣ En validant ton panier sur le site @svrshop_bot
+2️⃣ Directement avec nous sur @SVR_TOV
+
+⏰ Horaires: 14:00 - 00:00`
+    });
+  }, {
+    timezone: 'Europe/Paris',
+    noOverlap: true,
+    name: 'ouverture-14h'
+  });
+
+  cron.schedule('0 0 * * *', async () => {
+    await publishMessage({
+      name: 'fermeture-minuit',
+      deleteKey: 'opening',
+      saveKey: 'closing',
+      message: `LA BOUTIQUE EST FERMÉE! 🌙
+
+⏰ Horaires: 14:00 - 00:00
+
+Merci à tous et bonne soirée! 💙`
+    });
+  }, {
+    timezone: 'Europe/Paris',
+    noOverlap: true,
+    name: 'fermeture-minuit'
+  });
+
+  console.log('Messages quotidiens programmés avec suppression automatique');
 }
 
 function isAllowedMediaUrl(value) {
@@ -269,15 +319,10 @@ app.get('/admin', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.j
 
 app.get('/api/catalog', requireTelegram, (_req, res) => {
   const data = loadData();
-
   res.set('Cache-Control', 'private, no-store');
-
-  res.json({
-    products: data.products,
-    shop_settings: data.shop_settings,
-    concours: data.concours
-  });
+  res.json({ products: data.products, shop_settings: data.shop_settings, concours: data.concours });
 });
+
 app.get('/api/admin/data', adminLimiter, requireAdmin, (_req, res) => res.json(loadData()));
 
 app.put('/api/admin/data', adminLimiter, requireAdmin, async (req, res, next) => {
@@ -333,9 +378,13 @@ app.post('/api/order', orderLimiter, requireTelegram, async (req, res, next) => 
       const unit = item.category === 'WEED' || item.category === 'HASH' ? ' gr' : '';
       return `• <b>${e(item.name)}</b> — ${formattedQuantity}${unit} × ${item.quantity} = ${(item.price * item.quantity).toFixed(2)}€`;
     }).join('\n');
-    const displayName = req.telegramUser.username ? `@${e(req.telegramUser.username)}` : e(req.telegramUser.first_name || `Utilisateur ${req.telegramUser.id}`);
+    const telegramId = req.telegramUser.id;
+    const displayLabel = req.telegramUser.username
+      ? `@${e(req.telegramUser.username)}`
+      : e(req.telegramUser.first_name || `Utilisateur ${telegramId}`);
+    const displayName = `<a href="tg://user?id=${telegramId}">${displayLabel}</a>`;
     const delivery = order.deliveryOption === 'sur_place' ? 'Sur place' : 'Livraison';
-    const message = `<b>📦 Commande #${orderNumber}</b>\n\n<b>Client :</b> ${displayName}\n<b>Articles :</b>\n${itemsText}\n\n<b>Total :</b> ${order.total.toFixed(2)}€\n<b>Créneau :</b> ${e(order.timeSlot)}\n<b>Type :</b> ${delivery}`;
+    const message = `<b>📦 Commande #${orderNumber}</b>\n\n<b>Client :</b> ${displayName}\n<b>ID Telegram :</b> <code>${telegramId}</code>\n<b>Articles :</b>\n${itemsText}\n\n<b>Total :</b> ${order.total.toFixed(2)}€\n<b>Créneau :</b> ${e(order.timeSlot)}\n<b>Type :</b> ${delivery}`;
     await notifications.sendTelegramMessage(process.env.OWNER_TELEGRAM_ID, message);
     if (process.env.MY_TELEGRAM_ID && process.env.MY_TELEGRAM_ID !== process.env.OWNER_TELEGRAM_ID) await notifications.sendTelegramMessage(process.env.MY_TELEGRAM_ID, message);
     await saveDataAtomic(data);
@@ -364,6 +413,7 @@ if (BOT_TOKEN) {
   bot = new Telegraf(BOT_TOKEN);
   const shopButton = { reply_markup: { inline_keyboard: [[{ text: '🛍️ Ouvrir la boutique', web_app: { url: process.env.SITE_URL } }]] } };
   bot.start(ctx => ctx.reply('Bienvenue. Ouvre la boutique avec le bouton sécurisé ci-dessous.', shopButton));
+  bot.command('id', ctx => ctx.reply(`Ton Telegram ID est : ${ctx.from.id}`));
   bot.command('shop', ctx => ctx.reply('Ouvre la boutique.', shopButton));
   bot.catch(error => logSafeError('Erreur bot Telegram', error));
   bot.launch({ dropPendingUpdates: true }).catch(error => logSafeError('Démarrage bot impossible', error));
