@@ -267,12 +267,17 @@ function buildTrustedOrder(input, products) {
 app.get('/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 app.get('/admin', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 
-app.get('/api/catalog', (_req, res) => {
+app.get('/api/catalog', requireTelegram, (_req, res) => {
   const data = loadData();
-  res.set('Cache-Control', 'public, max-age=60');
-  res.json({ products: data.products, shop_settings: data.shop_settings, concours: data.concours });
-});
 
+  res.set('Cache-Control', 'private, no-store');
+
+  res.json({
+    products: data.products,
+    shop_settings: data.shop_settings,
+    concours: data.concours
+  });
+});
 app.get('/api/admin/data', adminLimiter, requireAdmin, (_req, res) => res.json(loadData()));
 
 app.put('/api/admin/data', adminLimiter, requireAdmin, async (req, res, next) => {
