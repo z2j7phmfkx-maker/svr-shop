@@ -63,6 +63,10 @@ app.use(helmet({
   hsts: { maxAge: 31_536_000, includeSubDomains: true }
 }));
 app.use(express.json({ limit: '100kb', strict: true }));
+app.use((req, res, next) => {
+  if (/^\/admin(?:-stats)?\.(?:html|js|css)$/.test(req.path)) return requireAdmin(req, res, next);
+  next();
+});
 app.use(express.static(PUBLIC_DIR, { index: false, etag: true, maxAge: '1h', dotfiles: 'deny' }));
 
 const apiLimiter = rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false });
@@ -77,7 +81,8 @@ function loadData() {
     shop_settings: parsed.shop_settings || {},
     concours: parsed.concours || {},
     orderCounter: Number.isSafeInteger(parsed.orderCounter) ? parsed.orderCounter : 1000,
-    scheduledMessages: parsed.scheduledMessages || { opening: null, closing: null }
+    scheduledMessages: parsed.scheduledMessages || { opening: null, closing: null },
+    orders: Array.isArray(parsed.orders) ? parsed.orders : []
   };
 }
 
@@ -317,8 +322,59 @@ function buildTrustedOrder(input, products) {
   return { items, total: Math.round(total * 100) / 100, deliveryOption: input.deliveryOption, timeSlot: input.timeSlot };
 }
 
+const parisDayFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit'
+});
+const parisMonthFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit'
+});
+
+function dayKey(value) { return parisDayFormatter.format(new Date(value)); }
+function monthKey(value) { return parisMonthFormatter.format(new Date(value)); }
+function startOfRollingDays(days) { return new Date(Date.now() - (days - 1) * 86_400_000); }
+function sumOrders(orders) { return Math.round(orders.reduce((sum, order) => sum + Number(order.total || 0), 0) * 100) / 100; }
+
+function buildStatistics(orders, period) {
+  const now = new Date();
+  const today = dayKey(now);
+  const periods = { week: 7, month: 30, year: 365 };
+  const days = periods[period] || periods.week;
+  const selected = orders.filter(order => new Date(order.createdAt) >= startOfRollingDays(days));
+  const labels = [];
+  const values = [];
+
+  if (period === 'year') {
+    for (let offset = 11; offset >= 0; offset -= 1) {
+      const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - offset, 1));
+      const key = monthKey(date);
+      labels.push(new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', month: 'short' }).format(date));
+      values.push(sumOrders(orders.filter(order => monthKey(order.createdAt) === key)));
+    }
+  } else {
+    const points = period === 'month' ? 30 : 7;
+    for (let offset = points - 1; offset >= 0; offset -= 1) {
+      const date = new Date(now.getTime() - offset * 86_400_000);
+      const key = dayKey(date);
+      labels.push(new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: 'short' }).format(date));
+      values.push(sumOrders(orders.filter(order => dayKey(order.createdAt) === key)));
+    }
+  }
+
+  return {
+    summary: {
+      today: sumOrders(orders.filter(order => dayKey(order.createdAt) === today)),
+      week: sumOrders(orders.filter(order => new Date(order.createdAt) >= startOfRollingDays(7))),
+      month: sumOrders(orders.filter(order => new Date(order.createdAt) >= startOfRollingDays(30))),
+      year: sumOrders(orders.filter(order => new Date(order.createdAt) >= startOfRollingDays(365)))
+    },
+    chart: { labels, values },
+    orders: selected.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  };
+}
+
 app.get('/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 app.get('/admin', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
+app.get('/admin/statistics', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin-stats.html')));
 
 app.get('/api/catalog', requireTelegram, (_req, res) => {
   const data = loadData();
@@ -327,6 +383,10 @@ app.get('/api/catalog', requireTelegram, (_req, res) => {
 });
 
 app.get('/api/admin/data', adminLimiter, requireAdmin, (_req, res) => res.json(loadData()));
+app.get('/api/admin/stats', adminLimiter, requireAdmin, (req, res) => {
+  const period = ['week', 'month', 'year'].includes(req.query.period) ? req.query.period : 'week';
+  res.json(buildStatistics(loadData().orders, period));
+});
 
 app.put('/api/admin/data', adminLimiter, requireAdmin, async (req, res, next) => {
   try {
@@ -390,6 +450,20 @@ app.post('/api/order', orderLimiter, requireTelegram, async (req, res, next) => 
     const message = `<b>📦 Commande #${orderNumber}</b>\n\n<b>Client :</b> ${displayName}\n<b>ID Telegram :</b> <code>${telegramId}</code>\n<b>Articles :</b>\n${itemsText}\n\n<b>Total :</b> ${order.total.toFixed(2)}€\n<b>Créneau :</b> ${e(order.timeSlot)}\n<b>Type :</b> ${delivery}`;
     await notifications.sendTelegramMessage(process.env.OWNER_TELEGRAM_ID, message);
     if (process.env.MY_TELEGRAM_ID && process.env.MY_TELEGRAM_ID !== process.env.OWNER_TELEGRAM_ID) await notifications.sendTelegramMessage(process.env.MY_TELEGRAM_ID, message);
+    data.orders.push({
+      id: orderNumber,
+      createdAt: new Date().toISOString(),
+      telegramUser: {
+        id: telegramId,
+        username: req.telegramUser.username || null,
+        firstName: req.telegramUser.first_name || null
+      },
+      items: order.items,
+      total: order.total,
+      deliveryOption: order.deliveryOption,
+      timeSlot: order.timeSlot
+    });
+    if (data.orders.length > 5000) data.orders = data.orders.slice(-5000);
     await saveDataAtomic(data);
     const response = { success: true, orderNumber };
     completedRequests.set(requestKey, response);
