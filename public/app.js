@@ -55,22 +55,6 @@ function element(tag, options = {}, children = []) {
   for (const child of children) if (child) node.appendChild(child);
   return node;
 }
-function showTelegramOnlyPage() {
-  document.body.replaceChildren();
-
-  const container = document.createElement('main');
-  container.className = 'telegram-only';
-
-  const title = document.createElement('h1');
-  title.textContent = 'Accès réservé';
-
-  const message = document.createElement('p');
-  message.textContent =
-    'Cette boutique est uniquement accessible depuis le bot Telegram.';
-
-  container.append(title, message);
-  document.body.appendChild(container);
-}
 
 async function loadShop() {
   if (!tg?.initData) {
@@ -86,16 +70,9 @@ async function loadShop() {
       },
       cache: 'no-store'
     });
-
-    if (!response.ok) {
-      throw new Error('Accès Telegram requis');
-    }
-
+    if (!response.ok) throw new Error('Accès Telegram requis');
     shopData = await response.json();
-
-    $('concoursText').textContent =
-      shopData.concours?.description || '';
-
+    $('concoursText').textContent = shopData.concours?.description || '';
     createFilters();
     loadProducts();
     restoreCart();
@@ -103,6 +80,16 @@ async function loadShop() {
     console.error(error);
     showTelegramOnlyPage();
   }
+}
+
+function showTelegramOnlyPage() {
+  document.body.replaceChildren();
+  const container = element('main', { className: 'telegram-only' });
+  container.append(
+    element('h1', { text: 'Accès réservé' }),
+    element('p', { text: 'Cette boutique est uniquement accessible depuis le bot Telegram.' })
+  );
+  document.body.appendChild(container);
 }
 
 function createFilters() {

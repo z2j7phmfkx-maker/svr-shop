@@ -1072,8 +1072,66 @@
       100% { transform: rotate(360deg); }
     }
 
-    
+    @media (max-width: 768px) {
+      .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
 
+      .header {
+        padding: 20px;
+        gap: 20px;
+      }
+
+      .logo {
+        width: 110px;
+        height: 80px;
+      }
+
+      .logo-text {
+        font-size: 85px;
+        letter-spacing: 8px;
+      }
+
+      .header h1 {
+        font-size: 26px;
+      }
+
+      .header p {
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header {
+        flex-direction: column;
+        text-align: center;
+        padding: 15px;
+        gap: 15px;
+        border-radius: 20px;
+      }
+
+      .logo {
+        width: 100px;
+        height: 70px;
+      }
+
+      .logo-text {
+        font-size: 75px;
+        letter-spacing: 6px;
+      }
+
+      .header-content {
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 20px;
+      }
+
+      .header p {
+        font-size: 11px;
+      }
 
       .modal-content {
         width: 95%;
@@ -1114,147 +1172,120 @@
         font-size: 20px;
       }
     }
+    /* En-tête compact et toujours placé au-dessus du concours */
     .header-wrapper {
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto 15px;
-}
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto 12px;
+    }
 
-    .header-wrapper {
-  width: 100%;
-  max-width: 500px;
-  margin: 0 auto 12px;
-}
+    .header {
+      min-height: 100px;
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 18px;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(15, 30, 60, 0.98), rgba(20, 45, 80, 0.98));
+      border: 1px solid rgba(100, 150, 180, 0.4);
+      border-radius: 22px;
+      box-shadow: 0 6px 24px rgba(0, 80, 180, 0.2), 0 0 18px rgba(100, 150, 180, 0.15);
+    }
 
-.header {
-  min-height: 100px;
-  padding: 12px 18px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 18px;
-  overflow: hidden;
+    .logo {
+      width: 105px;
+      height: 75px;
+    }
 
-  background: linear-gradient(
-    135deg,
-    rgba(15, 30, 60, 0.98) 0%,
-    rgba(20, 45, 80, 0.98) 100%
-  );
+    .logo-text {
+      font-size: 68px;
+      line-height: 1;
+      letter-spacing: 4px;
+    }
 
-  border: 1px solid rgba(100, 150, 180, 0.4);
-  border-radius: 22px;
+    .header-content {
+      min-width: 0;
+      text-align: left;
+    }
 
-  box-shadow:
-    0 6px 24px rgba(0, 80, 180, 0.2),
-    0 0 18px rgba(100, 150, 180, 0.15);
-}
+    .header h1 {
+      margin: 0 0 5px;
+      font-size: 25px;
+      line-height: 1;
+      white-space: nowrap;
+    }
 
-.logo {
-  width: 105px;
-  height: 75px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.logo-text {
-  font-size: 68px;
-  line-height: 1;
-  letter-spacing: 4px;
-}
-
-.header-content {
-  min-width: 0;
-  text-align: left;
-}
-
-.header h1 {
-  margin: 0 0 5px;
-  font-size: 25px;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.header p {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.3;
-}
-
-@media (max-width: 480px) {
-  .header-wrapper {
-    max-width: 370px;
-    margin-bottom: 10px;
-  }
-
-  .header {
-    min-height: 82px;
-    padding: 10px 14px;
-    flex-direction: row;
-    gap: 12px;
-    border-radius: 18px;
-  }
-
-  .logo {
-    width: 78px;
-    height: 58px;
-  }
-
-  .logo-text {
-    font-size: 50px;
-    letter-spacing: 2px;
-  }
-
-  .header h1 {
-    font-size: 19px;
-  }
-
-  .header p {
-    font-size: 9px;
-  }
-}
+    .header p {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.3;
+    }
 
     .telegram-only {
-  width: min(420px, calc(100% - 32px));
-  margin: 20vh auto 0;
-  padding: 30px 22px;
-  text-align: center;
+      width: min(420px, calc(100% - 32px));
+      margin: 20vh auto 0;
+      padding: 30px 22px;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(15, 30, 60, 0.98), rgba(20, 45, 80, 0.98));
+      border: 1px solid rgba(100, 150, 180, 0.45);
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(50, 130, 220, 0.2);
+    }
 
-  background: linear-gradient(
-    135deg,
-    rgba(15, 30, 60, 0.98),
-    rgba(20, 45, 80, 0.98)
-  );
+    .telegram-only h1 {
+      margin-bottom: 12px;
+      color: #8ab4d4;
+      font-size: 24px;
+    }
 
-  border: 1px solid rgba(100, 150, 180, 0.45);
-  border-radius: 20px;
-  box-shadow: 0 0 30px rgba(50, 130, 220, 0.2);
-}
+    .telegram-only p {
+      color: #c1d2df;
+      font-size: 14px;
+      line-height: 1.6;
+    }
 
-.telegram-only h1 {
-  margin-bottom: 12px;
-  color: #8ab4d4;
-  font-size: 24px;
-}
+    @media (max-width: 480px) {
+      .header-wrapper {
+        max-width: 370px;
+        margin-bottom: 10px;
+      }
 
-.telegram-only p {
-  color: #c1d2df;
-  font-size: 14px;
-  line-height: 1.6;
-}
+      .header {
+        min-height: 82px;
+        padding: 10px 14px;
+        flex-direction: row;
+        gap: 12px;
+        border-radius: 18px;
+      }
+
+      .logo {
+        width: 78px;
+        height: 58px;
+      }
+
+      .logo-text {
+        font-size: 50px;
+        letter-spacing: 2px;
+      }
+
+      .header h1 {
+        font-size: 19px;
+      }
+
+      .header p {
+        font-size: 9px;
+      }
+    }
   </style>
 </head>
-
-
 <body>
   <div class="header-wrapper">
     <div class="header">
       <div class="logo">
         <div class="logo-text">דהר</div>
       </div>
-
       <div class="header-content">
         <h1>SVR SHOP</h1>
         <p>Découvre nos produits exclusifs</p>
@@ -1265,15 +1296,12 @@
   <div class="concours-banner" id="concoursBanner">
     <div class="concours-content">
       <div class="concours-preview" id="concoursPreview">
-        Clique pour voir les détails
-        <span class="expand-icon">▼</span>
+        Clique pour voir les détails <span class="expand-icon">▼</span>
       </div>
-
       <div class="concours-text" id="concoursText"></div>
     </div>
   </div>
-  <div class="concours-banner" id="concoursBanner">
-  
+
   <div class="filter-section" id="filterSection"></div>
 
   <div class="container">
