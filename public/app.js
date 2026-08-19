@@ -72,7 +72,9 @@ async function loadShop() {
     });
     if (!response.ok) throw new Error('Accès Telegram requis');
     shopData = await response.json();
-    $('concoursText').textContent = shopData.concours?.description || '';
+    const concoursActive = shopData.concours?.active === true;
+    $('concoursBanner').hidden = !concoursActive;
+    $('concoursText').textContent = concoursActive ? (shopData.concours?.description || '') : '';
     createFilters();
     loadProducts();
     restoreCart();
