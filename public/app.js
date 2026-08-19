@@ -55,19 +55,36 @@ function element(tag, options = {}, children = []) {
   for (const child of children) if (child) node.appendChild(child);
   return node;
 }
-
 async function loadShop() {
+  if (!tg?.initData) {
+    showTelegramOnlyPage();
+    return;
+  }
+
   try {
-    const response = await fetch('/api/catalog', { headers: { Accept: 'application/json' } });
-    if (!response.ok) throw new Error('Catalogue indisponible');
+    const response = await fetch('/api/catalog', {
+      headers: {
+        Accept: 'application/json',
+        'X-Telegram-Init-Data': tg.initData
+      },
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error('Accès Telegram requis');
+    }
+
     shopData = await response.json();
-    $('concoursText').textContent = shopData.concours?.description || '';
+
+    $('concoursText').textContent =
+      shopData.concours?.description || '';
+
     createFilters();
     loadProducts();
     restoreCart();
   } catch (error) {
     console.error(error);
-    $('productsGrid').textContent = 'Impossible de charger la boutique.';
+    showTelegramOnlyPage();
   }
 }
 
