@@ -55,6 +55,23 @@ function element(tag, options = {}, children = []) {
   for (const child of children) if (child) node.appendChild(child);
   return node;
 }
+function showTelegramOnlyPage() {
+  document.body.replaceChildren();
+
+  const container = document.createElement('main');
+  container.className = 'telegram-only';
+
+  const title = document.createElement('h1');
+  title.textContent = 'Accès réservé';
+
+  const message = document.createElement('p');
+  message.textContent =
+    'Cette boutique est uniquement accessible depuis le bot Telegram.';
+
+  container.append(title, message);
+  document.body.appendChild(container);
+}
+
 async function loadShop() {
   if (!tg?.initData) {
     showTelegramOnlyPage();
