@@ -6,6 +6,6 @@
     "closed_days": [],
     "timezone": "Europe/Paris"
   },
-  "concours": { "description": "" },
+  "concours": { "active": false, "description": "" },
   "orderCounter": 1000
 }

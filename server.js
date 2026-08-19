@@ -266,7 +266,10 @@ const saveSchema = z.object({
     closed_days: z.array(z.string().max(20)).max(7),
     timezone: z.string().max(80)
   }).strict(),
-  concours: z.object({ description: z.string().max(10_000) }).strict().optional()
+  concours: z.object({
+    active: z.boolean(),
+    description: z.string().max(10_000)
+  }).strict().optional()
 }).strict();
 
 const orderSchema = z.object({
