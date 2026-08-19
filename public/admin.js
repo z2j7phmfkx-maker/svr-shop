@@ -81,12 +81,27 @@ async function loadData() {
     };
     syncContestForm();
     renderProducts();
+    await loadSummary();
     showStatus('Données à jour.', 'success');
   } catch (error) {
     showStatus(error.message, 'error');
   } finally {
     setBusy(false);
   }
+}
+
+function formatMoney(value) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(Number(value || 0));
+}
+
+async function loadSummary() {
+  const response = await fetch('/api/admin/stats?period=week', { cache: 'no-store' });
+  if (!response.ok) throw new Error('Statistiques indisponibles');
+  const { summary } = await response.json();
+  $('revenueToday').textContent = formatMoney(summary.today);
+  $('revenueWeek').textContent = formatMoney(summary.week);
+  $('revenueMonth').textContent = formatMoney(summary.month);
+  $('revenueYear').textContent = formatMoney(summary.year);
 }
 
 async function saveData() {
@@ -162,13 +177,18 @@ function renderProducts() {
     image.addEventListener('error', () => { image.hidden = true; });
 
     const summary = node('div', { className: 'product-summary' });
-    summary.appendChild(node('strong', { text: product.name }));
+    const nameBlock = node('div');
+    nameBlock.appendChild(node('strong', { text: product.name }));
     const meta = node('div', { className: 'product-meta' });
-    meta.append(pill(product.category), pill(minimumPrice(product)));
+    meta.append(pill(product.category));
     if (product.promoTariffs) meta.appendChild(pill('Promo', 'promo'));
     if (product.stock === 'Stock limité') meta.appendChild(pill('Stock limité', 'limited'));
     if (product.stock === 'Rupture de stock') meta.appendChild(pill('Rupture', 'out'));
-    summary.appendChild(meta);
+    nameBlock.appendChild(meta);
+    summary.append(image, nameBlock);
+
+    const statePill = pill(typeof product.stock === 'string' ? product.stock : `${product.stock} restant(s)`, product.stock === 'Rupture de stock' ? 'out' : (product.stock === 'Stock limité' ? 'limited' : ''));
+    const priceCell = node('strong', { className: 'price-cell', text: minimumPrice(product) });
 
     const actions = node('div', { className: 'product-actions' });
     const up = actionButton('↑', 'Monter', () => moveProduct(index, index - 1));
@@ -180,7 +200,7 @@ function renderProducts() {
     const remove = actionButton('Supprimer', 'Supprimer', () => removeProduct(index), 'button-danger');
     actions.append(up, down, edit, duplicate, remove);
 
-    card.append(handle, image, summary, actions);
+    card.append(handle, summary, statePill, priceCell, actions);
     bindDragEvents(card);
     list.appendChild(card);
   });
@@ -252,6 +272,7 @@ function openProductDialog(index = null) {
   $('productCategory').value = product?.category || 'WEED';
   $('productStock').value = typeof product?.stock === 'string' ? product.stock : 'En stock';
   $('productDescription').value = product?.description || '';
+  updateDescriptionCount();
   $('productImage').value = product?.image || '';
   $('productGallery').value = (product?.gallery || []).join('\n');
   $('productVideos').value = (product?.videos || []).join('\n');
@@ -265,6 +286,18 @@ function openProductDialog(index = null) {
   (tariffs.length ? tariffs : [{ size: '', price: '', promoPrice: '' }]).forEach(addTariffRow);
   $('productDialog').showModal();
   setTimeout(() => $('productName').focus(), 50);
+}
+
+function updateDescriptionCount() {
+  $('descriptionCount').textContent = `${$('productDescription').value.length} / 5000`;
+}
+
+function insertDescriptionText(text) {
+  const editor = $('productDescription');
+  const start = editor.selectionStart;
+  editor.setRangeText(text, start, editor.selectionEnd, 'end');
+  editor.focus();
+  updateDescriptionCount();
 }
 
 function closeProductDialog() {
@@ -388,6 +421,11 @@ $('productForm').addEventListener('submit', saveProductFromForm);
 $('addTariffButton').addEventListener('click', () => addTariffRow());
 $('productIsNew').addEventListener('change', updateNewUntilVisibility);
 $('productImage').addEventListener('input', updateImagePreview);
+$('productDescription').addEventListener('input', updateDescriptionCount);
+document.querySelectorAll('[data-editor]').forEach(button => button.addEventListener('click', () => {
+  insertDescriptionText(button.dataset.editor === 'bullet' ? '\n• ' : '\n');
+}));
+$('menuButton').addEventListener('click', () => $('sidebar').classList.toggle('open'));
 $('uploadMainImageButton').addEventListener('click', () => runUpload('mainImageFile', 'productImage'));
 $('uploadGalleryButton').addEventListener('click', () => runUpload('galleryFile', 'productGallery', true));
 $('uploadVideoButton').addEventListener('click', () => runUpload('videoFile', 'productVideos', true));
