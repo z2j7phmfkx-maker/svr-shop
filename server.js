@@ -252,8 +252,11 @@ const productSchema = z.object({
   category: z.enum(['WEED', 'HASH', 'EXTRA']),
   description: z.string().max(5000).default(''),
   tariffs: z.string().trim().min(3).max(1000),
+  costTariffs: z.string().max(1000).optional().default(''),
   promoTariffs: z.string().max(1000).optional().default(''),
   stock: z.union([z.enum(['En stock', 'Stock limité', 'Rupture de stock']), z.number().int().nonnegative()]),
+  stockUnit: z.enum(['grams', 'units']).optional().default('units'),
+  stockQuantity: z.number().nonnegative().max(1_000_000).optional(),
   image: z.string().refine(isAllowedMediaUrl, 'URL image interdite'),
   gallery: z.array(z.string().refine(isAllowedMediaUrl, 'URL galerie interdite')).max(20).default([]),
   videos: z.array(z.string().refine(isAllowedMediaUrl, 'URL vidéo interdite')).max(10).default([]),
@@ -312,6 +315,14 @@ const financeEntrySchema = z.discriminatedUnion('type', [
   }).strict()
 ]);
 
+const stockUpdateSchema = z.object({
+  products: z.array(z.object({
+    id: z.union([z.string().min(1).max(80), z.number().int().nonnegative()]),
+    stockUnit: z.enum(['grams', 'units']),
+    stockQuantity: z.number().nonnegative().max(1_000_000)
+  }).strict()).min(1).max(500)
+}).strict();
+
 function parseTariffs(product) {
   const parseNumericValue = value => Number.parseFloat(String(value ?? '').trim().replace(',', '.'));
   const promo = new Map();
@@ -339,11 +350,29 @@ function buildTrustedOrder(input, products) {
     if (!tariff) throw new Error('Tarif inexistant');
     const price = tariff.price;
     const grams = tariff.size;
+    const requestedStock = tariff.size * requested.quantity;
+    if (Number.isFinite(product.stockQuantity) && requestedStock > product.stockQuantity) throw new Error('Stock insuffisant');
     return { id: product.id, name: product.name, category: product.category, price, grams, quantity: requested.quantity };
   });
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   if (input.deliveryOption === 'livraison' && total < 50) throw new Error('Minimum de livraison non atteint');
   return { items, total: Math.round(total * 100) / 100, deliveryOption: input.deliveryOption, timeSlot: input.timeSlot };
+}
+
+function refreshProductStockStatus(product) {
+  if (!Number.isFinite(product.stockQuantity)) return;
+  if (product.stockQuantity <= 0) product.stock = 'Rupture de stock';
+  else if (product.stockUnit === 'grams' && product.stockQuantity < 50) product.stock = 'Stock limité';
+  else product.stock = 'En stock';
+}
+
+function applyStockMovement(products, items) {
+  for (const item of items) {
+    const product = products.find(value => String(value.id) === String(item.id));
+    if (!product || !Number.isFinite(product.stockQuantity)) continue;
+    product.stockQuantity = Math.max(0, Math.round((product.stockQuantity - item.grams * item.quantity) * 100) / 100);
+    refreshProductStockStatus(product);
+  }
 }
 
 const parisDayFormatter = new Intl.DateTimeFormat('en-CA', {
@@ -418,6 +447,7 @@ function buildStatistics(orders, financeEntries, period) {
 app.get('/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 app.get('/admin', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 app.get('/admin/statistics', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin-stats.html')));
+app.get('/admin/stocks', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin-stocks.html')));
 
 app.get('/api/catalog', requireTelegram, (_req, res) => {
   const data = loadData();
@@ -430,6 +460,56 @@ app.get('/api/admin/stats', adminLimiter, requireAdmin, (req, res) => {
   const period = ['week', 'month', 'year'].includes(req.query.period) ? req.query.period : 'week';
   const data = loadData();
   res.json(buildStatistics(data.orders, data.financeEntries, period));
+});
+
+app.get('/api/admin/stocks', adminLimiter, requireAdmin, (_req, res) => {
+  const data = loadData();
+  const since = startOfRollingDays(30);
+  const recentOrders = data.orders.filter(order => new Date(order.createdAt) >= since);
+  const products = data.products.map(product => {
+    let sold30d = 0;
+    let revenue30d = 0;
+    let orderCount30d = 0;
+    for (const order of recentOrders) {
+      const matching = order.items.filter(item => String(item.id) === String(product.id));
+      if (!matching.length) continue;
+      orderCount30d += 1;
+      for (const item of matching) {
+        sold30d += Number(item.grams) * Number(item.quantity);
+        revenue30d += Number(item.price) * Number(item.quantity);
+      }
+    }
+    const configured = Number.isFinite(product.stockQuantity);
+    const low = configured && product.stockUnit === 'grams' && product.stockQuantity > 0 && product.stockQuantity < 50;
+    const out = configured && product.stockQuantity <= 0;
+    const daysCover = configured && sold30d > 0 ? Math.round((product.stockQuantity / sold30d) * 30) : null;
+    let recommendation = 'Stock stable';
+    let priority = 10;
+    if (!configured) { recommendation = 'Stock à configurer'; priority = 95; }
+    else if (out) { recommendation = 'Racheter immédiatement'; priority = 100; }
+    else if (low) { recommendation = 'Presque à sec'; priority = 90; }
+    else if (sold30d === 0) { recommendation = 'Aucune vente récente'; priority = 0; }
+    else if (daysCover != null && daysCover <= 14) { recommendation = 'Réapprovisionnement prioritaire'; priority = 75; }
+    else if (daysCover != null && daysCover <= 30) { recommendation = 'Réapprovisionnement à prévoir'; priority = 55; }
+    return { id: product.id, name: product.name, image: product.image, category: product.category, stockUnit: product.stockUnit || 'units', stockQuantity: configured ? product.stockQuantity : null, stock: product.stock, sold30d: Math.round(sold30d * 100) / 100, revenue30d: Math.round(revenue30d * 100) / 100, orderCount30d, daysCover, low, out, recommendation, priority };
+  });
+  res.json({ products, summary: { configured: products.filter(p => p.stockQuantity != null).length, low: products.filter(p => p.low).length, out: products.filter(p => p.out).length, noSales: products.filter(p => p.sold30d === 0).length } });
+});
+
+app.put('/api/admin/stocks', adminLimiter, requireAdmin, async (req, res, next) => {
+  try {
+    const input = stockUpdateSchema.parse(req.body);
+    const data = loadData();
+    for (const update of input.products) {
+      const product = data.products.find(item => String(item.id) === String(update.id));
+      if (!product) continue;
+      product.stockUnit = update.stockUnit;
+      product.stockQuantity = Math.round(update.stockQuantity * 100) / 100;
+      refreshProductStockStatus(product);
+    }
+    await saveDataAtomic(data);
+    res.json({ success: true });
+  } catch (error) { next(error); }
 });
 
 app.post('/api/admin/finance', adminLimiter, requireAdmin, async (req, res, next) => {
@@ -465,6 +545,7 @@ app.post('/api/admin/orders', adminLimiter, requireAdmin, async (req, res, next)
       timeSlot: trusted.timeSlot
     };
     data.orders.push(order);
+    applyStockMovement(data.products, trusted.items);
     if (data.orders.length > 5000) data.orders = data.orders.slice(-5000);
     await saveDataAtomic(data);
     res.status(201).json({ success: true, order });
@@ -476,6 +557,7 @@ app.put('/api/admin/data', adminLimiter, requireAdmin, async (req, res, next) =>
     const input = saveSchema.parse(req.body);
     const oldData = loadData();
     const nextData = { ...oldData, ...input };
+    nextData.products.forEach(refreshProductStockStatus);
     await saveDataAtomic(nextData);
     res.json({ success: true });
   } catch (error) { next(error); }
@@ -546,6 +628,7 @@ app.post('/api/order', orderLimiter, requireTelegram, async (req, res, next) => 
       deliveryOption: order.deliveryOption,
       timeSlot: order.timeSlot
     });
+    applyStockMovement(data.products, order.items);
     if (data.orders.length > 5000) data.orders = data.orders.slice(-5000);
     await saveDataAtomic(data);
     const response = { success: true, orderNumber };
@@ -564,7 +647,7 @@ app.use((error, _req, res, _next) => {
   logSafeError('Erreur HTTP', error);
   if (error instanceof z.ZodError) return res.status(400).json({ error: 'Données invalides', fields: error.issues.map(issue => ({ path: issue.path.join('.'), message: issue.message })) });
   if (error instanceof multer.MulterError) return res.status(400).json({ error: 'Upload invalide' });
-  const safeErrors = new Set(['Produit indisponible','Tarif inexistant','Tarif invalide','Montant personnalisé interdit','Montant personnalisé hors limites','Minimum de livraison non atteint']);
+  const safeErrors = new Set(['Produit indisponible','Stock insuffisant','Tarif inexistant','Tarif invalide','Montant personnalisé interdit','Montant personnalisé hors limites','Minimum de livraison non atteint']);
   res.status(safeErrors.has(error.message) ? 400 : 500).json({ error: safeErrors.has(error.message) ? error.message : 'Erreur interne' });
 });
 
