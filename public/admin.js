@@ -42,6 +42,11 @@ function parseNumber(value) {
 
 function parseTariffs(product) {
   const promos = new Map();
+  const costs = new Map();
+  String(product.costTariffs || '').split('|').filter(Boolean).forEach(entry => {
+    const [size, cost] = entry.split('=').map(parseNumber);
+    if (size > 0 && cost > 0) costs.set(size, cost);
+  });
   String(product.promoTariffs || '').split('|').filter(Boolean).forEach(entry => {
     const [size, price] = entry.split('=');
     const numericSize = parseNumber(size);
@@ -52,7 +57,7 @@ function parseTariffs(product) {
   return String(product.tariffs || '').split('|').filter(Boolean).map(entry => {
     const [size, price] = entry.split('=');
     const numericSize = parseNumber(size);
-    return { size: numericSize, price: parseNumber(price), promoPrice: promos.get(numericSize) || '' };
+    return { size: numericSize, costPrice: costs.get(numericSize) || '', price: parseNumber(price), promoPrice: promos.get(numericSize) || '' };
   }).filter(row => row.size > 0 && row.price > 0);
 }
 
@@ -182,7 +187,7 @@ function renderProducts() {
     const meta = node('div', { className: 'product-meta' });
     meta.append(pill(product.category));
     if (product.promoTariffs) meta.appendChild(pill('Promo', 'promo'));
-    if (product.stock === 'Stock limité') meta.appendChild(pill('Stock limité', 'limited'));
+    if (product.stock === 'Stock limité') meta.appendChild(pill(product.stockUnit === 'grams' ? 'Presque à sec' : 'Stock limité', product.stockUnit === 'grams' ? 'out' : 'limited'));
     if (product.stock === 'Rupture de stock') meta.appendChild(pill('Rupture', 'out'));
     nameBlock.appendChild(meta);
     summary.append(image, nameBlock);
@@ -271,6 +276,8 @@ function openProductDialog(index = null) {
   $('productName').value = product?.name || '';
   $('productCategory').value = product?.category || 'WEED';
   $('productStock').value = typeof product?.stock === 'string' ? product.stock : 'En stock';
+  $('productStockUnit').value = product?.stockUnit || ((product?.category === 'WEED' || product?.category === 'HASH') ? 'grams' : 'units');
+  $('productStockQuantity').value = Number.isFinite(product?.stockQuantity) ? product.stockQuantity : '';
   $('productDescription').value = product?.description || '';
   updateDescriptionCount();
   $('productImage').value = product?.image || '';
@@ -309,22 +316,40 @@ function addTariffRow(values = {}) {
   const row = node('div', { className: 'tariff-row' });
   const size = node('input');
   size.type = 'number'; size.min = '0.01'; size.step = '0.01'; size.required = true; size.placeholder = '2.5'; size.className = 'tariff-size'; size.value = values.size ?? '';
+  const cost = node('input');
+  cost.type = 'number'; cost.min = '0.01'; cost.step = '0.01'; cost.placeholder = 'À renseigner'; cost.className = 'tariff-cost'; cost.value = values.costPrice ?? '';
   const price = node('input');
   price.type = 'number'; price.min = '0.01'; price.step = '0.01'; price.required = true; price.placeholder = '20'; price.className = 'tariff-price'; price.value = values.price ?? '';
   const promo = node('input');
   promo.type = 'number'; promo.min = '0.01'; promo.step = '0.01'; promo.placeholder = 'Facultatif'; promo.className = 'tariff-promo promo-price'; promo.value = values.promoPrice ?? '';
   const remove = node('button', { className: 'icon-button', text: '×', title: 'Retirer ce tarif', type: 'button' });
+  const margin = node('div', { className: 'tariff-margin' });
+  function updateMargin() {
+    const purchase = parseNumber(cost.value);
+    const normalSale = parseNumber(price.value);
+    const promoSale = parseNumber(promo.value);
+    const sale = promoSale > 0 ? promoSale : normalSale;
+    if (!(purchase > 0) || !(sale > 0)) { margin.textContent = 'Prix d’achat manquant'; return; }
+    const amount = sale - purchase;
+    const percentage = (amount / purchase) * 100;
+    margin.replaceChildren(node('span', { text: `${amount.toFixed(2)} €` }), node('small', { text: `${percentage.toFixed(1)} %${promoSale > 0 ? ' (promo)' : ''}` }));
+    margin.style.background = amount < 0 ? '#fff0f1' : '#eef9f3';
+    margin.style.color = amount < 0 ? '#b42332' : '#168657';
+  }
+  [cost, price, promo].forEach(input => input.addEventListener('input', updateMargin));
   remove.addEventListener('click', () => {
     if ($('tariffRows').children.length === 1) return showToast('Au moins un tarif est obligatoire');
     row.remove();
   });
-  row.append(size, price, promo, remove);
+  row.append(size, cost, price, promo, margin, remove);
   $('tariffRows').appendChild(row);
+  updateMargin();
 }
 
 function collectTariffs() {
   const rows = [...$('tariffRows').querySelectorAll('.tariff-row')].map(row => ({
     size: parseNumber(row.querySelector('.tariff-size').value),
+    costPrice: parseNumber(row.querySelector('.tariff-cost').value),
     price: parseNumber(row.querySelector('.tariff-price').value),
     promoPrice: parseNumber(row.querySelector('.tariff-promo').value)
   }));
@@ -333,6 +358,7 @@ function collectTariffs() {
   rows.sort((a, b) => a.size - b.size);
   return {
     tariffs: rows.map(row => `${row.size}=${row.price}`).join('|'),
+    costTariffs: rows.filter(row => row.costPrice > 0).map(row => `${row.size}=${row.costPrice}`).join('|'),
     promoTariffs: rows.filter(row => row.promoPrice > 0).map(row => `${row.size}=${row.promoPrice}`).join('|')
   };
 }
@@ -340,7 +366,7 @@ function collectTariffs() {
 function saveProductFromForm(event) {
   event.preventDefault();
   try {
-    const { tariffs, promoTariffs } = collectTariffs();
+    const { tariffs, costTariffs, promoTariffs } = collectTariffs();
     const existing = editingIndex == null ? null : state.products[editingIndex];
     const product = {
       id: existing?.id ?? Date.now(),
@@ -348,8 +374,11 @@ function saveProductFromForm(event) {
       category: $('productCategory').value,
       description: $('productDescription').value.trim(),
       tariffs,
+      costTariffs,
       promoTariffs,
       stock: $('productStock').value,
+      stockUnit: $('productStockUnit').value,
+      stockQuantity: parseNumber($('productStockQuantity').value),
       image: $('productImage').value.trim(),
       gallery: splitUrls($('productGallery').value),
       videos: splitUrls($('productVideos').value),
