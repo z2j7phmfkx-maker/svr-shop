@@ -17,6 +17,7 @@ const notifications = require('./notificationService');
 const app = express();
 const DATA_FILE = path.join(__dirname, 'data.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
+const BACKUP_DIR = path.join(__dirname, 'backups');
 const PORT = Number(process.env.PORT || 10000);
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const AUTH_MAX_AGE = Number(process.env.TELEGRAM_AUTH_MAX_AGE_SECONDS || 900);
@@ -83,8 +84,22 @@ function loadData() {
     orderCounter: Number.isSafeInteger(parsed.orderCounter) ? parsed.orderCounter : 1000,
     scheduledMessages: parsed.scheduledMessages || { opening: null, closing: null },
     orders: Array.isArray(parsed.orders) ? parsed.orders : [],
-    financeEntries: Array.isArray(parsed.financeEntries) ? parsed.financeEntries : []
+    financeEntries: Array.isArray(parsed.financeEntries) ? parsed.financeEntries : [],
+    activityLog: Array.isArray(parsed.activityLog) ? parsed.activityLog : [],
+    adminSettings: {
+      minimumDelivery: Number(parsed.adminSettings?.minimumDelivery ?? 50),
+      shopEnabled: parsed.adminSettings?.shopEnabled !== false,
+      maintenanceMessage: String(parsed.adminSettings?.maintenanceMessage || 'La boutique est momentanément indisponible.'),
+      openingMessage: String(parsed.adminSettings?.openingMessage || `LA BOUTIQUE EST OUVERTE! 🛍️\n\nTu peux passer ta commande de 2 manières :\n\n1️⃣ En validant ton panier sur le site @svrshop_bot\n2️⃣ Directement avec nous sur @SVR_TOV\n\n⏰ Horaires: 14:00 - 00:00`),
+      closingMessage: String(parsed.adminSettings?.closingMessage || `LA BOUTIQUE EST FERMÉE! 🌙\n\n⏰ Horaires: 14:00 - 00:00\n\nMerci à tous et bonne soirée! 💙`)
+    }
   };
+}
+
+function addActivity(data, action, detail) {
+  data.activityLog ||= [];
+  data.activityLog.push({ id: crypto.randomUUID(), createdAt: new Date().toISOString(), action, detail });
+  if (data.activityLog.length > 2000) data.activityLog = data.activityLog.slice(-2000);
 }
 
 function saveDataAtomic(data) {
@@ -203,14 +218,7 @@ function scheduleDailyMessages() {
       name: 'ouverture-14h',
       deleteKey: 'closing',
       saveKey: 'opening',
-      message: `LA BOUTIQUE EST OUVERTE! 🛍️
-
-Tu peux passer ta commande de 2 manières :
-
-1️⃣ En validant ton panier sur le site @svrshop_bot
-2️⃣ Directement avec nous sur @SVR_TOV
-
-⏰ Horaires: 14:00 - 00:00`
+      message: loadData().adminSettings.openingMessage
     });
   }, {
     timezone: 'Europe/Paris',
@@ -223,11 +231,7 @@ Tu peux passer ta commande de 2 manières :
       name: 'fermeture-minuit',
       deleteKey: 'opening',
       saveKey: 'closing',
-      message: `LA BOUTIQUE EST FERMÉE! 🌙
-
-⏰ Horaires: 14:00 - 00:00
-
-Merci à tous et bonne soirée! 💙`
+      message: loadData().adminSettings.closingMessage
     });
   }, {
     timezone: 'Europe/Paris',
@@ -323,6 +327,19 @@ const stockUpdateSchema = z.object({
   }).strict()).min(1).max(500)
 }).strict();
 
+const managementSettingsSchema = z.object({
+  minimumDelivery: z.number().nonnegative().max(10_000),
+  shopEnabled: z.boolean(),
+  maintenanceMessage: z.string().trim().min(1).max(500),
+  openingMessage: z.string().trim().min(1).max(4000),
+  closingMessage: z.string().trim().min(1).max(4000)
+}).strict();
+
+const orderManagementSchema = z.object({
+  status: z.enum(['new', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled']),
+  internalNote: z.string().max(1000).default('')
+}).strict();
+
 function parseTariffs(product) {
   const parseNumericValue = value => Number.parseFloat(String(value ?? '').trim().replace(',', '.'));
   const promo = new Map();
@@ -341,7 +358,7 @@ function parseTariffs(product) {
   }).sort((a, b) => a.size - b.size);
 }
 
-function buildTrustedOrder(input, products) {
+function buildTrustedOrder(input, products, adminSettings = {}) {
   const items = input.items.map(requested => {
     const product = products.find(p => String(p.id) === String(requested.productId));
     if (!product || product.stock === 'Rupture de stock' || product.stock === 0) throw new Error('Produit indisponible');
@@ -355,7 +372,7 @@ function buildTrustedOrder(input, products) {
     return { id: product.id, name: product.name, category: product.category, price, grams, quantity: requested.quantity };
   });
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  if (input.deliveryOption === 'livraison' && total < 50) throw new Error('Minimum de livraison non atteint');
+  if (input.deliveryOption === 'livraison' && total < Number(adminSettings.minimumDelivery ?? 50)) throw new Error('Minimum de livraison non atteint');
   return { items, total: Math.round(total * 100) / 100, deliveryOption: input.deliveryOption, timeSlot: input.timeSlot };
 }
 
@@ -371,6 +388,15 @@ function applyStockMovement(products, items) {
     const product = products.find(value => String(value.id) === String(item.id));
     if (!product || !Number.isFinite(product.stockQuantity)) continue;
     product.stockQuantity = Math.max(0, Math.round((product.stockQuantity - item.grams * item.quantity) * 100) / 100);
+    refreshProductStockStatus(product);
+  }
+}
+
+function restoreStockMovement(products, items) {
+  for (const item of items) {
+    const product = products.find(value => String(value.id) === String(item.id));
+    if (!product || !Number.isFinite(product.stockQuantity)) continue;
+    product.stockQuantity = Math.round((product.stockQuantity + Number(item.grams) * Number(item.quantity)) * 100) / 100;
     refreshProductStockStatus(product);
   }
 }
@@ -448,11 +474,12 @@ app.get('/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
 app.get('/admin', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 app.get('/admin/statistics', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin-stats.html')));
 app.get('/admin/stocks', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin-stocks.html')));
+app.get('/admin/management', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin-management.html')));
 
 app.get('/api/catalog', requireTelegram, (_req, res) => {
   const data = loadData();
   res.set('Cache-Control', 'private, no-store');
-  res.json({ products: data.products, shop_settings: data.shop_settings, concours: data.concours });
+  res.json({ products: data.products, shop_settings: { ...data.shop_settings, minimum_delivery: data.adminSettings.minimumDelivery, shop_enabled: data.adminSettings.shopEnabled, maintenance_message: data.adminSettings.maintenanceMessage }, concours: data.concours });
 });
 
 app.get('/api/admin/data', adminLimiter, requireAdmin, (_req, res) => res.json(loadData()));
@@ -507,9 +534,86 @@ app.put('/api/admin/stocks', adminLimiter, requireAdmin, async (req, res, next) 
       product.stockQuantity = Math.round(update.stockQuantity * 100) / 100;
       refreshProductStockStatus(product);
     }
+    addActivity(data, 'Stocks mis à jour', `${input.products.length} produit(s)`);
     await saveDataAtomic(data);
     res.json({ success: true });
   } catch (error) { next(error); }
+});
+
+app.get('/api/admin/management', adminLimiter, requireAdmin, async (_req, res, next) => {
+  try {
+    const data = loadData();
+    const clientMap = new Map();
+    for (const order of data.orders) {
+      const user = order.telegramUser || {};
+      const key = user.id ? `id:${user.id}` : `name:${user.username || user.firstName || 'inconnu'}`;
+      const client = clientMap.get(key) || { id: user.id || null, username: user.username || null, name: user.firstName || null, orders: 0, totalSpent: 0, lastOrderAt: null, favoriteProducts: new Map() };
+      client.orders += 1;
+      client.totalSpent += Number(order.total || 0);
+      if (!client.lastOrderAt || new Date(order.createdAt) > new Date(client.lastOrderAt)) client.lastOrderAt = order.createdAt;
+      for (const item of order.items || []) client.favoriteProducts.set(item.name, (client.favoriteProducts.get(item.name) || 0) + Number(item.quantity || 0));
+      clientMap.set(key, client);
+    }
+    const clients = [...clientMap.values()].map(client => ({ ...client, totalSpent: Math.round(client.totalSpent * 100) / 100, favoriteProduct: [...client.favoriteProducts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || '—', favoriteProducts: undefined })).sort((a, b) => b.totalSpent - a.totalSpent);
+    await fs.promises.mkdir(BACKUP_DIR, { recursive: true, mode: 0o700 });
+    const backups = (await fs.promises.readdir(BACKUP_DIR)).filter(name => /^backup-\d{8}-\d{6}\.json$/.test(name)).sort().reverse();
+    res.json({ orders: [...data.orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)), clients, settings: data.adminSettings, activity: [...data.activityLog].reverse().slice(0, 300), backups });
+  } catch (error) { next(error); }
+});
+
+app.patch('/api/admin/orders/:id', adminLimiter, requireAdmin, async (req, res, next) => {
+  try {
+    const input = orderManagementSchema.parse(req.body);
+    const data = loadData();
+    const order = data.orders.find(item => String(item.id) === String(req.params.id));
+    if (!order) return res.status(404).json({ error: 'Commande introuvable' });
+    const previous = order.status || 'new';
+    if (previous === 'cancelled' && input.status !== 'cancelled') return res.status(400).json({ error: 'Une commande annulée ne peut pas être réactivée' });
+    if (input.status === 'cancelled' && previous !== 'cancelled') restoreStockMovement(data.products, order.items || []);
+    order.status = input.status;
+    order.internalNote = input.internalNote;
+    order.updatedAt = new Date().toISOString();
+    addActivity(data, 'Commande modifiée', `#${order.id} : ${previous} → ${input.status}`);
+    await saveDataAtomic(data);
+    res.json({ success: true, order });
+  } catch (error) { next(error); }
+});
+
+app.put('/api/admin/settings', adminLimiter, requireAdmin, async (req, res, next) => {
+  try {
+    const settings = managementSettingsSchema.parse(req.body);
+    const data = loadData();
+    data.adminSettings = settings;
+    addActivity(data, 'Paramètres modifiés', `Boutique ${settings.shopEnabled ? 'ouverte' : 'désactivée'}, livraison minimum ${settings.minimumDelivery}€`);
+    await saveDataAtomic(data);
+    res.json({ success: true });
+  } catch (error) { next(error); }
+});
+
+function csvCell(value) { const text = String(value ?? ''); return `"${text.replaceAll('"', '""')}"`; }
+app.get('/api/admin/export', adminLimiter, requireAdmin, (req, res) => {
+  const data = loadData();
+  let rows;
+  if (req.query.type === 'finance') rows = [['Date','Type','Détail','Montant'], ...data.financeEntries.map(entry => [entry.createdAt, entry.type, entry.productName || entry.label, entry.costPrice || entry.amount])];
+  else if (req.query.type === 'stocks') rows = [['Produit','Unité','Quantité','État'], ...data.products.map(product => [product.name, product.stockUnit || '', product.stockQuantity ?? '', product.stock])];
+  else rows = [['Commande','Date','Client','Produits','Total','Statut'], ...data.orders.map(order => [order.id, order.createdAt, order.telegramUser?.username || order.telegramUser?.firstName || '', (order.items || []).map(item => item.name).join(' | '), order.total, order.status || 'new'])];
+  res.type('text/csv').set('Content-Disposition', `attachment; filename="svr-${req.query.type || 'orders'}.csv"`).send(`\uFEFF${rows.map(row => row.map(csvCell).join(';')).join('\n')}`);
+});
+
+app.post('/api/admin/backups', adminLimiter, requireAdmin, async (_req, res, next) => {
+  try {
+    await fs.promises.mkdir(BACKUP_DIR, { recursive: true, mode: 0o700 });
+    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
+    const filename = `backup-${stamp}.json`;
+    await fs.promises.copyFile(DATA_FILE, path.join(BACKUP_DIR, filename));
+    const data = loadData(); addActivity(data, 'Sauvegarde créée', filename); await saveDataAtomic(data);
+    res.status(201).json({ success: true, filename });
+  } catch (error) { next(error); }
+});
+
+app.get('/api/admin/backups/:name', adminLimiter, requireAdmin, (req, res) => {
+  if (!/^backup-\d{8}-\d{6}\.json$/.test(req.params.name)) return res.status(400).json({ error: 'Sauvegarde invalide' });
+  res.download(path.join(BACKUP_DIR, req.params.name));
 });
 
 app.post('/api/admin/finance', adminLimiter, requireAdmin, async (req, res, next) => {
@@ -522,6 +626,7 @@ app.post('/api/admin/finance', adminLimiter, requireAdmin, async (req, res, next
       entry.growthPercentage = Math.round(((entry.salePrice - entry.costPrice) / entry.costPrice) * 10_000) / 100;
     }
     data.financeEntries.push(entry);
+    addActivity(data, entry.type === 'recharge' ? 'Recharge ajoutée' : 'Salaire ajouté', entry.type === 'recharge' ? `${entry.productName} — ${entry.costPrice}€` : `${entry.label} — ${entry.amount}€`);
     if (data.financeEntries.length > 5000) data.financeEntries = data.financeEntries.slice(-5000);
     await saveDataAtomic(data);
     res.status(201).json({ success: true, entry });
@@ -532,12 +637,13 @@ app.post('/api/admin/orders', adminLimiter, requireAdmin, async (req, res, next)
   try {
     const input = manualOrderSchema.parse(req.body);
     const data = loadData();
-    const trusted = buildTrustedOrder(input, data.products);
+    const trusted = buildTrustedOrder(input, data.products, data.adminSettings);
     data.orderCounter += 1;
     const order = {
       id: data.orderCounter,
       createdAt: new Date().toISOString(),
       source: 'manual',
+      status: 'new',
       telegramUser: { id: null, username: input.telegramUsername.replace(/^@/, '') || null, firstName: input.customerName },
       items: trusted.items,
       total: input.finalTotal ?? trusted.total,
@@ -546,6 +652,7 @@ app.post('/api/admin/orders', adminLimiter, requireAdmin, async (req, res, next)
     };
     data.orders.push(order);
     applyStockMovement(data.products, trusted.items);
+    addActivity(data, 'Commande manuelle ajoutée', `#${order.id} — ${input.customerName} — ${order.total}€`);
     if (data.orders.length > 5000) data.orders = data.orders.slice(-5000);
     await saveDataAtomic(data);
     res.status(201).json({ success: true, order });
@@ -558,6 +665,7 @@ app.put('/api/admin/data', adminLimiter, requireAdmin, async (req, res, next) =>
     const oldData = loadData();
     const nextData = { ...oldData, ...input };
     nextData.products.forEach(refreshProductStockStatus);
+    addActivity(nextData, 'Catalogue mis à jour', `${nextData.products.length} produit(s)`);
     await saveDataAtomic(nextData);
     res.json({ success: true });
   } catch (error) { next(error); }
@@ -597,7 +705,8 @@ app.post('/api/order', orderLimiter, requireTelegram, async (req, res, next) => 
 
     const input = orderSchema.parse(req.body);
     const data = loadData();
-    const order = buildTrustedOrder(input, data.products);
+    if (!data.adminSettings.shopEnabled) throw new Error('Boutique fermée');
+    const order = buildTrustedOrder(input, data.products, data.adminSettings);
     data.orderCounter += 1;
     const orderNumber = data.orderCounter;
     const e = notifications.escapeTelegramHtml;
@@ -618,6 +727,7 @@ app.post('/api/order', orderLimiter, requireTelegram, async (req, res, next) => 
     data.orders.push({
       id: orderNumber,
       createdAt: new Date().toISOString(),
+      status: 'new',
       telegramUser: {
         id: telegramId,
         username: req.telegramUser.username || null,
@@ -647,7 +757,7 @@ app.use((error, _req, res, _next) => {
   logSafeError('Erreur HTTP', error);
   if (error instanceof z.ZodError) return res.status(400).json({ error: 'Données invalides', fields: error.issues.map(issue => ({ path: issue.path.join('.'), message: issue.message })) });
   if (error instanceof multer.MulterError) return res.status(400).json({ error: 'Upload invalide' });
-  const safeErrors = new Set(['Produit indisponible','Stock insuffisant','Tarif inexistant','Tarif invalide','Montant personnalisé interdit','Montant personnalisé hors limites','Minimum de livraison non atteint']);
+  const safeErrors = new Set(['Boutique fermée','Produit indisponible','Stock insuffisant','Tarif inexistant','Tarif invalide','Montant personnalisé interdit','Montant personnalisé hors limites','Minimum de livraison non atteint']);
   res.status(safeErrors.has(error.message) ? 400 : 500).json({ error: safeErrors.has(error.message) ? error.message : 'Erreur interne' });
 });
 
