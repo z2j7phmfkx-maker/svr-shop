@@ -72,6 +72,9 @@ async function loadShop() {
     });
     if (!response.ok) throw new Error('Accès Telegram requis');
     shopData = await response.json();
+    if (shopData.shop_settings?.shop_enabled === false) {
+      alert(shopData.shop_settings?.maintenance_message || 'La boutique est momentanément indisponible.');
+    }
     const concoursActive = shopData.concours?.active === true;
     $('concoursBanner').hidden = !concoursActive;
     $('concoursText').textContent = concoursActive ? (shopData.concours?.description || '') : '';
@@ -211,11 +214,12 @@ function openDeliveryModal() {
   if (!tg?.initData) return alert('Ouvre la boutique depuis Telegram pour commander.');
   selectedDeliveryOption = null;
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const minimumDelivery = Number(shopData.shop_settings?.minimum_delivery ?? 50);
   const container = $('deliveryOptionsContainer');
   container.replaceChildren();
   $('deliveryWarning').replaceChildren();
-  for (const option of [{ label: '🏪 Sur place', value: 'sur_place' }, { label: '🚚 Livraison (min. 50€)', value: 'livraison' }]) {
-    const disabled = option.value === 'livraison' && total < 50;
+  for (const option of [{ label: '🏪 Sur place', value: 'sur_place' }, { label: `🚚 Livraison (min. ${minimumDelivery}€)`, value: 'livraison' }]) {
+    const disabled = option.value === 'livraison' && total < minimumDelivery;
     const button = element('button', { className: 'quantity-btn', text: option.label, disabled });
     button.addEventListener('click', () => {
       container.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
@@ -224,7 +228,7 @@ function openDeliveryModal() {
     });
     container.appendChild(button);
   }
-  if (total < 50) $('deliveryWarning').appendChild(element('div', { className: 'warning-message', text: `Livraison disponible à partir de 50€ (actuellement ${total.toFixed(2)}€).` }));
+  if (total < minimumDelivery) $('deliveryWarning').appendChild(element('div', { className: 'warning-message', text: `Livraison disponible à partir de ${minimumDelivery}€ (actuellement ${total.toFixed(2)}€).` }));
   $('deliveryModal').classList.add('active');
 }
 
