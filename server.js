@@ -24,6 +24,8 @@ const AUTH_MAX_AGE = Number(process.env.TELEGRAM_AUTH_MAX_AGE_SECONDS || 900);
 const allowedMediaHosts = new Set((process.env.ALLOWED_MEDIA_HOSTS || 'res.cloudinary.com').split(',').map(v => v.trim()).filter(Boolean));
 const completedRequests = new Map();
 const processingRequests = new Set();
+const adminSessions = new Map();
+const ADMIN_SESSION_AGE = 60 * 60 * 1000;
 let writeQueue = Promise.resolve();
 
 function logSafeError(context, error) {
@@ -65,7 +67,7 @@ app.use(helmet({
 }));
 app.use(express.json({ limit: '100kb', strict: true }));
 app.use((req, res, next) => {
-  if (/^\/admin(?:-[a-z]+)?\.(?:html|js|css)$/.test(req.path)) return requireAdmin(req, res, next);
+  if (/^\/admin(?:-[a-z]+)?\.(?:html|js|css)$/.test(req.path) && !/^\/admin-login\.(?:html|js|css)$/.test(req.path)) return requireAdmin(req, res, next);
   next();
 });
 app.use(express.static(PUBLIC_DIR, { index: false, etag: true, maxAge: '1h', dotfiles: 'deny' }));
@@ -73,6 +75,7 @@ app.use(express.static(PUBLIC_DIR, { index: false, etag: true, maxAge: '1h', dot
 const apiLimiter = rateLimit({ windowMs: 60_000, limit: 120, standardHeaders: 'draft-8', legacyHeaders: false });
 const orderLimiter = rateLimit({ windowMs: 10 * 60_000, limit: 8, standardHeaders: 'draft-8', legacyHeaders: false });
 const adminLimiter = rateLimit({ windowMs: 15 * 60_000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false });
+const loginLimiter = rateLimit({ windowMs: 15 * 60_000, limit: 8, standardHeaders: 'draft-8', legacyHeaders: false });
 app.use('/api', apiLimiter);
 
 function loadData() {
@@ -117,25 +120,43 @@ function safeEqualText(a, b) {
   return left.length === right.length && crypto.timingSafeEqual(left, right);
 }
 
-function requireAdmin(req, res, next) {
-  const expectedUser = process.env.ADMIN_USERNAME;
-  const expectedPassword = process.env.ADMIN_PASSWORD;
-  const authorization = req.get('authorization') || '';
-  if (!expectedUser || !expectedPassword || !authorization.startsWith('Basic ')) {
-    res.set('WWW-Authenticate', 'Basic realm="Administration", charset="UTF-8"');
-    return res.status(401).send('Authentification requise');
-  }
+function parseCookies(req) {
+  const decode = value => { try { return decodeURIComponent(value); } catch { return ''; } };
+  return Object.fromEntries(String(req.get('cookie') || '').split(';').map(part => part.trim()).filter(Boolean).map(part => { const index = part.indexOf('='); return [decode(index < 0 ? part : part.slice(0, index)), decode(index < 0 ? '' : part.slice(index + 1))]; }));
+}
 
-  let credentials;
-  try { credentials = Buffer.from(authorization.slice(6), 'base64').toString('utf8'); }
-  catch { return res.status(401).send('Authentification invalide'); }
-  const separator = credentials.indexOf(':');
-  const user = separator >= 0 ? credentials.slice(0, separator) : '';
-  const password = separator >= 0 ? credentials.slice(separator + 1) : '';
-  if (!safeEqualText(user, expectedUser) || !safeEqualText(password, expectedPassword)) {
-    return res.status(401).send('Authentification invalide');
+function secureCookie(req) {
+  return req.secure || req.get('x-forwarded-proto') === 'https' || process.env.NODE_ENV === 'production';
+}
+
+function cookieHeader(name, value, req, options = {}) {
+  const parts = [`${name}=${encodeURIComponent(value)}`, 'Path=/', `Max-Age=${Math.floor(ADMIN_SESSION_AGE / 1000)}`, 'SameSite=Strict'];
+  if (options.httpOnly) parts.push('HttpOnly');
+  if (secureCookie(req)) parts.push('Secure');
+  return parts.join('; ');
+}
+
+function requireAdmin(req, res, next) {
+  const token = parseCookies(req).svr_admin_session;
+  const session = token ? adminSessions.get(token) : null;
+  if (!session || session.expiresAt <= Date.now()) {
+    if (token) adminSessions.delete(token);
+    if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Session administrateur expirée' });
+    return res.redirect(302, `/admin/login?next=${encodeURIComponent(req.originalUrl)}`);
   }
+  session.expiresAt = Date.now() + ADMIN_SESSION_AGE;
+  req.adminSession = session;
+  res.append('Set-Cookie', cookieHeader('svr_admin_session', token, req, { httpOnly: true }));
+  res.append('Set-Cookie', cookieHeader('svr_admin_csrf', session.csrfToken, req));
   res.set('Cache-Control', 'no-store');
+  next();
+}
+
+function requireAdminCsrf(req, res, next) {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  const cookieToken = parseCookies(req).svr_admin_csrf;
+  const headerToken = req.get('x-csrf-token');
+  if (!cookieToken || !headerToken || !req.adminSession || !safeEqualText(cookieToken, headerToken) || !safeEqualText(headerToken, req.adminSession.csrfToken)) return res.status(403).json({ error: 'Protection CSRF invalide' });
   next();
 }
 
@@ -470,7 +491,36 @@ function buildStatistics(orders, financeEntries, period) {
   };
 }
 
+app.post('/api/admin/login', loginLimiter, (req, res) => {
+  const username = typeof req.body?.username === 'string' ? req.body.username : '';
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+  const expectedUser = process.env.ADMIN_USERNAME || '';
+  const expectedPassword = process.env.ADMIN_PASSWORD || '';
+  if (!expectedUser || !expectedPassword || !safeEqualText(username, expectedUser) || !safeEqualText(password, expectedPassword)) return res.status(401).json({ error: 'Identifiants invalides' });
+  const sessionToken = crypto.randomBytes(32).toString('base64url');
+  const csrfToken = crypto.randomBytes(32).toString('base64url');
+  adminSessions.set(sessionToken, { username, csrfToken, expiresAt: Date.now() + ADMIN_SESSION_AGE });
+  res.set('Set-Cookie', [cookieHeader('svr_admin_session', sessionToken, req, { httpOnly: true }), cookieHeader('svr_admin_csrf', csrfToken, req)]);
+  res.json({ success: true, expiresIn: ADMIN_SESSION_AGE / 1000 });
+});
+
+app.use('/api/admin', requireAdmin, requireAdminCsrf);
+
+app.post('/api/admin/logout', (req, res) => {
+  const token = parseCookies(req).svr_admin_session;
+  if (token) adminSessions.delete(token);
+  const expired = `Path=/; Max-Age=0; SameSite=Strict${secureCookie(req) ? '; Secure' : ''}`;
+  res.set('Set-Cookie', [`svr_admin_session=; HttpOnly; ${expired}`, `svr_admin_csrf=; ${expired}`]);
+  res.json({ success: true });
+});
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, session] of adminSessions) if (session.expiresAt <= now) adminSessions.delete(token);
+}, 15 * 60_000).unref();
+
 app.get('/', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+app.get('/admin/login', (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin-login.html')));
 app.get('/admin', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin.html')));
 app.get('/admin/statistics', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin-stats.html')));
 app.get('/admin/stocks', adminLimiter, requireAdmin, (_req, res) => res.sendFile(path.join(PUBLIC_DIR, 'admin-stocks.html')));
