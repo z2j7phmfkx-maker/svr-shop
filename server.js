@@ -64,7 +64,7 @@ app.use(helmet({
 }));
 app.use(express.json({ limit: '100kb', strict: true }));
 app.use((req, res, next) => {
-  if (/^\/admin(?:-stats)?\.(?:html|js|css)$/.test(req.path)) return requireAdmin(req, res, next);
+  if (/^\/admin(?:-[a-z]+)?\.(?:html|js|css)$/.test(req.path)) return requireAdmin(req, res, next);
   next();
 });
 app.use(express.static(PUBLIC_DIR, { index: false, etag: true, maxAge: '1h', dotfiles: 'deny' }));
@@ -82,7 +82,8 @@ function loadData() {
     concours: parsed.concours || {},
     orderCounter: Number.isSafeInteger(parsed.orderCounter) ? parsed.orderCounter : 1000,
     scheduledMessages: parsed.scheduledMessages || { opening: null, closing: null },
-    orders: Array.isArray(parsed.orders) ? parsed.orders : []
+    orders: Array.isArray(parsed.orders) ? parsed.orders : [],
+    financeEntries: Array.isArray(parsed.financeEntries) ? parsed.financeEntries : []
   };
 }
 
@@ -288,6 +289,29 @@ const orderSchema = z.object({
   timeSlot: z.enum(['14:00 - 15:00','15:00 - 16:00','16:00 - 17:00','17:00 - 18:00','18:00 - 19:00','19:00 - 20:00','20:00 - 21:00','21:00 - 22:00','22:00 - 23:00','23:00 - 00:00'])
 }).strict();
 
+const manualOrderSchema = z.object({
+  customerName: z.string().trim().min(1).max(120),
+  telegramUsername: z.string().trim().max(64).optional().default(''),
+  items: orderSchema.shape.items,
+  deliveryOption: orderSchema.shape.deliveryOption,
+  timeSlot: orderSchema.shape.timeSlot,
+  finalTotal: z.number().positive().max(100_000).optional()
+}).strict();
+
+const financeEntrySchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('recharge'),
+    productName: z.string().trim().min(1).max(120),
+    costPrice: z.number().positive().max(100_000),
+    salePrice: z.number().positive().max(100_000)
+  }).strict(),
+  z.object({
+    type: z.literal('salary'),
+    label: z.string().trim().min(1).max(120),
+    amount: z.number().positive().max(100_000)
+  }).strict()
+]);
+
 function parseTariffs(product) {
   const parseNumericValue = value => Number.parseFloat(String(value ?? '').trim().replace(',', '.'));
   const promo = new Map();
@@ -334,21 +358,38 @@ function monthKey(value) { return parisMonthFormatter.format(new Date(value)); }
 function startOfRollingDays(days) { return new Date(Date.now() - (days - 1) * 86_400_000); }
 function sumOrders(orders) { return Math.round(orders.reduce((sum, order) => sum + Number(order.total || 0), 0) * 100) / 100; }
 
-function buildStatistics(orders, period) {
+function sumFinance(entries, type) {
+  return Math.round(entries.filter(entry => entry.type === type).reduce((sum, entry) => sum + Number(entry.type === 'recharge' ? entry.costPrice : entry.amount), 0) * 100) / 100;
+}
+
+function financialTotals(orders, entries) {
+  const revenue = sumOrders(orders);
+  const materials = sumFinance(entries, 'recharge');
+  const salaries = sumFinance(entries, 'salary');
+  return { revenue, materials, salaries, netProfit: Math.round((revenue - materials - salaries) * 100) / 100 };
+}
+
+function buildStatistics(orders, financeEntries, period) {
   const now = new Date();
   const today = dayKey(now);
   const periods = { week: 7, month: 30, year: 365 };
   const days = periods[period] || periods.week;
   const selected = orders.filter(order => new Date(order.createdAt) >= startOfRollingDays(days));
+  const selectedFinance = financeEntries.filter(entry => new Date(entry.createdAt) >= startOfRollingDays(days));
   const labels = [];
-  const values = [];
+  const revenue = [], materials = [], salaries = [], profit = [];
+
+  function addChartPoint(periodOrders, periodFinance) {
+    const totals = financialTotals(periodOrders, periodFinance);
+    revenue.push(totals.revenue); materials.push(totals.materials); salaries.push(totals.salaries); profit.push(totals.netProfit);
+  }
 
   if (period === 'year') {
     for (let offset = 11; offset >= 0; offset -= 1) {
       const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - offset, 1));
       const key = monthKey(date);
       labels.push(new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', month: 'short' }).format(date));
-      values.push(sumOrders(orders.filter(order => monthKey(order.createdAt) === key)));
+      addChartPoint(orders.filter(order => monthKey(order.createdAt) === key), financeEntries.filter(entry => monthKey(entry.createdAt) === key));
     }
   } else {
     const points = period === 'month' ? 30 : 7;
@@ -356,7 +397,7 @@ function buildStatistics(orders, period) {
       const date = new Date(now.getTime() - offset * 86_400_000);
       const key = dayKey(date);
       labels.push(new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: 'short' }).format(date));
-      values.push(sumOrders(orders.filter(order => dayKey(order.createdAt) === key)));
+      addChartPoint(orders.filter(order => dayKey(order.createdAt) === key), financeEntries.filter(entry => dayKey(entry.createdAt) === key));
     }
   }
 
@@ -367,8 +408,10 @@ function buildStatistics(orders, period) {
       month: sumOrders(orders.filter(order => new Date(order.createdAt) >= startOfRollingDays(30))),
       year: sumOrders(orders.filter(order => new Date(order.createdAt) >= startOfRollingDays(365)))
     },
-    chart: { labels, values },
-    orders: selected.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    selectedSummary: financialTotals(selected, selectedFinance),
+    chart: { labels, revenue, materials, salaries, profit },
+    orders: selected.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+    financeEntries: selectedFinance.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   };
 }
 
@@ -385,7 +428,47 @@ app.get('/api/catalog', requireTelegram, (_req, res) => {
 app.get('/api/admin/data', adminLimiter, requireAdmin, (_req, res) => res.json(loadData()));
 app.get('/api/admin/stats', adminLimiter, requireAdmin, (req, res) => {
   const period = ['week', 'month', 'year'].includes(req.query.period) ? req.query.period : 'week';
-  res.json(buildStatistics(loadData().orders, period));
+  const data = loadData();
+  res.json(buildStatistics(data.orders, data.financeEntries, period));
+});
+
+app.post('/api/admin/finance', adminLimiter, requireAdmin, async (req, res, next) => {
+  try {
+    const input = financeEntrySchema.parse(req.body);
+    const data = loadData();
+    const entry = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), ...input };
+    if (entry.type === 'recharge') {
+      entry.netMargin = Math.round((entry.salePrice - entry.costPrice) * 100) / 100;
+      entry.growthPercentage = Math.round(((entry.salePrice - entry.costPrice) / entry.costPrice) * 10_000) / 100;
+    }
+    data.financeEntries.push(entry);
+    if (data.financeEntries.length > 5000) data.financeEntries = data.financeEntries.slice(-5000);
+    await saveDataAtomic(data);
+    res.status(201).json({ success: true, entry });
+  } catch (error) { next(error); }
+});
+
+app.post('/api/admin/orders', adminLimiter, requireAdmin, async (req, res, next) => {
+  try {
+    const input = manualOrderSchema.parse(req.body);
+    const data = loadData();
+    const trusted = buildTrustedOrder(input, data.products);
+    data.orderCounter += 1;
+    const order = {
+      id: data.orderCounter,
+      createdAt: new Date().toISOString(),
+      source: 'manual',
+      telegramUser: { id: null, username: input.telegramUsername.replace(/^@/, '') || null, firstName: input.customerName },
+      items: trusted.items,
+      total: input.finalTotal ?? trusted.total,
+      deliveryOption: trusted.deliveryOption,
+      timeSlot: trusted.timeSlot
+    };
+    data.orders.push(order);
+    if (data.orders.length > 5000) data.orders = data.orders.slice(-5000);
+    await saveDataAtomic(data);
+    res.status(201).json({ success: true, order });
+  } catch (error) { next(error); }
 });
 
 app.put('/api/admin/data', adminLimiter, requireAdmin, async (req, res, next) => {
